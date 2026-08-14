@@ -23,7 +23,7 @@ export function createKnowledgeBaseTool(options: KnowledgeBaseToolOptions) {
   return defineTool({
     name: 'knowledge_base',
     description:
-      '知识库管理。设置、查看、删除当前工作空间的知识库列表（每条含知识库目录 dir 和说明 description）。知识库信息会注入到子代理（夔/力牧/皋陶/离朱）的系统提示词中，并对其目录自动放行读权限。仅供风后调用。',
+      '知识库管理。设置、查看、删除当前工作空间的知识库列表（每条含知识库目录 dir 和说明 description）。知识库信息会注入到子代理（夔/力牧/皋陶/离朱）的系统提示词中，供子代理参考（dsh 中读操作默认放行，子代理可直接读取知识库目录）。仅供风后调用。',
     parameters: {
       action: {
         type: 'string',
