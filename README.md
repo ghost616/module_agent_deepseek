@@ -6,7 +6,13 @@
 
 ## 安装与加载
 
-将 `@deepseek-ai/dsh-module-agent` 加入项目的 cordis.yml，启动时由 dsh 自动加载：
+### 接入方式
+
+本包 package.json 的 peerDependencies/dependencies 全部使用 `workspace:^` 协议（pnpm monorepo 内部约定），并标记 `"private": true`，设计上即 dsh monorepo 内部 workspace 包，不独立发布到 npm。因此唯一接入方式为：将本包放入 dsh 仓库的 `packages/module-agent/dsh-module-agent` 目录，由 monorepo 的 pnpm workspace 统一解析依赖（package.json 中的 `workspace:^` 依赖即在此解析），并确认其出现在 resolver manifest 的 `dependencies` 中，使 cordis.yml 的 `plugins` 插件名能解析到该已安装的 workspace 包。
+
+### 配置 cordis.yml
+
+接入 workspace 后，将 `@deepseek-ai/dsh-module-agent` 加入项目的 cordis.yml，启动时由 dsh 自动加载：
 
 ```yaml
 plugins:
