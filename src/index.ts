@@ -3,7 +3,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import type { PreToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'
+import type { PostToolDecision, PreToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'
 import type { AssembleContext } from '@deepseek-ai/dsh-system-prompt'
 import { Config, type Config as ModuleAgentConfig } from './config.ts'
 import { registerModuleAgentTools } from './tools/index.ts'
@@ -253,10 +253,21 @@ function isNotifiableOwner(mode: AgentMode, ownerMode: AgentMode | undefined): b
 /**
  * 挂载完成通知（opencode session.idle 的 dsh 等价物）：框架子智能体转为
  * idle 时，通过父 agent 的 followup 通知其启动者（风后/夔/力牧）。
- * 同时维护力牧活跃监控：running 记录活动、idle 清除活动，供状态查询与
- * 会话复用判定使用。
+ * 同时维护力牧活跃监控：running 记录活动、idle 清除活动；tools/post-execute
+ * 在每次工具执行后刷新活动时间，供状态查询与会话复用判定使用。
  */
 function registerCompletionNotification(ctx: Context, state: SessionState, config: ModuleAgentConfig): void {
+  // tools/post-execute（opencode tool.execute.after 的 dsh 等价物）：
+  // 框架子智能体每次工具执行后刷新 lastActivity，使长任务中持续工具调用
+  // 不会被 getSessionIdle 误判 unresponsive。waterfall 语义，必须委托 next()。
+  ctx.on('tools/post-execute', async (exec, _result, next): Promise<PostToolDecision> => {
+    const agent = exec.agent
+    if (agent !== undefined && isFrameworkSubagentMode(state.getAgentMode(agent.id))) {
+      recordActivity(agent.id)
+    }
+    return next()
+  })
+
   ctx.on('agent/status', ({ agent, status }) => {
     const agentId = agent.id
     const mode = state.getAgentMode(agentId)
