@@ -8,22 +8,25 @@
 
 ### 接入方式
 
-本包 package.json 的 peerDependencies/dependencies 全部使用 `workspace:^` 协议（pnpm monorepo 内部约定），并标记 `"private": true`，设计上即 dsh monorepo 内部 workspace 包，不独立发布到 npm。因此唯一接入方式为：将本包放入 dsh 仓库的 `packages/module-agent/dsh-module-agent` 目录，由 monorepo 的 pnpm workspace 统一解析依赖（package.json 中的 `workspace:^` 依赖即在此解析），并确认其出现在 resolver manifest 的 `dependencies` 中，使 cordis.yml 的 `plugins` 插件名能解析到该已安装的 workspace 包。
+本包 package.json 的 peerDependencies/dependencies 全部使用 `workspace:^` 协议（pnpm monorepo 内部约定），并标记 `"private": true`，设计上即 dsh monorepo 内部 workspace 包，不独立发布到 npm。因此唯一接入方式为：将本包放入 dsh 仓库的 `packages/module-agent/dsh-module-agent` 目录，由 monorepo 的 pnpm workspace 统一解析依赖（package.json 中的 `workspace:^` 依赖即在此解析），并确认其出现在 resolver manifest 的 `dependencies` 中，使 `cordis.patch.yml` 中的插件条目（`name` 字段）能解析到该已安装的 workspace 包。
 
 将以下文件和文件夹复制到 `packages/module-agent/dsh-module-agent` 目录：`package.json`、`tsconfig.json`、`src/`；放入 dsh 仓库后依赖由 monorepo 的 `pnpm install` 统一安装。
 
-### 配置 cordis.yml
+### 挂载插件
 
-接入 workspace 后，将 `@deepseek-ai/dsh-module-agent` 加入项目的 cordis.yml，启动时由 dsh 自动加载：
+接入 workspace 后，将以下条目写入 profile 目录下的 `cordis.patch.yml`（或 `$DSH_HOME/cordis.patch.yml`），dsh 启动时作为 patch 层加载该插件：
 
 ```yaml
-plugins:
-  module-agent:
+- id: module-agent
+  name: '@deepseek-ai/dsh-module-agent'
+  config:
     # 项目根目录兜底（agent 会话无 cwd 时作为 .module_agent 数据目录的解析根）
     dataDir: .
     # 启动力牧/皋陶/离朱/夔子智能体使用的 subagent provider，默认 'spawn'
     subagentProvider: spawn
 ```
+
+`cordis.yml` 是框架自动管理的 profile 根文件（内容为空列表，由框架重写），无需编辑；用户配置写在 `cordis.patch.yml` 中。
 
 插件通过 `inject` 声明依赖以下 dsh 服务：`tools`、`systemPrompt`、`agents`、`subagents`、`llm`、`sessions`。配置项由 `src/config.ts` 提供 schemastery 校验：
 
