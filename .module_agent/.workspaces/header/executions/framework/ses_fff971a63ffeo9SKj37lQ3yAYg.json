@@ -34,5 +34,23 @@
     ],
     "summary": "已将 README.md 第 13 行整句替换为「将以下文件和文件夹复制到 packages/module-agent/dsh-module-agent 目录：package.json、tsconfig.json、src/；放入 dsh 仓库后依赖由 monorepo 的 pnpm install 统一安装。」，去掉了 node_modules 说明、.module_agent/ 说明及「搬入…等」模糊表述，改为「复制」+ 明确三个文件/目录清单。第 11 行接入方式说明、第 15 行起 cordis.yml 配置及其余章节均未改动。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_b0120ec5-d67c-48bc-8095-5f04b64cae54",
+    "plan": "修正 README.md 配置 cordis.yml 章节为正确的 dsh cordis 插件数组配置格式",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "已将 README.md「配置 cordis.yml」小节标题改为「挂载插件」；引导语改为写入 profile 目录下的 cordis.patch.yml（或 $DSH_HOME/cordis.patch.yml）由 dsh 作为 patch 层加载；配置示例改为 dsh 插件数组列表格式（- id: module-agent / name: '@deepseek-ai/dsh-module-agent' / config: {...}），保留 dataDir、subagentProvider 及注释；示例后补充 cordis.yml 为框架自动管理的 profile 根文件（空列表由框架重写）无需编辑、用户配置写在 cordis.patch.yml 的说明。inject 依赖说明与 config.ts schemastery 校验说明保持不变。",
+    "errors": []
+  },
+  {
+    "plan_id": "plan_e1190e31-be40-4460-b3b0-bfab43d736c7",
+    "plan": "修正 README.md 第 11 行末尾旧表述，与挂载插件小节格式一致",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "已将 README.md 第 11 行末尾「使 cordis.yml 的 `plugins` 插件名能解析到该已安装的 workspace 包」改为「使 `cordis.patch.yml` 中的插件条目（`name` 字段）能解析到该已安装的 workspace 包」，与「挂载插件」小节的 cordis.patch.yml + name 字段格式一致。第 11 行其余内容及所有其他行均未改动。",
+    "errors": []
   }
 ]

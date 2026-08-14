@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_e1190e31-be40-4460-b3b0-bfab43d736c7",
+  "module_name": "framework",
+  "development_plan": "修正 README.md 第 11 行末尾的旧表述，使其与「挂载插件」小节格式一致。\n\n背景：README.md 第 11 行「接入方式」末尾仍写「使 cordis.yml 的 `plugins` 插件名能解析到该已安装的 workspace 包」，这是旧格式表述；「挂载插件」小节已改为 dsh 实际的「cordis.patch.yml + 数组条目（name 字段）」格式，第 11 行此处表述与之不一致。\n\n修改（仅改 README.md 第 11 行末尾）：\n1. 将「并确认其出现在 resolver manifest 的 `dependencies` 中，使 cordis.yml 的 `plugins` 插件名能解析到该已安装的 workspace 包。」中的「使 cordis.yml 的 `plugins` 插件名能解析到该已安装的 workspace 包」改为「使 `cordis.patch.yml` 中的插件条目（`name` 字段）能解析到该已安装的 workspace 包」。\n2. 第 11 行其余内容（workspace:^ 协议、private:true、不独立发布、放入 packages/module-agent/dsh-module-agent 目录、resolver manifest dependencies 等）保持不变。\n3. 不改动其他任何行。\n\n验证：确认第 11 行表述与「挂载插件」小节一致，Markdown 无语法错误，其余内容无改动。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_fff971a63ffeo9SKj37lQ3yAYg",
+  "modified_files": [
+    "README.md"
+  ]
+}

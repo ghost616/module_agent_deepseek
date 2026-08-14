@@ -1,7 +1,15 @@
 [
   {
-    "plan_id": "plan_59e4ffdc-6fbd-4cc8-9309-b3ec5d227668",
-    "plan_summary": "README 接入方式改为明确复制文件清单，去掉 node_modules/.module_agent 说明",
+    "plan_id": "plan_b0120ec5-d67c-48bc-8095-5f04b64cae54",
+    "plan_summary": "修正 README cordis 配置章节为正确的数组格式与 cordis.patch.yml 说明",
+    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_e1190e31-be40-4460-b3b0-bfab43d736c7",
+    "plan_summary": "修正 README 第 11 行 cordis.yml 旧表述，与挂载插件小节格式一致",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,

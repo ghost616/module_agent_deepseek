@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_59e4ffdc-6fbd-4cc8-9309-b3ec5d227668",
-  "module_name": "framework",
-  "development_plan": "修正 README.md「接入方式」章节中搬入内容范围的表述。\n\n背景：当前 README.md 第 13 行为「搬入的是本仓库 git 跟踪的源码文件：`package.json`、`tsconfig.json`、`src/`、`README.md`、`.gitignore` 等（不含 `node_modules/`）。`node_modules/` 不在 git 版本库中（`.gitignore` 已排除），无需搬入；放入 dsh 仓库后依赖由 monorepo 的 `pnpm install` 统一安装。`.module_agent/` 是框架运行时数据（运行期生成），同样不搬入。」，表述模糊且包含冗余说明。\n\n修改（仅改 README.md 第 13 行）：\n1. 将整句替换为：「将以下文件和文件夹复制到 `packages/module-agent/dsh-module-agent` 目录：`package.json`、`tsconfig.json`、`src/`；放入 dsh 仓库后依赖由 monorepo 的 `pnpm install` 统一安装。」\n2. 即：去掉 node_modules 说明、去掉 `.module_agent/` 说明，将「搬入…等」的模糊表述改为「复制」+ 明确列出三个文件/目录清单。\n3. 不改动第 11 行的接入方式说明、第 15 行起的 cordis.yml 配置、以及其余章节。\n\n验证：确认第 13 行表述准确清晰，Markdown 无语法错误，其余章节无改动。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
-  "session_id": "ses_fff971a63ffeo9SKj37lQ3yAYg",
-  "modified_files": [
-    "README.md"
-  ]
-}
