@@ -19,7 +19,7 @@ import { getPlanIdBySession, removeMappingByPlanId } from '../lib/session_plan_m
 import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
 import { releasePlanFilesSession } from '../lib/plan_files.ts'
 import { getBoundLizhu, getGaotaoStarter, hasGaotaoBound } from '../lib/module_session_tracker.ts'
-import { exists } from '../lib/fs.ts'
+import { exists, sanitizeIdSegment } from '../lib/fs.ts'
 import { checkConfirmationCode, storePlanConfirmation, generateId } from './verification_code.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
 
@@ -172,7 +172,7 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
           // 离朱绑定与测试报告已读取校验（orchestration：会话绑定跟踪）。
           const lizhuSid = await getBoundLizhu(wsDir, agentId)
           if (lizhuSid) {
-            const reportPath = join(wsDir, 'test_reports', `${lizhuSid}.json`)
+            const reportPath = join(wsDir, 'test_reports', `${sanitizeIdSegment(lizhuSid)}.json`)
             if (!(await exists(reportPath))) {
               return {
                 status: 'error',
@@ -188,7 +188,7 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
           }
 
           if (passed && !lizhuSid) {
-            const testSpecPath = join(wsDir, 'test_specs', `${agentId}.json`)
+            const testSpecPath = join(wsDir, 'test_specs', `${sanitizeIdSegment(agentId)}.json`)
             if (await exists(testSpecPath)) {
               const testReportsDir = join(wsDir, 'test_reports')
               let hasReports = false

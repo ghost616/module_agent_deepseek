@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { exec } from 'node:child_process'
 import type { ExecException } from 'node:child_process'
 import { mkdir, readdir, unlink } from 'node:fs/promises'
-import { exists, writeText } from './fs.ts'
+import { exists, writeText, sanitizeIdSegment, desanitizeIdSegment } from './fs.ts'
 import type { TestSpec } from './types.ts'
 
 export interface ShellResult {
@@ -40,7 +40,7 @@ export async function writeTestReport(
 ): Promise<void> {
   const dir = join(workspaceDir, 'test_reports')
   await mkdir(dir, { recursive: true })
-  const path = join(dir, `${sessionId}.json`)
+  const path = join(dir, `${sanitizeIdSegment(sessionId)}.json`)
   const record = {
     lizhu_session_id: sessionId,
     content,
@@ -56,7 +56,7 @@ export async function writeTestSpec(
 ): Promise<void> {
   const dir = join(workspaceDir, 'test_specs')
   await mkdir(dir, { recursive: true })
-  const path = join(dir, `${sessionId}.json`)
+  const path = join(dir, `${sanitizeIdSegment(sessionId)}.json`)
   const record: TestSpec = {
     session_id: sessionId,
     content,
@@ -75,7 +75,7 @@ export async function cleanStaleTestSpecs(
   const files = await readdir(dir)
   for (const f of files) {
     if (!f.endsWith('.json')) continue
-    const sid = f.slice(0, -5)
+    const sid = desanitizeIdSegment(f.slice(0, -5))
     if (!(await isAlive(sid))) {
       try { await unlink(join(dir, f)) } catch { /* 并发删除时忽略 */ }
       removed++
@@ -94,7 +94,7 @@ export async function cleanStaleTestReports(
   const files = await readdir(dir)
   for (const f of files) {
     if (!f.endsWith('.json')) continue
-    const sid = f.slice(0, -5)
+    const sid = desanitizeIdSegment(f.slice(0, -5))
     if (!(await isAlive(sid))) {
       try { await unlink(join(dir, f)) } catch { /* 并发删除时忽略 */ }
       removed++

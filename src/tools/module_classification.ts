@@ -5,7 +5,7 @@ import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import { addModule, findModule } from '../lib/module_tree.ts'
 import { readModuleDefinition, writeModuleDefinition } from '../lib/module_definition.ts'
 import { addOrUpdateModule } from '../lib/module_design.ts'
-import { exists, readJson, writeText } from '../lib/fs.ts'
+import { exists, readJson, writeText, sanitizeIdSegment } from '../lib/fs.ts'
 import {
   moduleAgentDir,
   AGENT_PROFILE_FILE,
@@ -43,7 +43,7 @@ interface ClassificationData {
 }
 
 function getFilePath(directory: string, sessionId: string): string {
-  return join(directory, '.module_agent', '.classifications', `${sessionId}.json`)
+  return join(directory, '.module_agent', '.classifications', `${sanitizeIdSegment(sessionId)}.json`)
 }
 
 async function readData(directory: string, sessionId: string): Promise<ClassificationData> {

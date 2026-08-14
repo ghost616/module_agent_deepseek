@@ -1,6 +1,6 @@
 import { mkdir, unlink, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import { exists, readJson, writeText } from './fs.ts'
+import { exists, readJson, writeText, sanitizeIdSegment, desanitizeIdSegment } from './fs.ts'
 import type { ReviewResult } from './types.ts'
 
 function reviewDir(workspaceDir: string): string {
@@ -8,7 +8,7 @@ function reviewDir(workspaceDir: string): string {
 }
 
 function reviewPath(workspaceDir: string, reviewerSessionId: string): string {
-  return join(reviewDir(workspaceDir), `${reviewerSessionId}.json`)
+  return join(reviewDir(workspaceDir), `${sanitizeIdSegment(reviewerSessionId)}.json`)
 }
 
 export async function writeReviewResult(
@@ -54,7 +54,7 @@ export async function cleanStaleReviewResults(
   const files = await readdir(dir)
   for (const f of files) {
     if (!f.endsWith('.json')) continue
-    const sid = f.slice(0, -5)
+    const sid = desanitizeIdSegment(f.slice(0, -5))
     if (!(await isAlive(sid))) {
       await unlink(join(dir, f))
       removed++

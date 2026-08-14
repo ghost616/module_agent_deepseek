@@ -6,7 +6,7 @@ import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import { readCurrentSpec, getSpecHeadings, getSpecSection } from '../lib/module_spec.ts'
 import { readModuleDefinition, getModuleParentDirs } from '../lib/module_definition.ts'
 import { moduleAgentDir, CHANGE_HISTORY_FILE } from '../lib/constants.ts'
-import { exists, readText, readJson } from '../lib/fs.ts'
+import { exists, readText, readJson, sanitizeIdSegment } from '../lib/fs.ts'
 import { readPlanFiles } from '../lib/plan_files.ts'
 import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
 import { getBoundLizhu, getBoundStarter, unbindLizhu, getKuiStarter } from '../lib/module_session_tracker.ts'
@@ -224,7 +224,7 @@ async function handleReadTestResults(directory: string, sessionId: string, args:
     }
   }
 
-  const reportPath = join(wsDir, 'test_reports', `${lizhuSid}.json`)
+  const reportPath = join(wsDir, 'test_reports', `${sanitizeIdSegment(lizhuSid)}.json`)
   if (!(await exists(reportPath))) {
     return { status: 'ok', message: '离朱尚未生成测试报告', lizhu_session_id: lizhuSid }
   }
@@ -260,7 +260,7 @@ async function handleReadTestSpecs(directory: string, sessionId: string, mode: s
     specSessionId = starter
   }
 
-  const specPath = join(wsDir, 'test_specs', `${specSessionId}.json`)
+  const specPath = join(wsDir, 'test_specs', `${sanitizeIdSegment(specSessionId)}.json`)
   if (!(await exists(specPath))) {
     return { status: 'ok', message: '未找到测试说明', spec_session_id: specSessionId }
   }

@@ -1,6 +1,6 @@
 import { mkdir, unlink, readdir } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
-import { exists, readJson, writeText } from './fs.ts'
+import { exists, readJson, writeText, sanitizeIdSegment, desanitizeIdSegment } from './fs.ts'
 import type { KuiPlan } from './types.ts'
 
 function kuiPlansDir(workspaceDir: string): string {
@@ -8,7 +8,7 @@ function kuiPlansDir(workspaceDir: string): string {
 }
 
 function fengzhouPlansPath(workspaceDir: string, fengzhouSessionId: string): string {
-  return join(kuiPlansDir(workspaceDir), `${fengzhouSessionId}.json`)
+  return join(kuiPlansDir(workspaceDir), `${sanitizeIdSegment(fengzhouSessionId)}.json`)
 }
 
 export async function readFengzhouPlans(workspaceDir: string, fengzhouSessionId: string): Promise<KuiPlan[]> {
@@ -97,7 +97,7 @@ export async function cleanStaleKuiPlans(
   const files = await readdir(dir)
   for (const f of files) {
     if (!f.endsWith('.json')) continue
-    const fsid = f.slice(0, -5)
+    const fsid = desanitizeIdSegment(f.slice(0, -5))
     if (!(await isAlive(fsid))) {
       try { await unlink(join(dir, f)) } catch { /* 并发删除时忽略 */ }
       removed++
