@@ -3,6 +3,7 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { SessionId } from '@deepseek-ai/dsh-session'
 // Type-only: pulls the `subagent/start` event augmentation into the program.
 import type {} from '@deepseek-ai/dsh-subagent'
+import { foldSubagentDescriptor } from '@deepseek-ai/dsh-subagent'
 
 export type AgentMode = 'fengzhou' | 'qibo' | 'limu' | 'gaotao' | 'lishou' | 'lizhu' | 'kui'
 
@@ -68,7 +69,8 @@ export function modeFromProvider(provider: string): AgentMode | undefined {
  * 力牧/皋陶/离朱/夔身份，替代 opencode 的 session_modes.json 映射。
  * orchestration 模块在创建子智能体时通过 {@link setAgentMode} 注册，
  * 或当 provider 名遵循 `module-agent:<mode>` 约定时由 subagent/start
- * 事件自动分类。
+ * 事件自动分类；冷恢复时（provider 名不命中）从持久化的
+ * subagent/descriptor persona 识别 marker 重建身份。
  */
 export class SessionState {
   private readonly modes = new Map<string, AgentMode>()
@@ -115,11 +117,24 @@ export function createSessionState(): SessionState {
 /**
  * 将 SessionState 绑定到 dsh 生命周期：subagent/start 自动分类，
  * agent/disposed 清理注册。返回 effect disposer 交由调用方挂载。
+ *
+ * 分类链保持同步：先按 provider 名约定（`module-agent:<mode>`）识别；未命中时
+ * 从已持久化的 subagent/descriptor 事件恢复 —— 冷恢复的 continuable 子智能体
+ * 同样会触发 subagent/start，此时通过 ctx.agents 取回 agent，用
+ * {@link foldSubagentDescriptor} 折叠出其 persona 并识别身份 marker。
  */
 export function registerSessionState(ctx: Context, state: SessionState): () => Promise<void> {
   return ctx.effect(function* () {
     yield ctx.on('subagent/start', (info) => {
-      state.classifyProvider(info.id, info.provider)
+      if (state.classifyProvider(info.id, info.provider) !== undefined) return
+      const agent = ctx.agents.get(info.id)
+      if (agent === undefined) return
+      // 冷恢复时 events 含 seed 前缀，须按 header.seedLength 截断后折叠。
+      const seedLength = agent.session.header.seedLength ?? 0
+      const descriptor = foldSubagentDescriptor(agent.session.events.slice(seedLength))
+      if (descriptor?.mode !== 'continuable') return
+      const mode = modeFromPersona(descriptor.persona ?? '')
+      if (mode !== undefined) state.setAgentMode(info.id, mode)
     })
     yield ctx.on('agent/disposed', ({ agent }) => {
       state.clearAgentMode(agent.id)

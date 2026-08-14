@@ -93,8 +93,7 @@ function assertWithin(directory: string, filePath: string): boolean {
 /**
  * 挂载权限与拦截层（opencode permission.ask / tool.execute.before 的 dsh 等价物）。
  * - tools/pre-execute：自定义工具继续 waterfall 交由 orchestration 守卫；write/edit 越出工程目录则 deny。
- * - tools.guard：各智能体模式的工具守卫（写文件禁令、力牧 .module_agent 禁令、
- *   离朱写文件禁令、夔白名单）。
+ * - tools.guard：各智能体模式的工具守卫（写文件禁令、力牧 .module_agent 禁令、夔白名单）。
  */
 function registerGuards(ctx: Context, state: SessionState, config: ModuleAgentConfig): void {
   ctx.on('tools/pre-execute', async (exec, next): Promise<PreToolDecision> => {
@@ -131,10 +130,6 @@ function registerGuards(ctx: Context, state: SessionState, config: ModuleAgentCo
           return '力牧不直接修改 .module_agent 下的文件，请使用 module_agent_updater 工具。'
         }
       }
-    }
-
-    if (mode === 'lizhu' && BLOCKED_WRITE_TOOLS.includes(exec.name)) {
-      return '离朱不直接修改代码文件。'
     }
 
     if (mode === 'kui') {

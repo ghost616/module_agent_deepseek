@@ -4,8 +4,9 @@ import { directoryOfAgent, type SessionState } from './session_state.ts'
 import { validateLimuBashCommand } from './limu_bash_guard.ts'
 import { validateLizhuEnvCommand } from './lizhu_env_guard.ts'
 import { checkLimuPlanActive } from './limu_plan_guard.ts'
+import { isWorking } from './limu_monitor.ts'
 import { resolveWorkspace, getWorkspaceDir } from './workspace.ts'
-import { getBoundStarter } from './module_session_tracker.ts'
+import { getBoundStarter, getBoundLizhu } from './module_session_tracker.ts'
 
 export interface OrchestrationGuardOptions {
   /** 会话模式注册表（用于判断调用者身份）。 */
@@ -26,7 +27,7 @@ function stringArg(args: unknown, key: string): string | undefined {
 /**
  * 挂载 orchestration 模块的工具守卫（framework 的 registerGuards 之外追加）：
  * - tools.guard：力牧 bash 命令守卫（仅允许文件删除/重命名/移动）、离朱环境构建目录守卫。
- * - tools/pre-execute：力牧计划有效性检查、离朱启动者绑定校验（覆盖全部工具）。
+ * - tools/pre-execute：力牧计划有效性检查与绑定离朱运行守卫、离朱启动者绑定校验（覆盖全部工具）。
  */
 export function registerOrchestrationGuards(ctx: Context, options: OrchestrationGuardOptions): void {
   const { sessionState, dataDir } = options
@@ -71,6 +72,18 @@ export function registerOrchestrationGuards(ctx: Context, options: Orchestration
         await checkLimuPlanActive(directory, agentId)
       } catch (error) {
         return { kind: 'deny', reason: (error as Error).message }
+      }
+      let wsName: string | null = null
+      try {
+        wsName = await resolveWorkspace(directory, agentId)
+      } catch {
+        // 工作空间解析失败视为无工作空间，跳过绑定离朱运行守卫
+      }
+      if (wsName !== null) {
+        const boundLizhu = await getBoundLizhu(getWorkspaceDir(directory, wsName), agentId)
+        if (boundLizhu !== null && isWorking(boundLizhu)) {
+          return { kind: 'deny', reason: '力牧绑定的离朱仍在运行，请等待离朱测试完成后再操作。' }
+        }
       }
       return next()
     }
