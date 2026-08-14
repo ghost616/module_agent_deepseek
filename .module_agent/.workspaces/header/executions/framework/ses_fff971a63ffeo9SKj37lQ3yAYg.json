@@ -52,5 +52,14 @@
     ],
     "summary": "已将 README.md 第 11 行末尾「使 cordis.yml 的 `plugins` 插件名能解析到该已安装的 workspace 包」改为「使 `cordis.patch.yml` 中的插件条目（`name` 字段）能解析到该已安装的 workspace 包」，与「挂载插件」小节的 cordis.patch.yml + name 字段格式一致。第 11 行其余内容及所有其他行均未改动。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_131ebf1d-69b6-4562-ac0e-f4c0fb604403",
+    "plan": "修改 package.json description 字段，去掉「移植」表述，改为体现插件功能",
+    "modified_files": [
+      "package.json"
+    ],
+    "summary": "已将 package.json 第 3 行 description 改为「多智能体协同开发框架：内置岐伯、隶首、风后、夔、力牧、皋陶、离朱七级智能体，覆盖项目初始化、代码归类、计划编排、批量执行、代码审查与测试验证的完整开发闭环。」，去掉「移植」表述。JSON 字符串合法（中文/逗号/顿号原样保留，无需转义），其余字段（name、version、license、private、type、main、types、exports、files、scripts、peerDependencies、dependencies、devDependencies）均未改动。",
+    "errors": []
   }
 ]

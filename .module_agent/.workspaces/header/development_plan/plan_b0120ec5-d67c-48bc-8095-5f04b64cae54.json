@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_b0120ec5-d67c-48bc-8095-5f04b64cae54",
-  "module_name": "framework",
-  "development_plan": "修正 README.md「配置 cordis.yml」章节，改为正确的 dsh cordis 配置格式。\n\n背景：当前 README.md 第 15-31 行的「配置 cordis.yml」小节用了错误的格式 `plugins: module-agent: {...}`（键值对象），而 dsh 的 cordis 配置实际是插件数组列表 `- id: / name: / config:`，且用户配置应写入 `cordis.patch.yml`（cordis.yml 是框架自动管理的空列表根文件）。参考 dsh 实际配置格式：F:\\deepseek-harness\\examples\\headless-agent\\cordis.yml（每个条目 `- id: xxx / name: '@deepseek-ai/dsh-xxx' / config: {...}`）。\n\n修改（仅改 README.md 第 15-31 行的「配置 cordis.yml」小节）：\n1. 将小节标题「### 配置 cordis.yml」改为「### 挂载插件」。\n2. 将引导语「接入 workspace 后，将 `@deepseek-ai/dsh-module-agent` 加入项目的 cordis.yml，启动时由 dsh 自动加载」改为说明：接入 workspace 后，将以下条目写入 profile 目录下的 `cordis.patch.yml`（或 `$DSH_HOME/cordis.patch.yml`），dsh 启动时作为 patch 层加载该插件。\n3. 配置示例改为正确的数组列表格式（保留 dataDir、subagentProvider 及其注释）：\n   ```yaml\n   - id: module-agent\n     name: '@deepseek-ai/dsh-module-agent'\n     config:\n       # 项目根目录兜底（agent 会话无 cwd 时作为 .module_agent 数据目录的解析根）\n       dataDir: .\n       # 启动力牧/皋陶/离朱/夔子智能体使用的 subagent provider，默认 'spawn'\n       subagentProvider: spawn\n   ```\n4. 在示例后补充一句说明：`cordis.yml` 是框架自动管理的 profile 根文件（内容为空列表，由框架重写），无需编辑；用户配置写在 `cordis.patch.yml` 中。\n5. 保留「插件通过 inject 声明依赖…」及 config.ts schemastery 校验说明（dataDir、subagentProvider 两项）不变。\n\n验证：确认章节标题、示例格式、说明文字均正确，Markdown 无语法错误，其余章节无改动。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
-  "session_id": "ses_fff971a63ffeo9SKj37lQ3yAYg",
-  "modified_files": [
-    "README.md"
-  ]
-}

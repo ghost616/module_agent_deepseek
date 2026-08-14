@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_131ebf1d-69b6-4562-ac0e-f4c0fb604403",
+  "module_name": "framework",
+  "development_plan": "修改 package.json 的 description 字段，去掉「移植」表述，改为体现插件功能。\n\n背景：当前 package.json 第 3 行 description 为「风后力牧多智能体协同框架：将 opencode 插件移植为 DeepSeek Harness (Cordis) 插件的基础骨架与数据层」，体现了「移植」；用户要求改为体现插件功能，不提移植。\n\n修改（仅改 package.json 第 3 行 description 字段）：\n1. 将 description 改为：「多智能体协同开发框架：内置岐伯、隶首、风后、夔、力牧、皋陶、离朱七级智能体，覆盖项目初始化、代码归类、计划编排、批量执行、代码审查与测试验证的完整开发闭环。」\n2. 不改动 package.json 的 name、version、license、private、type、main、types、exports、files、scripts、peerDependencies、dependencies、devDependencies 等任何其他字段。\n3. 保持 JSON 语法正确（description 字符串中的中文、逗号、顿号原样保留，注意 JSON 转义）。\n\n验证：确认 package.json 为合法 JSON（可用 node 或 JSON 解析校验），description 为新文案，其余字段无改动。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_fff971a63ffeo9SKj37lQ3yAYg",
+  "modified_files": [
+    "package.json"
+  ]
+}

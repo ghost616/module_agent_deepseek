@@ -1,15 +1,7 @@
 [
   {
-    "plan_id": "plan_b0120ec5-d67c-48bc-8095-5f04b64cae54",
-    "plan_summary": "修正 README cordis 配置章节为正确的数组格式与 cordis.patch.yml 说明",
-    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_e1190e31-be40-4460-b3b0-bfab43d736c7",
-    "plan_summary": "修正 README 第 11 行 cordis.yml 旧表述，与挂载插件小节格式一致",
+    "plan_id": "plan_131ebf1d-69b6-4562-ac0e-f4c0fb604403",
+    "plan_summary": "修改 package.json description 为体现插件功能（去掉移植表述）",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
