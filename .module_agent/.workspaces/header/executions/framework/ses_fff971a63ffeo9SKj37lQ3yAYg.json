@@ -16,5 +16,14 @@
     ],
     "summary": "已调整 README.md「安装与加载」章节：移除路径 A（发布到 npm）的全部内容（workspace:^ 转 semver、pnpm publish、pnpm add 等），将小节标题改为「接入方式」，仅保留「作为 dsh monorepo workspace 包」唯一接入方式说明——放入 dsh 仓库 packages/module-agent/dsh-module-agent 目录由 pnpm workspace 统一解析，并保留简化后的 workspace:^ 协议约束说明（monorepo 内部协议、private:true、不独立发布）。「配置 cordis.yml」小节、cordis.yml 配置示例（dataDir、subagentProvider）、inject 依赖说明、config.ts schemastery 校验说明均保留不变。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_531dbe77-baec-4f55-9a76-f395643f04a5",
+    "plan": "在 README.md「接入方式」小节补充放入 dsh 仓库时的具体内容范围说明",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "已更新 README.md「接入方式」小节：补充放入 dsh 仓库时的具体内容范围说明——搬入的是 git 跟踪的源码文件（package.json、tsconfig.json、src/、README.md、.gitignore 等，不含 node_modules/）；node_modules/ 不在 git 版本库中（.gitignore 已排除）无需搬入，放入 dsh 仓库后依赖由 monorepo 的 pnpm install 统一安装；.module_agent/ 为框架运行时数据（运行期生成）同样不搬入。仅改动「接入方式」小节，其余章节不变。",
+    "errors": []
   }
 ]

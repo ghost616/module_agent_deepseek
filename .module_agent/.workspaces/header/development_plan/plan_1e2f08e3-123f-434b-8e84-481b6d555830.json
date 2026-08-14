@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_1e2f08e3-123f-434b-8e84-481b6d555830",
-  "module_name": "framework",
-  "development_plan": "调整 README.md「安装与加载」章节：去掉「发布到 npm」路径，只保留「作为 dsh monorepo workspace 包」这一种接入方式。\n\n背景：本包 package.json 使用 `workspace:^`（pnpm monorepo 内部协议）且 `\"private\": true`，设计上就是 dsh monorepo 内部 workspace 包，不独立发布到 npm。上一版 README 写了「路径 A 发布到 npm」与「路径 B workspace 包」两条路径，现按用户要求去掉路径 A，只保留 workspace 包这一种接入方式。\n\n修改（仅改 README.md「安装与加载」章节，约第 7-23 行附近）：\n1. 移除「路径 A（发布到 npm）」的全部说明内容：包括将 workspace:^ 转换为实际 semver 版本、pnpm publish、pnpm add、以及 private: true 字段移除、@deepseek-ai/schemastery 依赖确认清单等。\n2. 将「作为 dsh monorepo workspace 包」作为唯一接入方式说明：将本包放入 dsh 仓库的 packages/module-agent/dsh-module-agent 目录，由 monorepo 的 pnpm workspace 统一解析（package.json 中的 workspace:^ 依赖即在此解析）。\n3. 保留并简化 workspace:^ 协议约束说明：说明本包依赖均使用 workspace:^（monorepo 内部协议），因此只能作为 dsh monorepo 内部包接入，不独立发布。\n4. 保留 cordis.yml 配置示例（dataDir、subagentProvider）、inject 依赖说明、config.ts schemastery 校验说明不变。\n5. 语言中文，风格与现有 README 一致，Markdown 结构完整、章节顺序合理（安装与加载 → 快速开始 → …）。\n\n验证：确认「安装与加载」章节仅保留 workspace 包接入方式，无残留的发布相关内容，Markdown 无语法错误。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
-  "session_id": "ses_fff971a63ffeo9SKj37lQ3yAYg",
-  "modified_files": [
-    "README.md"
-  ]
-}

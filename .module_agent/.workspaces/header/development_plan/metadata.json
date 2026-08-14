@@ -1,15 +1,7 @@
 [
   {
-    "plan_id": "plan_588251bf-4194-4188-a133-77fe6405163a",
-    "plan_summary": "修正 README 安装与加载章节，补充发布/安装前置与 workspace 协议约束",
-    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_1e2f08e3-123f-434b-8e84-481b6d555830",
-    "plan_summary": "README 安装与加载仅保留 workspace 包接入方式，去掉发布到 npm 路径",
+    "plan_id": "plan_531dbe77-baec-4f55-9a76-f395643f04a5",
+    "plan_summary": "README 接入方式补充放入内容范围（git 源码，不含 node_modules/.module_agent）",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
