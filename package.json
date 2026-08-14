@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-module-agent",
-  "description": "风后力牧多智能体协同框架：将 opencode 插件移植为 DeepSeek Harness (Cordis) 插件的基础骨架与数据层",
+  "description": "多智能体协同开发框架：内置岐伯、隶首、风后、夔、力牧、皋陶、离朱七级智能体，覆盖项目初始化、代码归类、计划编排、批量执行、代码审查与测试验证的完整开发闭环。",
   "version": "0.1.0",
   "license": "MIT",
   "private": true,
