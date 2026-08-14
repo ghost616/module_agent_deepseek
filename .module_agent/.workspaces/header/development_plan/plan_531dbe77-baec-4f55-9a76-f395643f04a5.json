@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_531dbe77-baec-4f55-9a76-f395643f04a5",
-  "module_name": "framework",
-  "development_plan": "在 README.md 的「安装与加载 → 接入方式」章节补充放入 dsh 仓库时的具体内容范围说明。\n\n背景：当前「接入方式」只说\"将本包放入 dsh 仓库的 packages/module-agent/dsh-module-agent 目录\"，未说明具体搬哪些内容。用户要求补充：node_modules 不在 git 里（.gitignore 已排除），放入 dsh 仓库后依赖由 monorepo 统一安装。\n\n修改（仅改 README.md 的「接入方式」小节，约第 9-11 行附近）：\n1. 在\"将本包放入 dsh 仓库\"的说明后，补充放入内容的具体范围：\n   - 放入的是本仓库 git 跟踪的源码文件：package.json、tsconfig.json、src/、README.md、.gitignore 等（不含 node_modules）。\n   - node_modules/ 不在 git 版本库中（.gitignore 已排除），无需搬入；放入 dsh 仓库后依赖由 monorepo 的 pnpm install 统一安装。\n   - .module_agent/ 是框架运行时数据（运行期生成），也不搬入。\n2. 语言中文，风格与现有 README 一致，不改变其他章节。\n\n验证：确认「接入方式」章节说明完整清晰，Markdown 无语法错误，其余章节无改动。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
-  "session_id": "ses_fff971a63ffeo9SKj37lQ3yAYg",
-  "modified_files": [
-    "README.md"
-  ]
-}

@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_2ae239f0-5ecb-4e80-bdb0-670d64d940c6",
+  "module_name": "workspace",
+  "development_plan": "修正 knowledge_base 工具描述中与 dsh 实际机制不符的说法。\n\n背景：src/tools/knowledge_base.ts 第 26 行工具描述写「知识库信息会注入到子代理（夔/力牧/皋陶/离朱）的系统提示词中，并对其目录自动放行读权限」。但 dsh 框架中 read/glob/grep 读操作默认放行（fs-sandbox 的「Reads pass through untouched」），外部目录读取无需任何权限放行，因此「自动放行读权限」这一说法与 dsh 实际机制不符（这是 opencode 版权限模型的遗留描述）。\n\n修改（仅改 src/tools/knowledge_base.ts 第 26 行的 description 字符串）：\n1. 将「并对其目录自动放行读权限」改为「供子代理参考（dsh 中读操作默认放行，子代理可直接读取知识库目录）」，去掉「自动放行」这一误导性说法。\n2. 其余描述内容（知识库管理、注入系统提示词、仅供风后调用）保持不变。\n3. 不改动 execute 逻辑、parameters 定义和其他代码。\n\n验证：确认描述语义准确反映 dsh 实际（读默认放行），typecheck 无错误（仅字符串改动，无类型影响）。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_fff65dbc2ffeVkJDWD47R5iRtz",
+  "modified_files": [
+    "src/tools/knowledge_base.ts"
+  ]
+}

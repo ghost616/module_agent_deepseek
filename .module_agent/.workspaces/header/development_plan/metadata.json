@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_531dbe77-baec-4f55-9a76-f395643f04a5",
-    "plan_summary": "README 接入方式补充放入内容范围（git 源码，不含 node_modules/.module_agent）",
+    "plan_id": "plan_2ae239f0-5ecb-4e80-bdb0-670d64d940c6",
+    "plan_summary": "修正 knowledge_base 工具描述，去掉「自动放行读权限」的不符说法",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
