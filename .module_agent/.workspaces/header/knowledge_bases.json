@@ -1,0 +1,12 @@
+{
+  "knowledge_bases": [
+    {
+      "dir": "F:\\deepseek-harness",
+      "description": "DeepSeek Harness（dsh）插件开发知识库：当开发、调试或修改 dsh 插件（plugin）、以及涉及 dsh 框架核心机制（Cordis 插件系统、agent 运行时、llm/mcp/sandbox/session/subagent/skill/storage 等模块）时，优先查询此知识库。包含源码、文档、示例与 SDK，用于了解插件 API、生命周期、注册机制与最佳实践。"
+    },
+    {
+      "dir": "E:\\open_code_plugin\\src",
+      "description": "风后力牧多智能体协同框架插件源码：opencode 插件（@opencode-ai/plugin），实现模块化管理、工作空间、开发计划、力牧/皋陶/离朱/夔多智能体调度、知识库与工具暴露。当开发、修改、调试此插件自身源码（lib 核心逻辑、tools 工具实现、插件入口）时查询此知识库。"
+    }
+  ]
+}

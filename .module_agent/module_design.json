@@ -1,0 +1,103 @@
+{
+  "requirements": "requirements_design.md",
+  "modules": [
+    {
+      "name": "framework",
+      "description": "系统框架模块，管理插件入口、公共类型/常量/工具、会话状态、权限拦截、智能体画像与代码规范、验证码、备份与清理等共用文件",
+      "responsibilities": [
+        "维护插件入口与工具注册",
+        "管理公共类型/常量/工具",
+        "维护会话状态与权限拦截",
+        "维护智能体画像与代码规范",
+        "维护验证码、备份与清理"
+      ],
+      "dependencies": [],
+      "functions": [
+        {
+          "name": "插件入口",
+          "description": "index.ts 注册全部工具与事件钩子、权限拦截、会话模式守卫"
+        }
+      ]
+    },
+    {
+      "name": "workspace",
+      "description": "工作空间管理模块，管理工作空间、知识库、纠正记录、模型配置与设置向导（岐伯）",
+      "responsibilities": [
+        "工作空间生命周期管理",
+        "知识库配置",
+        "纠正记录维护",
+        "模型配置",
+        "设置向导"
+      ],
+      "dependencies": [
+        "framework"
+      ],
+      "functions": [
+        {
+          "name": "工作空间管理",
+          "description": "工作空间创建、绑定、列表、配置与开发模式设置"
+        }
+      ]
+    },
+    {
+      "name": "module-management",
+      "description": "模块管理模块，管理模块树、模块定义/设计/规格、文件分类（隶首）与文件探查读取",
+      "responsibilities": [
+        "模块树维护",
+        "文件定义与职责描述",
+        "文件分类",
+        "目录探查与文件读取"
+      ],
+      "dependencies": [
+        "framework"
+      ],
+      "functions": [
+        {
+          "name": "模块管理",
+          "description": "模块创建、修改、删除与文件定义增删改"
+        }
+      ]
+    },
+    {
+      "name": "workflow",
+      "description": "开发流程模块，管理开发计划、执行结果、代码审查与测试（离朱）",
+      "responsibilities": [
+        "开发计划管理",
+        "执行结果记录",
+        "代码审查",
+        "测试管理"
+      ],
+      "dependencies": [
+        "framework",
+        "module-management"
+      ],
+      "functions": [
+        {
+          "name": "计划与执行",
+          "description": "计划确认、执行进度、审查结果、测试报告"
+        }
+      ]
+    },
+    {
+      "name": "orchestration",
+      "description": "智能体调度模块，管理力牧/皋陶/夔的启动、执行、关闭、监控、守卫与会话跟踪",
+      "responsibilities": [
+        "力牧执行调度",
+        "皋陶审查调度",
+        "夔批量编排",
+        "会话监控与守卫"
+      ],
+      "dependencies": [
+        "framework",
+        "workspace",
+        "workflow"
+      ],
+      "functions": [
+        {
+          "name": "智能体调度",
+          "description": "启动、监控、守卫、关闭各智能体会话"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+# 代码规范（遵循 DeepSeek Harness）
+
+## 架构
+- 一切皆插件：所有功能通过 Cordis 插件实现，基于 `@deepseek-ai/cordis`
+- 注册即副作用：每个贡献通过 `ctx.effect()` / `ctx.on()` 挂载；registry 的 `register()` 返回 disposer
+
+## 语言与模块
+- ESM 模块（`"type": "module"`），跨包用包名引用，包内相对导入用 `.ts` 后缀
+- npm 包命名遵循 `@deepseek-ai/dsh-<name>`
+- 严格类型：`strict: true` + `noImplicitAny`；残留 `any` 需说明无法收窄的原因
+- 跨边界不透明 id 使用 Branded（`Branded<B>`），不使用裸 string
+
+## 类型与联合
+- 可辨识联合 switch 判别标签；封闭联合以 `assertNever` 收尾
+- 类型化事件使用声明合并，事件 JSDoc 标注 `@mode` 与 payload `@param`
+- 导出需有简洁 JSDoc，函数式导出包含 `@param`/`@returns`
+
+## 代码风格
+- 不注释代码中显而易见的事实
+- 空 `catch` 需注明吞掉什么及为何无其他可达路径；`try` 保持单语句
+- 平行值优先对称；无根据的不对称通常意味着遗漏抽取
+- 文件以恰好一个换行符结尾（LF）
+- 插件内不硬编码可调参数：用可校验的 `Config` 字段，可在 cordis.yml 修改
+
+## 错误处理
+- 配置错误尽早 loud 失败，绝不静默跳过缺失引用
+- 在 parser/config、队列、模型/工具 JSON、持久化、worker、进程、wire 边界做运行时校验
+
+## 测试
+- 测试描述行为而非正确性；非平凡变更须带 Agent Note
+- 模型/用户可见行为变更须加 keyless snapshot 并附真实可运行示例
+
+## 文档
+- 代码变更需同步更新 README 与 JSDoc 契约
+- 用精确术语，不用隐喻；保持行为、失败、时序、所有权与安全使用事实

@@ -1,0 +1,12 @@
+{
+  "corrections": [
+    {
+      "content": "移植完成后不要拷入 dsh 仓库（E:\\deepseek-harness），因为对该仓库没有文件写权限。开发与最终产物都留在当前工作目录 E:\\module_agent_deepseek，不涉及对 dsh 仓库的写入操作。",
+      "timestamp": "2026-08-14T04:35:52.911Z"
+    },
+    {
+      "content": ".module_agent 目录也需要提交到 git 仓库，不应在提交时排除。此前两次提交（源码、README）均手动排除了 .module_agent 目录，属于遗漏。",
+      "timestamp": "2026-08-14T09:51:39.368Z"
+    }
+  ]
+}

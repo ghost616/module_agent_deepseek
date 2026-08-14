@@ -1,0 +1,73 @@
+{
+  "module_name": "orchestration",
+  "files": [
+    {
+      "path": "src/lib/module_session_tracker.ts",
+      "description": "会话绑定跟踪：维护工作空间内 module_sessions.json（模块→力牧会话）、session_bindings.json（风后↔皋陶/力牧/夔、启动者↔离朱、离朱↔风后）、lizhu_sessions.json；提供会话注册/移除/复用查找（getModuleLimuSession/getAvailableLizhuSession）、绑定/解绑/归属校验（getBoundGaotao/getBoundKui/getBoundLizhu/getBoundStarter/getGaotaoStarter/getKuiStarter 等）、二次检查标记与失效数据清理（cleanStale*）。会话存活判定通过注入的 isAlive 回调实现，替代 opencode 的 client.session.get。"
+    },
+    {
+      "path": "src/lib/limu_monitor.ts",
+      "description": "力牧活跃监控：记录/清除子智能体会话的活动时间戳（recordActivity/clearActivity），提供 isWorking（是否活跃）与 getSessionIdle（空闲秒数与 5 分钟无响应判定），支撑 module_agent_executor 的状态查询、ping 提醒与会话复用。"
+    },
+    {
+      "path": "src/lib/limu_bash_guard.ts",
+      "description": "力牧 bash 命令守卫：仅允许单条文件删除/重命名/移动命令（Remove-Item/Rename-Item/Move-Item/rm/del/ren/mv 等），拦截链式/管道/重定向等字符，不合法时抛错供 tools.guard 转为拒绝理由。"
+    },
+    {
+      "path": "src/lib/lizhu_env_guard.ts",
+      "description": "离朱 bash 环境守卫：识别环境构建类命令（npm/pip/poetry/uv/go/cargo/playwright install 等），要求其在项目根目录 .lizhu_env/ 内执行且禁止 cd 切换目录，返回拒绝理由或 null。"
+    },
+    {
+      "path": "src/lib/limu_plan_guard.ts",
+      "description": "力牧计划有效性守卫：校验会话已关联工作空间、存在未完成的开发计划（limuPlanGuard 返回拒绝理由，checkLimuPlanActive 抛错），供 orchestration_guards 的 tools/pre-execute 挂载。"
+    },
+    {
+      "path": "src/lib/orchestrator_rules.ts",
+      "description": "风后力牧编排规则文本（ORCHESTRATOR_RULES）：工作空间初始化、逐模块确认与执行、夔批量编排询问、离朱测试调度、状态查询、无响应处理与工具使用原则，module_agent_start 注入当前会话。"
+    },
+    {
+      "path": "src/lib/kui_rules.ts",
+      "description": "夔（批量编排智能体）规则文本（KUI_RULES）：允许工具白名单、严格禁止轮询与提问、按依赖分析/文件锁检测/启动力牧/等待通知/启动皋陶审查/标记计划完成的完整工作流程。"
+    },
+    {
+      "path": "src/lib/reviewer_rules.ts",
+      "description": "皋陶（代码审查智能体）规则文本（REVIEWER_RULES）：审查循环、六个审查维度、审查结果格式与审查原则，module_agent_executor start_review 时作为子智能体 persona。"
+    },
+    {
+      "path": "src/lib/lizhu_rules.ts",
+      "description": "离朱（测试智能体）规则文本（LIZHU_RULES）：允许/禁止工具、.lizhu_env 环境目录限制、测试用例生成规则、工作流程与环境问题处理，module_agent_executor start_lizhu 时作为子智能体 persona。"
+    },
+    {
+      "path": "src/lib/code_conventions.ts",
+      "description": "读取项目根目录 .module_agent/code_conventions.txt 的代码规范内容（文件缺失返回空串），module_agent_executor 启动力牧/皋陶时拼接进子智能体 persona。"
+    },
+    {
+      "path": "src/lib/stale_cleanup.ts",
+      "description": "失效数据清理：cleanWorkspaceStale 清理工作空间内引用了已不存在会话的数据（计划/映射/会话/绑定/执行记录/审查结果/夔计划/测试说明与报告），cleanExternalStale 清理项目级数据（会话-工作空间映射、工作空间绑定、文件锁），基于注入的 isAlive 存活判定。"
+    },
+    {
+      "path": "src/lib/subagent_host.ts",
+      "description": "子智能体运行时抽象（SubagentHost）：封装 ctx.subagents.startContinuable（startChild）、followup、listChildren、childAlive，ctx.sessions + sessionPersistence 的 isAlive 存活判定、ctx.agents 的 agent 查找与 stop 停止，替代 opencode 的 client.session.create/promptAsync/get/delete。"
+    },
+    {
+      "path": "src/lib/orchestration_guards.ts",
+      "description": "orchestration 守卫挂载：tools.guard 挂载力牧 bash 命令守卫与离朱环境构建目录守卫；tools/pre-execute 挂载力牧计划有效性检查（checkLimuPlanActive）与离朱启动者绑定校验，覆盖全部工具调用。"
+    },
+    {
+      "path": "src/tools/module_agent_executor.ts",
+      "description": "智能体调度执行工具：start（启动力牧，含会话复用/计划确认码校验/模型校验）、status（查询力牧执行状态）、ping（二次检查提醒）、start_review/review_status/check_reviewer（皋陶审查调度）、kui_status/start_kui（夔批量编排）、start_lizhu/list_unbound_lizhu（离朱测试调度）。基于 SubagentHost 与 module_session_tracker 实现 dsh 会话建立与复用。"
+    },
+    {
+      "path": "src/tools/module_agent_start.ts",
+      "description": "启动力牧编排模式：校验互斥身份（岐伯/力牧/皋陶/隶首/离朱）后，将当前会话标记为风后（setAgentMode）并通过 agent.inject 注入风后力牧规则（ORCHESTRATOR_RULES）。"
+    },
+    {
+      "path": "src/tools/module_agent_done.ts",
+      "description": "会话关闭工具：风后关闭力牧/皋陶/离朱/夔会话并清理关联数据（执行记录/计划/映射/文件锁/工作空间映射/会话绑定），支持 close、close_all（全部可关闭才关闭）、list_idle；关闭前检测忙碌/二次检查/结果未读取等阻塞原因，需确认码。"
+    },
+    {
+      "path": "src/tools/module_agent_cleanup.ts",
+      "description": "失效数据清理工具：clean_workspace 清理当前绑定工作空间内的失效数据，clean_external 清理项目级失效数据，仅供风后调用；基于 SubagentHost.isAlive 的存活判定。"
+    }
+  ]
+}

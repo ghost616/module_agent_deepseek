@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_000e9b917ffe4Hl07MrmX1Oray",
+  "content": "# module_agent_updater update_kui_plan 操作实现编译测试\n\n## 待测试功能\n\n在 src/tools/module_agent_updater.ts 中实现 update_kui_plan 操作（替换原 TODO 分支），新增 handleUpdateKuiPlan：\n- 参数校验：kui_plan_id 必填，status（enum pending/running/completed）或 result 至少其一\n- resolveWorkspace 解析工作空间（未绑定返回错误）、getWorkspaceDir 得 wsDir\n- getKuiStarter 获取夔绑定的风后会话（未绑定返回错误）\n- readKuiPlan 读取计划（不存在返回错误）\n- status==='completed' 时校验子计划 plan_completed/code_reviewed，返回 pending_complete/pending_review\n- 更新 status/kui_session_id/result 并 writeKuiPlan 写回\n- 权限：仅 kui 模式可调用\n\n## 涉及文件\n\n- E:\\module_agent_deepseek\\src\\tools\\module_agent_updater.ts（修改）\n\n## 测试要求\n\n1. 编译类型测试：`npx tsc --noEmit -p E:/module_agent_deepseek/tsconfig.json --typeRoots E:/module_agent_deepseek/.lizhu_env/env/node_modules/@types --noErrorTruncation`\n   - 确认 src/**/*.ts 本项目错误清零（允许 E:\\deepseek-harness 环境噪音）\n2. 单元测试回归：`npx vitest run --config vitest.config.ts`（`oxc:{tsconfig:false}`），报告通过/失败\n3. 若编译错误列出文件:行号、错误码、错误文本与修复建议\n",
+  "timestamp": "2026-08-14T09:18:59.491Z"
+}

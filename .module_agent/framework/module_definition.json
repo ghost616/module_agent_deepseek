@@ -1,0 +1,121 @@
+{
+  "module_name": "framework",
+  "files": [
+    {
+      "path": "package.json",
+      "description": "dsh 插件包骨架：@deepseek-ai/dsh-module-agent，type=module，依赖 @deepseek-ai/cordis/schemastery 与 dsh 各 peer 包（workspace:^），声明 typecheck/test 脚本"
+    },
+    {
+      "path": "tsconfig.json",
+      "description": "类型检查配置：extends E:/deepseek-harness/tsconfig.base.json 以 paths 引用 dsh 源码（strict + noImplicitAny），noEmit 仅做类型检查"
+    },
+    {
+      "path": "src/index.ts",
+      "description": "插件入口：Cordis apply(ctx, config) + inject(['tools','systemPrompt','agents','subagents'])，组装 session_state 注册、25 工具注册、权限/拦截（tools/pre-execute + tools.guard）、系统提示词注入（systemPrompt.section）、完成通知（agent/status + owner.followup）"
+    },
+    {
+      "path": "src/config.ts",
+      "description": "插件 Config：dataDir 项目根目录兜底，schemastery 校验 schema"
+    },
+    {
+      "path": "src/lib/types.ts",
+      "description": "公共类型定义：ModuleTree/ModuleEntry、ModuleDefinition/FileEntry、ExecutionRecord、PlanMeta/PlanDetail、KuiPlan、ReviewIssue/PlanReview/ReviewResult、AdminResult/ExecutorResult/TestSpec 等"
+    },
+    {
+      "path": "src/lib/constants.ts",
+      "description": "路径常量与默认模板：.module_agent 相关文件/目录路径常量、workspaceDir/moduleAgentDir 目录函数、defaultAgentProfile/defaultCurrentSpec/INITIAL_CHANGE_HISTORY/emptyModuleDefinition 模板"
+    },
+    {
+      "path": "src/lib/fs.ts",
+      "description": "文件读写工具：异步 exists/readText/readJson/writeText，以及 systemPrompt 同步 section 使用的 existsSync/readJsonSync"
+    },
+    {
+      "path": "src/lib/session_state.ts",
+      "description": "会话模式注册表（dsh 改写）：AgentMode 类型与分类（modeFromPersona/modeFromProvider/personaForMode），SessionState 类提供 getAgentMode/setAgentMode/clearAgentMode 及完成通知去重，registerSessionState 绑定 subagent/start 与 agent/disposed 生命周期，directoryOfAgent 解析项目根目录"
+    },
+    {
+      "path": "src/lib/module_tree.ts",
+      "description": "模块树数据模型：.module_agent/module_tree.json 的读取/写入/查找模块/增删模块"
+    },
+    {
+      "path": "src/lib/module_definition.ts",
+      "description": "模块定义数据模型：.module_agent/<module>/module_definition.json 的读取/写入/增删改文件条目/按文件查模块/父目录提取"
+    },
+    {
+      "path": "src/lib/development_plan.ts",
+      "description": "开发计划数据模型：workspace/development_plan 下 metadata.json 与 <plan_id>.json 的保存/读取/完成标记/审查/删除/清理"
+    },
+    {
+      "path": "src/lib/execution_result.ts",
+      "description": "执行结果数据模型：workspace/executions/<module>/<session>.json 的写入/读取/删除/失效清理"
+    },
+    {
+      "path": "src/lib/review_result.ts",
+      "description": "审查结果数据模型：workspace/review_results/<reviewer>.json 的写入/读取/删除/失效清理"
+    },
+    {
+      "path": "src/lib/kui_plan.ts",
+      "description": "夔计划数据模型：workspace/kui_plans/<fengzhou>.json 的读取/写入/状态推进/完成清理/失效清理"
+    },
+    {
+      "path": "src/lib/plan_files.ts",
+      "description": "计划文件清单数据模型：.module_agent/<module>/plan_files.json 的读取/增删/释放 session/失效清理"
+    },
+    {
+      "path": "src/lib/session_plan_map.ts",
+      "description": "会话-计划映射数据模型：workspace/session_plan_map.json 的记录/查询/删除/失效清理"
+    },
+    {
+      "path": "src/lib/session_workspace.ts",
+      "description": "会话-工作空间映射数据模型：.module_agent/session_workspaces.json 的读写/删除/失效清理，含同步读取 getSessionWorkspaceSync"
+    },
+    {
+      "path": "src/lib/workspace_config.ts",
+      "description": "工作空间配置数据模型：workspace/config.json 的读写与开发模式设置，含同步读取 getWorkspaceConfigSync"
+    },
+    {
+      "path": "src/lib/corrections.ts",
+      "description": "纠正记录数据模型：workspace/corrections.json 的读取/追加去重/删除"
+    },
+    {
+      "path": "src/lib/file_backup.ts",
+      "description": "文件备份数据模型：.module_agent/<module>/backups 下的备份/列表/按行读取/最新备份，md5 目录映射与最多 10 份轮换"
+    },
+    {
+      "path": "src/lib/workspace.ts",
+      "description": "工作空间索引共享读写：.module_agent/.workspaces/index.json 的创建/列表/风后绑定/解析工作空间/失效清理，含同步读取 getBoundWorkspaceSync（供提示词注入）"
+    },
+    {
+      "path": "src/lib/knowledge_base.ts",
+      "description": "知识库共享读写：workspace/knowledge_bases.json 的列表/增删/路径命中判断/提示词构造，含同步读取 listKnowledgeBasesSync（供提示词注入）"
+    },
+    {
+      "path": "src/lib/beginner_tips.ts",
+      "description": "新手模式需求引导规则常量 BEGINNER_TIPS（供风后新手模式提示词注入）"
+    },
+    {
+      "path": "src/lib/tool_output.ts",
+      "description": "defineTool 公共输出声明：jsonToolOutput() 返回 schema={type:json} + 文本 render，供全部 module-agent 工具复用"
+    },
+    {
+      "path": "src/tools/verification_code.ts",
+      "description": "verification_code 工具（完整实现）：生成验证随机码并保存至会话；导出 generateId/确认码校验消费等公共函数供计划确认工具复用"
+    },
+    {
+      "path": "src/tools/module_agent_backup.ts",
+      "description": "module_agent_backup 工具（完整实现）：backup/list/read_backup_content 三操作，力牧可备份、风后/力牧/皋陶可读取，校验模块存在与调用者身份"
+    },
+    {
+      "path": "src/tools/skeleton.ts",
+      "description": "工具注册骨架：23 个待后续模块移植工具的 SKELETON_TOOLS 清单与 buildSkeletonTool 占位构造（调用返回尚未实现）"
+    },
+    {
+      "path": "src/tools/index.ts",
+      "description": "工具注册集成点：registerModuleAgentTools 注册全部 25 个工具（verification_code、module_agent_backup 真实实现 + 23 个骨架占位）"
+    },
+    {
+      "path": "README.md",
+      "description": "项目根目录 README 文档：@deepseek-ai/dsh-module-agent 插件的使用说明，含安装/加载（cordis.yml 挂载、inject 依赖、dataDir/subagentProvider 配置）、七级智能体角色表、架构总览、新手模式、工作流程、知识库，以及 opencode 版与 dsh 版实现方案差异对照表"
+    }
+  ]
+}

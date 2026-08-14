@@ -1,0 +1,37 @@
+{
+  "module_name": "workspace",
+  "files": [
+    {
+      "path": "src/lib/agent_model_config.ts",
+      "description": "力牧/皋陶/离朱/夔默认模型配置的读写与校验。定义 AgentModelConfig（四智能体的 providerID/modelID 条目）、AgentModelEntry、ModelValidationError 与 ModelCatalog（模型目录访问抽象，供 agent_model_config / agent_model_list 工具读取提供方及模型）。readAgentModelConfig/writeAgentModelConfig 读写工作空间目录下的 agent_model_config.json；validateModelConfig 通过 ModelCatalog 校验各智能体默认模型是否存在于已配置的提供方列表中。"
+    },
+    {
+      "path": "src/lib/setup_guide.ts",
+      "description": "岐伯（项目设置向导智能体）的注入规则文本 SETUP_GUIDE。定义岐伯的工具使用限制、修改反馈、确认机制（verification_code 确认码）以及 Phase 1 需求设计、Phase 2 代码规范、Phase 3 模块设计三个阶段引导流程，供 module_agent_setup 工具注入会话。"
+    },
+    {
+      "path": "src/tools/workspace.ts",
+      "description": "工作空间管理工具（defineTool 风格）。createWorkspaceTool 注册 workspace 工具：list 列出现有工作空间与当前绑定、create 创建并绑定新空间、bind 绑定已有空间、status 查看当前绑定与开发模式、get_config 读取工作空间配置、set_development_mode 设置开发模式（beginner/expert）。仅风后（fengzhou）可调用，使用 exec.agent 的 cwd/会话 ID 解析目录。返回 interface 类型在边界 as unknown as JsonValue 断言。"
+    },
+    {
+      "path": "src/tools/knowledge_base.ts",
+      "description": "知识库管理工具（defineTool 风格）。createKnowledgeBaseTool 注册 knowledge_base 工具：list 查看知识库列表、set 整表替换、add 添加知识库（dir+description）、remove 删除知识库。仅风后可调用，需已绑定工作空间；知识库列表存于工作空间目录 knowledge_bases.json。"
+    },
+    {
+      "path": "src/tools/correction.ts",
+      "description": "用户纠正反馈记录工具（defineTool 风格）。createCorrectionTool 注册 module_agent_correction 工具：add 记录用户纠正、read 读取历史纠正（含索引）、remove 按索引删除。仅风后可调用，通过 resolveWorkspace 解析会话所属工作空间，纠正记录存于工作空间目录 corrections.json。"
+    },
+    {
+      "path": "src/tools/agent_model_config.ts",
+      "description": "模型默认配置管理工具（defineTool 风格）。createAgentModelConfigTool 注册 agent_model_config 工具：get 查看当前配置、set 设置各智能体默认模型（limu/gaotao/lizhu/kui 的 provider_id+model_id），set 时经 validateModelConfig 通过 ModelCatalog 校验模型有效性后写入。仅风后可调用，需已绑定工作空间。"
+    },
+    {
+      "path": "src/tools/agent_model_list.ts",
+      "description": "模型列表查看工具（defineTool 风格）。createAgentModelListTool 注册 agent_model_list 工具：通过 ModelCatalog 列出所有已配置模型提供方及其可用模型，返回 { id, name, models } 列表。供风后查看当前环境可用的 provider 与 model。"
+    },
+    {
+      "path": "src/tools/module_agent_setup.ts",
+      "description": "岐伯项目设置向导工具（defineTool 风格）。createModuleAgentSetupTool 注册 module_agent_setup 工具：校验会话模式互斥（风后/力牧/皋陶/隶首/离朱已激活时拒绝），写入 qibo 模式并创建用户消息将 SETUP_GUIDE 注入当前 agent 会话（agent.inject）。"
+    }
+  ]
+}

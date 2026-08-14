@@ -1,0 +1,62 @@
+import { defineTool } from '@deepseek-ai/dsh-tools'
+import { jsonToolOutput } from '../lib/tool_output.ts'
+
+export interface SkeletonToolMeta {
+  name: string
+  description: string
+}
+
+/**
+ * 尚未由后续模块移植实现的工具清单（本期仅完成注册骨架）。
+ * 各模块实现完成后，将其从本清单移除并在 tools/index.ts 注册真实实现。
+ */
+export const SKELETON_TOOLS: readonly SkeletonToolMeta[] = [
+  {
+    name: 'module_agent_executor',
+    description: '启动力牧会话或查询执行状态。用于分配开发计划给力牧并追踪执行结果。支持启动夔智能体进行批量计划编排。',
+  },
+  {
+    name: 'module_agent_updater_plan',
+    description: '力牧执行进度管理工具。',
+  },
+  {
+    name: 'module_agent_updater_review',
+    description: '皋陶代码审查结果写入工具。',
+  },
+  {
+    name: 'module_agent_start',
+    description: '启动力牧编排模式，注入风后力牧规则。',
+  },
+  {
+    name: 'module_agent_done',
+    description: '风后完成任务后调用，关闭力牧、皋陶或离朱会话窗口。',
+  },
+  {
+    name: 'module_agent_plan',
+    description: '开发计划管理。确认计划、读取计划元数据、读取计划详情、标记计划完成、获取待审查计划、标记审查完成、清理已完成计划、删除计划、创建审查计划。',
+  },
+  {
+    name: 'module_agent_cleanup',
+    description: '清理失效数据（引用了已不存在会话的数据）。仅供风后调用。',
+  },
+  {
+    name: 'module_agent_testing',
+    description: '代码测试工具。写入待测试功能说明或测试报告，检测 Playwright。',
+  },
+]
+
+/** 构造一个骨架工具：调用时返回"尚未实现"错误，由后续模块替换真实实现。 */
+export function buildSkeletonTool(meta: SkeletonToolMeta) {
+  return defineTool({
+    name: meta.name,
+    description: meta.description,
+    parameters: {},
+    output: jsonToolOutput(),
+    async execute() {
+      return {
+        status: 'error',
+        error: `工具 ${meta.name} 尚未实现，将由后续模块移植实现。`,
+      }
+    },
+  })
+}

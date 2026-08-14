@@ -1,0 +1,57 @@
+{
+  "module_name": "module-management",
+  "files": [
+    {
+      "path": "src/tools/module_agent_admin.ts",
+      "description": "模块管理工具：创建/修改/删除模块（module_agent_admin），列出候选模块目录、读取模块树。仅供风后（read_modules 另可隶首）调用。已从 opencode 移植为 defineTool + ctx.tools.register，目录经 exec.agent 会话 cwd 解析。"
+    },
+    {
+      "path": "src/tools/module_design_admin.ts",
+      "description": "模块设计管理工具：读写 module_design.json（add_module/update_module/read）、读写 code_conventions.txt 与 requirements_design.md。仅供风后、岐伯或隶首调用。"
+    },
+    {
+      "path": "src/tools/module_agent_reader.ts",
+      "description": "模块元数据读取工具：read_spec/read_spec_headings/read_spec_section/read_definition/read_descriptions/read_dirs/read_history/read_plan_files，并保留 read_test_results/read_test_specs/read_kui_plan 等 action 入口（后者依赖 orchestration 模块，暂返回未移植提示）。"
+    },
+    {
+      "path": "src/tools/module_agent_updater.ts",
+      "description": "模块元数据增量更新工具：update_spec（增/改 current_spec.md section）、update_definition（增/删/改 module_definition.json 文件条目）、move_definition（跨模块迁移文件定义并追加双方日志）、append_history。update_kui_plan 入口保留，依赖 orchestration 模块暂未移植。"
+    },
+    {
+      "path": "src/tools/module_agent_explorer.ts",
+      "description": "目录探查工具：explore_dir 递归列出子目录及其文件类型/所属模块统计，list_files 列出指定目录直接子文件及所属模块。仅供隶首或风后调用。"
+    },
+    {
+      "path": "src/tools/module_agent_analyzer.ts",
+      "description": "文件关键字分析工具：按关键字或正则匹配文件行，返回匹配行号与内容。仅供隶首或风后调用。"
+    },
+    {
+      "path": "src/tools/module_agent_line_reader.ts",
+      "description": "文件行读取工具：按 line/before/after 范围读取文件指定行内容。仅供隶首或风后调用。"
+    },
+    {
+      "path": "src/tools/module_classification.ts",
+      "description": "文件分类工具（隶首专用）：add/update/delete 管理分类结果，bind_module 绑定已有模块或新建模块并写入 agent_profile/current_spec/module_design，apply 将已绑定分类写入 module_definition.json。"
+    },
+    {
+      "path": "src/tools/module_agent_classifier.ts",
+      "description": "隶首激活工具：将当前会话标记为 lishou 模式，并通过 exec.deferContext 注入 CLASSIFIER_RULES 文件分析规则。与风后力牧/岐伯/力牧/皋陶/离朱模式互斥。"
+    },
+    {
+      "path": "src/lib/module_design.ts",
+      "description": "模块设计数据访问：读写 module_design.json，addOrUpdateModule 按 isUpdate 区分整体替换/字段合并，removeModuleDesign 移除模块设计条目。"
+    },
+    {
+      "path": "src/lib/module_spec.ts",
+      "description": "模块功能说明（current_spec.md）数据访问：读取全文、获取 ## 二级标题列表、按 heading 读取 section、按 set/add 模式增量更新 section。"
+    },
+    {
+      "path": "src/lib/classifier_rules.ts",
+      "description": "隶首文件归类智能体的工作流规则文本（CLASSIFIER_RULES），由 module_agent_classifier 注入会话。"
+    },
+    {
+      "path": "src/lib/agent_profile.ts",
+      "description": "模块智能体画像（agent_profile.txt）数据访问：读取、写入、缺失时按模板补建。"
+    }
+  ]
+}

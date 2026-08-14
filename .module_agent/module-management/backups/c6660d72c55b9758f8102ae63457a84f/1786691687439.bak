@@ -1,0 +1,28 @@
+import type { Context } from '@deepseek-ai/cordis'
+import type { SessionState } from '../lib/session_state.ts'
+import { verificationCode } from './verification_code.ts'
+import { createModuleAgentBackupTool } from './module_agent_backup.ts'
+import { SKELETON_TOOLS, buildSkeletonTool } from './skeleton.ts'
+
+export interface RegisterToolsOptions {
+  /** 会话模式注册表（module_agent_backup 需要校验调用者身份）。 */
+  readonly sessionState: SessionState
+  /** 项目根目录兜底（允许显式 undefined，兼容 exactOptionalPropertyTypes）。 */
+  readonly dataDir?: string | undefined
+}
+
+/**
+ * 注册全部 25 个 module-agent 工具。
+ * 本期完整实现 verification_code 与 module_agent_backup，其余 23 个为骨架
+ * 占位（调用返回"尚未实现"），由后续模块替换为真实实现。
+ */
+export function registerModuleAgentTools(ctx: Context, options: RegisterToolsOptions): void {
+  ctx.tools.register(verificationCode)
+  ctx.tools.register(createModuleAgentBackupTool({
+    sessionState: options.sessionState,
+    dataDir: options.dataDir,
+  }))
+  for (const meta of SKELETON_TOOLS) {
+    ctx.tools.register(buildSkeletonTool(meta))
+  }
+}

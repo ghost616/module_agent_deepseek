@@ -1,0 +1,57 @@
+{
+  "module_name": "workflow",
+  "files": [
+    {
+      "path": "src/tools/module_agent_plan.ts",
+      "description": "开发计划管理工具（module_agent_plan）：确认计划、读取计划元数据/详情、标记计划完成、设置测试通过、获取待审查计划、标记审查完成、清理/删除计划、创建审查计划。校验调用者身份与参数，读写 development_plan / session_plan_map / plan_files 数据；离朱绑定与皋陶/夔会话绑定校验由 orchestration 提供。"
+    },
+    {
+      "path": "src/tools/module_agent_updater_plan.ts",
+      "description": "力牧执行进度管理工具（module_agent_updater_plan）：write_result 写入执行记录、add_plan_files/remove_plan_files 维护计划修改文件列表、check_active_plan 检测计划有效性。仅供力牧调用；力牧计划有效性守卫由 orchestration 以 tools.guard 挂载。"
+    },
+    {
+      "path": "src/tools/module_agent_updater_review.ts",
+      "description": "皋陶代码审查结果写入工具（module_agent_updater_review）：写入或更新指定计划的审查总结、问题列表与通过结论，数据存 review_results。仅供皋陶调用。"
+    },
+    {
+      "path": "src/tools/module_agent_testing.ts",
+      "description": "代码测试工具（module_agent_testing）：write_spec 写入待测试功能说明、write_report 写入测试报告、check_playwright 检测 Playwright 安装。供风后/力牧/离朱按 action 调用；离朱启动者绑定校验由 orchestration 提供。"
+    },
+    {
+      "path": "src/lib/development_plan.ts",
+      "description": "开发计划数据层：development_plan/ 目录下 metadata.json 与 <plan_id>.json 的读写，覆盖计划保存/创建审查计划/标记完成/标记测试通过/待审查计划查询/审查完成/删除/清理已完成/过期清理。"
+    },
+    {
+      "path": "src/lib/execution_result.ts",
+      "description": "力牧执行结果数据层：workspace 下 executions/<module>/<session>.json 的记录写入（同计划覆盖、异计划追加）、读取与过期清理。"
+    },
+    {
+      "path": "src/lib/review_result.ts",
+      "description": "皋陶审查结果数据层：workspace 下 review_results/<session>.json 的写入、读取、删除与过期清理。"
+    },
+    {
+      "path": "src/lib/plan_files.ts",
+      "description": "力牧计划修改文件列表数据层：.module_agent/<module>/plan_files.json 的读取、追加、移除、释放会话与过期清理。"
+    },
+    {
+      "path": "src/lib/session_plan_map.ts",
+      "description": "会话-计划映射数据层：workspace 下 session_plan_map.json 的记录、查询、按会话/按计划移除与过期清理。"
+    },
+    {
+      "path": "src/lib/testing.ts",
+      "description": "测试数据层：workspace 下 test_specs/ 与 test_reports/ 的说明/报告写入（JSON 记录），runShellCommand 执行 shell 命令返回退出码与输出，以及 test_specs/test_reports 的过期清理。"
+    },
+    {
+      "path": "src/lib/reviewer_rules.ts",
+      "description": "皋陶审查规则文本 REVIEWER_RULES（审查循环、六个审查维度、结果格式），供 orchestration 注入皋陶 persona。"
+    },
+    {
+      "path": "src/lib/lizhu_rules.ts",
+      "description": "离朱测试规则文本 LIZHU_RULES（工具清单、环境目录限制、测试用例生成规则、工作流程），供 orchestration 注入离朱 persona。"
+    },
+    {
+      "path": "src/lib/lizhu_env_guard.ts",
+      "description": "离朱环境构建命令守卫：识别 install/init/create 等环境构建命令，校验 working_dir 必须位于 .lizhu_env/ 内且命令中禁止切换目录，供 orchestration 挂载 bash 守卫。"
+    }
+  ]
+}

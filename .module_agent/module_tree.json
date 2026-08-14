@@ -1,0 +1,24 @@
+{
+  "modules": [
+    {
+      "name": "framework",
+      "description": "系统框架模块，管理插件入口、公共类型/常量/工具、会话状态、权限拦截、智能体画像与代码规范、验证码、备份与清理等共用文件"
+    },
+    {
+      "name": "workspace",
+      "description": "工作空间管理模块，管理工作空间、知识库、纠正记录、模型配置与设置向导（岐伯）"
+    },
+    {
+      "name": "module-management",
+      "description": "模块管理模块，管理模块树、模块定义/设计/规格、文件分类（隶首）与文件探查读取"
+    },
+    {
+      "name": "workflow",
+      "description": "开发流程模块，管理开发计划、执行结果、代码审查与测试（离朱）"
+    },
+    {
+      "name": "orchestration",
+      "description": "智能体调度模块，管理力牧/皋陶/夔的启动、执行、关闭、监控、守卫与会话跟踪"
+    }
+  ]
+}
