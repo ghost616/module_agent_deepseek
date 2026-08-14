@@ -1,0 +1,20 @@
+[
+  {
+    "plan_id": "plan_f09911e0-bd9a-43c8-9607-a8ed367ac973",
+    "plan": "修复 dsh 重启后子智能体身份模式无法恢复：session_state.ts 冷恢复链路接通",
+    "modified_files": [
+      "src/lib/session_state.ts"
+    ],
+    "summary": "已修改 src/lib/session_state.ts：导入 foldSubagentDescriptor；registerSessionState 的 subagent/start handler 在 classifyProvider 未命中时，通过 ctx.agents.get 取回 agent，按 header.seedLength 截断 events 后折叠 descriptor，mode==='continuable' 时用 modeFromPersona 识别身份并 setAgentMode；同步更新相关 JSDoc",
+    "errors": []
+  },
+  {
+    "plan_id": "plan_85234c89-75e3-434d-b6d5-49a0c0f390be",
+    "plan": "移除 dsh 版错误禁止离朱 write/edit 的移植 Bug",
+    "modified_files": [
+      "src/index.ts"
+    ],
+    "summary": "已删除 src/index.ts registerGuards ctx.tools.guard 中 lizhu 的 write/edit 一刀切禁令（原 136-138 行）；同步更新 registerGuards JSDoc 移除\"离朱写文件禁令\"描述；NON_WRITING_MODES、力牧 .module_agent 禁令、夔白名单均未改动",
+    "errors": []
+  }
+]

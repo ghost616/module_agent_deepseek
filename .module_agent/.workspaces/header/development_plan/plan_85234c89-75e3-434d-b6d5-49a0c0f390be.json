@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_85234c89-75e3-434d-b6d5-49a0c0f390be",
+  "module_name": "framework",
+  "development_plan": "修复：移除 dsh 版错误禁止离朱 write/edit 的移植 Bug。\n\n根因：src/index.ts 的 registerGuards 中，对 lizhu 模式一刀切禁止 write/edit（`if (mode === 'lizhu' && BLOCKED_WRITE_TOOLS.includes(exec.name)) { return '离朱不直接修改代码文件。' }`，位于 registerGuards 的 ctx.tools.guard 回调内），与 src/lib/lizhu_rules.ts 明确允许 write/edit 编写测试文件（第 9 行「write / edit — 编写测试文件和 Playwright 测试脚本」、第 81 行「使用 write 编写测试文件」、第 98 行「使用 write 编写 Playwright 测试脚本」）自相矛盾。opencode 版（E:\\open_code_plugin\\src\\index.ts）禁止 write/edit 的只有 fengzhou/gaotao/lishou/kui（NON_WRITING_MODES），离朱不在其中，离朱可自由写测试文件。\n\n修复动作（仅改 src/index.ts）：\n1. 删除 registerGuards 的 ctx.tools.guard 回调中 `if (mode === 'lizhu' && BLOCKED_WRITE_TOOLS.includes(exec.name)) { return '离朱不直接修改代码文件。' }` 这一段（含其注释如有）。\n2. 不要改动其他逻辑：NON_WRITING_MODES（fengzhou/gaotao/lishou/kui）的 write/edit 禁令、力牧的 .module_agent 禁令、夔白名单均保留不变。\n3. 保留离朱的 bash 环境构建守卫与启动者绑定校验（在 src/lib/orchestration_guards.ts:48-59 与 78-93，无需修改）。\n\n验证：\n- 运行 typecheck 确认无类型错误。\n- 确认移除后离朱的 write/edit 不再被 tools.guard 拒绝，而 lizhu 的 bash 环境守卫、绑定校验仍生效。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_00036b663ffeFRJ044WiMqPoPv",
+  "modified_files": [
+    "src/index.ts"
+  ]
+}

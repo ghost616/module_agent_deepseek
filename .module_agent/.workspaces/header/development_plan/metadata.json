@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "plan_id": "plan_f09911e0-bd9a-43c8-9607-a8ed367ac973",
+    "plan_summary": "修复 dsh 重启后子智能体身份模式无法恢复的问题（接通 persona marker 冷恢复路径）",
+    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_85234c89-75e3-434d-b6d5-49a0c0f390be",
+    "plan_summary": "移除 dsh 版错误禁止离朱 write/edit 的移植 Bug，恢复离朱写测试文件能力",
+    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_eff22319-5d79-4b1a-9d03-1b95608a4b22",
+    "plan_summary": "补齐力牧绑定离朱运行中禁止操作的守卫（对齐 opencode 版）",
+    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  }
+]

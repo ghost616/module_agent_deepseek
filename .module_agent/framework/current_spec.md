@@ -4,11 +4,11 @@
 `src/index.ts` 为 dsh(Cordis) 插件入口：`apply(ctx, config)` + `inject(['tools','systemPrompt','agents','subagents'])`，替代 opencode 的 `Plugin(ctx)=>tool` 结构。`src/config.ts` 提供 `Config`（schemastery）与 `dataDir` 兜底字段。
 
 入口组装以下 dsh 等价 hooks：
-- 权限与拦截：`tools/pre-execute` 自动放行自定义工具、deny 越出工程目录的 write/edit；`tools.guard` 执行各智能体模式守卫（风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、离朱禁写文件、夔白名单与 action 级限制）。
+- 权限与拦截：`tools/pre-execute` 自动放行自定义工具、deny 越出工程目录的 write/edit；`tools.guard` 执行各智能体模式守卫（风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单与 action 级限制；离朱可自由 write/edit 编写测试文件）。
 - 系统提示词注入：`systemPrompt.section` 为框架子智能体注入知识库清单、为风后新手模式注入需求引导规则。
 - 完成通知：`agent/status(idle)` 监听 + 运行时父 agent（ownership）`followup` 通知启动者（风后/夔/力牧），带 idle 去重。
 
-`src/lib/session_state.ts` 为会话身份注册表：dsh 以 subagent persona/descriptor（`module-agent:role=<mode>` marker 或 `module-agent:<mode>` provider 命名）标记力牧/皋陶/离朱/夔身份，替代 opencode 的 session_modes.json 映射；保留 getAgentMode/setAgentMode/clearAgentMode 接口语义，并绑定 subagent/start 与 agent/disposed 生命周期。
+`src/lib/session_state.ts` 为会话身份注册表：dsh 以 subagent persona/descriptor（`module-agent:role=<mode>` marker 或 `module-agent:<mode>` provider 命名）标记力牧/皋陶/离朱/夔身份，替代 opencode 的 session_modes.json 映射；保留 getAgentMode/setAgentMode/clearAgentMode 接口语义，并绑定 subagent/start 与 agent/disposed 生命周期（冷恢复时经 foldSubagentDescriptor 从持久化 descriptor.persona 识别 marker 重建身份）。
 
 orchestration 模块尚未移植的能力（力牧计划守卫、bash 命令守卫、离朱启动者绑定校验、limu_monitor 活跃追踪）在代码中以 TODO(orchestration) 标注，由该模块后续以 tools.guard 挂载。
 ## 公共数据层
