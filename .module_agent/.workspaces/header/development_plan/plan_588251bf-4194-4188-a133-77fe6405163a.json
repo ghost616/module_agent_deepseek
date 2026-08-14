@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_588251bf-4194-4188-a133-77fe6405163a",
+  "module_name": "framework",
+  "development_plan": "修正 README.md 的「安装与加载」章节，补充发布/安装前置步骤与 workspace 协议约束说明。\n\n当前问题：README 直接写 cordis.yml 配置（plugins: module-agent: ...），缺了「发布/安装」前置——dsh 的 cordis.yml 插件名必须能解析到已安装的 npm 包（AGENTS.md 约定 bare plugin 须出现在 resolver manifest 的 dependencies 里），而当前 package.json 的 peerDependencies/dependencies 全部用 `workspace:^`（pnpm monorepo 内部协议），无法独立发布到 npm，也无法被独立目录下的项目解析。\n\n修改（仅改 README.md 的「安装与加载」章节，约第 7-23 行）：\n\n1. 在 cordis.yml 配置示例之前，新增「发布/安装前置」说明，明确两条接入路径：\n   - 路径 A 发布到 npm：将 package.json 中 `workspace:^` 依赖转换为实际 semver 版本（并确认 @deepseek-ai/dsh-* 及 @deepseek-ai/cordis 依赖已发布），执行 `pnpm publish` 发布，然后在目标项目 `pnpm add @deepseek-ai/dsh-module-agent` 安装。\n   - 路径 B 作为 dsh monorepo workspace 包：放入 dsh 仓库的 packages/module-agent/dsh-module-agent，由 monorepo 的 pnpm workspace 统一解析。\n2. 补充说明：当前 package.json 依赖使用 `workspace:^` 协议，属 monorepo 内部约定，独立发布前必须转换为实际版本号，否则无法被外部解析。\n3. 保留原 cordis.yml 配置示例（dataDir、subagentProvider）与 inject 依赖说明、config.ts schemastery 校验说明不变。\n4. 语言用中文，风格与 README 现有内容一致。\n\n验证：确认 README 结构完整、章节顺序合理（安装与加载 → 快速开始 → …），无 Markdown 语法错误。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_fff971a63ffeo9SKj37lQ3yAYg",
+  "modified_files": [
+    "README.md"
+  ]
+}

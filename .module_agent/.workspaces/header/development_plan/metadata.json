@@ -1,31 +1,15 @@
 [
   {
-    "plan_id": "plan_60e6a874-d155-47c8-b55b-7426bbe479d1",
-    "plan_summary": "framework 模块 sessionId 文件名特殊字符 sanitize 处理",
-    "starter_session_id": "ses_fffb8a411ffe6hM63tcMd0xB2w",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_cb21bade-b7e2-472a-b084-00019eac5576",
-    "plan_summary": "workflow 模块 testing.ts 复用 framework sanitize 规则",
-    "starter_session_id": "ses_fffb8a411ffe6hM63tcMd0xB2w",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_d8b993e5-9805-4967-90ba-b80581aec622",
-    "plan_summary": "补齐 sanitize 遗漏：module_agent_reader 读侧同步 + module_classification 独立风险点",
+    "plan_id": "plan_588251bf-4194-4188-a133-77fe6405163a",
+    "plan_summary": "修正 README 安装与加载章节，补充发布/安装前置与 workspace 协议约束",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_a057705a-c884-420a-a373-3e07aa262115",
-    "plan_summary": "补齐 module_agent_plan.ts set_test_passed 读侧 sanitize",
+    "plan_id": "plan_1e2f08e3-123f-434b-8e84-481b6d555830",
+    "plan_summary": "README 安装与加载仅保留 workspace 包接入方式，去掉发布到 npm 路径",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,

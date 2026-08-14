@@ -4,5 +4,6 @@
   "src/lib/fs.ts": "c18b73aa4afbf38bb565d1e8cbe451bc",
   "src/lib/execution_result.ts": "2e94bffcc2f48c196fc5eff6548e7961",
   "src/lib/review_result.ts": "53b1c7ca545b76e345681c3ea917bf2c",
-  "src/lib/kui_plan.ts": "ecd239152fd449fe4abde85f3068f0a3"
+  "src/lib/kui_plan.ts": "ecd239152fd449fe4abde85f3068f0a3",
+  "README.md": "04c6e90faac2675aa89e2176d2eec7d8"
 }

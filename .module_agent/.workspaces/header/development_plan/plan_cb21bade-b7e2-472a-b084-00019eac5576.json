@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_cb21bade-b7e2-472a-b084-00019eac5576",
-  "module_name": "workflow",
-  "development_plan": "对 sessionId 作为文件名的场景统一做特殊字符转换（sanitize），复用 framework 模块 fs.ts 提供的 sanitizeIdSegment / desanitizeIdSegment 函数。\n\n任务（workflow 模块，仅改 src/lib/testing.ts）：\n1. 从 './fs.ts' 导入 sanitizeIdSegment 与 desanitizeIdSegment。\n2. writeTestReport（约 43 行）与 writeTestSpec（约 59 行）的文件名 `${sessionId}.json` 改为 `${sanitizeIdSegment(sessionId)}.json`。\n3. cleanStaleTestSpecs（约 78 行）与 cleanStaleTestReports（约 97 行）的反推处 const sid = f.slice(0, -5) 改为 const sid = desanitizeIdSegment(f.slice(0, -5))，确保 isAlive 查的是原始 sessionId。\n\n依赖 framework 模块（fs.ts 的 sanitizeIdSegment/desanitizeIdSegment）。验证：typecheck 无错误；写入与清理反推使用同一套规则，正常 sessionId 行为不变。",
-  "session_id": "ses_fffb291e5ffeSJf8dSPVv4V1SN",
-  "modified_files": [
-    "src/lib/testing.ts"
-  ]
-}

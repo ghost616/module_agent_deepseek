@@ -1,0 +1,20 @@
+[
+  {
+    "plan_id": "plan_588251bf-4194-4188-a133-77fe6405163a",
+    "plan": "修正 README.md 安装与加载章节：补充发布/安装前置步骤与 workspace 协议约束说明",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "已更新 README.md「安装与加载」章节：在 cordis.yml 配置示例前新增「发布 / 安装前置」小节，明确两条接入路径（路径 A 发布到 npm：将 workspace:^ 依赖转换为实际 semver 版本并 pnpm publish 后由目标项目 pnpm add 安装；路径 B 作为 dsh monorepo workspace 包放入 packages/module-agent/dsh-module-agent 由 workspace 统一解析），并补充当前 package.json 使用 workspace:^ 协议属 monorepo 内部约定、独立发布前必须转换的说明。原 cordis.yml 配置示例（dataDir、subagentProvider）、inject 依赖说明与 config.ts schemastery 校验说明均保留不变。",
+    "errors": []
+  },
+  {
+    "plan_id": "plan_1e2f08e3-123f-434b-8e84-481b6d555830",
+    "plan": "调整 README.md 安装与加载章节：去掉「发布到 npm」路径，仅保留 dsh monorepo workspace 包接入方式",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "已调整 README.md「安装与加载」章节：移除路径 A（发布到 npm）的全部内容（workspace:^ 转 semver、pnpm publish、pnpm add 等），将小节标题改为「接入方式」，仅保留「作为 dsh monorepo workspace 包」唯一接入方式说明——放入 dsh 仓库 packages/module-agent/dsh-module-agent 目录由 pnpm workspace 统一解析，并保留简化后的 workspace:^ 协议约束说明（monorepo 内部协议、private:true、不独立发布）。「配置 cordis.yml」小节、cordis.yml 配置示例（dataDir、subagentProvider）、inject 依赖说明、config.ts schemastery 校验说明均保留不变。",
+    "errors": []
+  }
+]
