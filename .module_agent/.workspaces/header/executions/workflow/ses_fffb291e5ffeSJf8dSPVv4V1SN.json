@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_cb21bade-b7e2-472a-b084-00019eac5576",
+    "plan": "sessionId 文件名 sanitize 统一",
+    "modified_files": [
+      "src/lib/testing.ts"
+    ],
+    "summary": "已完成 src/lib/testing.ts 修改：导入 sanitizeIdSegment/desanitizeIdSegment，writeTestReport 与 writeTestSpec 文件名改为 sanitize，cleanStaleTestSpecs 与 cleanStaleTestReports 反推改为 desanitize。",
+    "errors": []
+  }
+]

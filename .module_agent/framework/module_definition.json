@@ -27,7 +27,7 @@
     },
     {
       "path": "src/lib/fs.ts",
-      "description": "文件读写工具：异步 exists/readText/readJson/writeText，以及 systemPrompt 同步 section 使用的 existsSync/readJsonSync"
+      "description": "文件读写工具：异步 exists/readText/readJson/writeText，以及 systemPrompt 同步 section 使用的 existsSync/readJsonSync；另提供 sanitizeIdSegment/desanitizeIdSegment 一对可逆函数，将 sessionId 等不透明 id 编码为安全的文件名字段（保留 [A-Za-z0-9-_.!~*'()]，其余特殊字符如 / \\ : 经 encodeURIComponent 转 %XX），防止路径穿越，写/读/删与 cleanStale 反推一致。"
     },
     {
       "path": "src/lib/session_state.ts",
@@ -47,15 +47,15 @@
     },
     {
       "path": "src/lib/execution_result.ts",
-      "description": "执行结果数据模型：workspace/executions/<module>/<session>.json 的写入/读取/删除/失效清理"
+      "description": "执行结果数据模型：workspace/executions/<module>/<session>.json 的写入/读取/删除/失效清理。文件名字段经 sanitizeIdSegment 编码 sessionId 防路径穿越，cleanStaleExecutions 用 desanitizeIdSegment 反推原始 sessionId 后再调 isAlive。"
     },
     {
       "path": "src/lib/review_result.ts",
-      "description": "审查结果数据模型：workspace/review_results/<reviewer>.json 的写入/读取/删除/失效清理"
+      "description": "审查结果数据模型：workspace/review_results/<reviewer>.json 的写入/读取/删除/失效清理。文件名字段经 sanitizeIdSegment 编码 reviewerSessionId 防路径穿越，cleanStaleReviewResults 用 desanitizeIdSegment 反推后调 isAlive。"
     },
     {
       "path": "src/lib/kui_plan.ts",
-      "description": "夔计划数据模型：workspace/kui_plans/<fengzhou>.json 的读取/写入/状态推进/完成清理/失效清理"
+      "description": "夔计划数据模型：workspace/kui_plans/<fengzhou>.json 的读取/写入/状态推进/完成清理/失效清理。文件名字段经 sanitizeIdSegment 编码 fengzhouSessionId 防路径穿越，cleanStaleKuiPlans 用 desanitizeIdSegment 反推后调 isAlive。"
     },
     {
       "path": "src/lib/plan_files.ts",

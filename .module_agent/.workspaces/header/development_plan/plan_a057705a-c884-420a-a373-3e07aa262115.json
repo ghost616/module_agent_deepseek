@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_a057705a-c884-420a-a373-3e07aa262115",
+  "module_name": "workflow",
+  "development_plan": "修复：补齐 sessionId 文件名 sanitize 的读侧遗漏——module_agent_plan.ts 的 set_test_passed 读侧校验。\n\n背景：testing.ts 写入 test_reports/、test_specs/ 时已用 sanitizeIdSegment（encodeURIComponent）编码文件名，但 module_agent_plan.ts 的 set_test_passed 逻辑中检查测试报告/说明是否存在时仍用原始 sessionId 拼路径，与写入侧不一致，sessionId 含特殊字符时会导致「已规划测试但误判未执行/未读取」。\n\n修复（仅改 src/tools/module_agent_plan.ts，workflow 模块）：\n1. 补充导入 sanitizeIdSegment（from '../lib/fs.ts'，与该文件已导入的 exists 等同源；若文件已从 node:fs/promises 导入 exists/readdir 则保持现状，仅新增 sanitizeIdSegment 导入）。\n2. 第 175 行：join(wsDir, 'test_reports', `${lizhuSid}.json`) 改为 join(wsDir, 'test_reports', `${sanitizeIdSegment(lizhuSid)}.json`)。\n3. 第 191 行：join(wsDir, 'test_specs', `${agentId}.json`) 改为 join(wsDir, 'test_specs', `${sanitizeIdSegment(agentId)}.json`)。\n\n注意：仅这两处文件名拼接需要 sanitize；其余目录遍历（readdir）与文件名反推不受影响。正常 sessionId（ses_xxx/session-N/UUID）经 sanitizeIdSegment 后原值不变，无回归。\n\n验证：typecheck 无错误；set_test_passed 读侧校验文件名与 testing.ts 写入侧一致。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_fffa1c4e6ffe4i3JAcFQdlGjHJ",
+  "modified_files": [
+    "src/tools/module_agent_plan.ts"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_fffb291e5ffeSJf8dSPVv4V1SN",
+  "content": "## 待测试功能说明\n\n### 涉及文件\n- `src/lib/testing.ts`（workflow 模块，仅此一个文件被修改）\n\n### 变更内容\n对 sessionId 作为文件名的场景统一做特殊字符转换（sanitize/desanitize），复用 framework 模块 `src/lib/fs.ts` 的 `sanitizeIdSegment` / `desanitizeIdSegment`：\n1. `writeTestReport` 与 `writeTestSpec` 的文件名由 `${sessionId}.json` 改为 `${sanitizeIdSegment(sessionId)}.json`。\n2. `cleanStaleTestSpecs` 与 `cleanStaleTestReports` 反推处 `const sid = f.slice(0, -5)` 改为 `const sid = desanitizeIdSegment(f.slice(0, -5))`，确保 `isAlive` 查询的是原始 sessionId。\n\n### 需要验证的功能\n- 编译测试：TypeScript typecheck 无错误（项目为 TS，需要编译/类型检查通过）。\n- 行为一致性：写入与清理反推使用同一套编解码规则；正常 sessionId（如 ses_xxx / session-N / UUID，不含特殊字符）行为不变（sanitize 后结果与原值相同，desanitize 还原一致）。",
+  "timestamp": "2026-08-14T12:44:59.079Z"
+}

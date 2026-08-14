@@ -11,7 +11,7 @@
     },
     {
       "path": "src/tools/module_agent_reader.ts",
-      "description": "模块元数据读取工具：read_spec/read_spec_headings/read_spec_section/read_definition/read_descriptions/read_dirs/read_history/read_plan_files，并保留 read_test_results/read_test_specs/read_kui_plan 等 action 入口（后者依赖 orchestration 模块，暂返回未移植提示）。"
+      "description": "模块元数据读取工具：read_spec/read_spec_headings/read_spec_section/read_definition/read_descriptions/read_dirs/read_history/read_plan_files，并保留 read_test_results/read_test_specs/read_kui_plan 等 action 入口（后者依赖 orchestration 模块，暂返回未移植提示）。read_test_results/read_test_specs 读取 test_reports/test_specs 时使用 sanitizeIdSegment 编码 sessionId 文件名，与 testing.ts 写入侧一致。"
     },
     {
       "path": "src/tools/module_agent_updater.ts",
@@ -31,7 +31,7 @@
     },
     {
       "path": "src/tools/module_classification.ts",
-      "description": "文件分类工具（隶首专用）：add/update/delete 管理分类结果，bind_module 绑定已有模块或新建模块并写入 agent_profile/current_spec/module_design，apply 将已绑定分类写入 module_definition.json。"
+      "description": "文件分类工具（隶首专用）：add/update/delete 管理分类结果，bind_module 绑定已有模块或新建模块并写入 agent_profile/current_spec/module_design，apply 将已绑定分类写入 module_definition.json。getFilePath 对 .classifications/<sessionId>.json 使用 sanitizeIdSegment 编码文件名，消除特殊字符 sessionId 的路径穿越风险，写读经统一入口保持一致。"
     },
     {
       "path": "src/tools/module_agent_classifier.ts",

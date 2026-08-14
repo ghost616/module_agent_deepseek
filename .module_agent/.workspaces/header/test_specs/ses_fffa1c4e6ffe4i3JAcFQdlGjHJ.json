@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_fffa1c4e6ffe4i3JAcFQdlGjHJ",
+  "content": "## 待测试功能：sessionId 文件名 sanitize 读侧补齐\n\n### 涉及文件\n- src/tools/module_agent_plan.ts（workflow 模块）\n\n### 功能说明\n1. module_agent_plan.ts 新增从 ../lib/fs.ts 导入 sanitizeIdSegment。\n2. set_test_passed 读侧校验中两处文件名拼接改用 sanitizeIdSegment 编码，与 testing.ts 写入侧（writeTestReport / writeTestSpec 用 ${sanitizeIdSegment(sessionId)}.json）保持一致：\n   - test_reports 目录：`${lizhuSid}.json` → `${sanitizeIdSegment(lizhuSid)}.json`\n   - test_specs 目录：`${agentId}.json` → `${sanitizeIdSegment(agentId)}.json`\n3. 验证点：\n   - TypeScript 类型检查通过（typecheck 无错误）。\n   - 正常 sessionId（如 ses_xxx、session-N、UUID）经 sanitizeIdSegment 后原值不变，set_test_passed 行为无回归。\n   - 含特殊字符的 sessionId（如包含空格 / 中文 / 特殊符号）读侧校验能与写入侧匹配。\n",
+  "timestamp": "2026-08-14T13:03:18.787Z"
+}
