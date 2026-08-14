@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_0f6b5596-8929-4b21-83b6-e03d2d1ec82a",
+  "module_name": "framework",
+  "development_plan": "修复：空闲提醒逻辑不一致——dsh 版 recordActivity 只在 agent/status running 起点记录一次，长任务被误判 unresponsive。\n\n根因：opencode 版（E:\\open_code_plugin\\src\\index.ts）在 `tool.execute.after`（每次工具执行后）与 `experimental.text.complete`（每次文本生成完成后）持续刷新 lastActivity，使其成为\"最近活动时间戳\"；dsh 版（src/index.ts registerCompletionNotification）只在 `agent/status` 转 running 时 recordActivity 一次、转 idle 时 clearActivity，running 期间不刷新，导致单轮超过 5 分钟（IDLE_TIMEOUT_MS=300000）的任务被 getSessionIdle 误判 unresponsive，触发不必要的 ping 提醒。\n\n修复（仅改 src/index.ts）：\n1. 在 apply 流程中新增 `tools/post-execute` 监听（dsh 的 tools/post-execute 是 waterfall 事件，等价 opencode 的 tool.execute.after）：\n   - 签名：`async (exec, _result, next) => Promise<PostToolDecision>`，参数中 exec 为 ToolExecution（含 exec.agent 可选字段）。\n   - 逻辑：若 `exec.agent !== undefined` 且 `isFrameworkSubagentMode(state.getAgentMode(exec.agent.id))`（limu/gaotao/lizhu/kui），则 `recordActivity(exec.agent.id)` 刷新 lastActivity。\n   - 必须 `return next()` 委托（waterfall 语义，否则会短路工具结果）。\n2. `isFrameworkSubagentMode` 与 `recordActivity` 均已在 src/index.ts 顶部导入，无需新增导入。\n3. 保留现有 registerCompletionNotification 中 `agent/status` 的 running→recordActivity、idle→clearActivity 逻辑不变。\n4. 对齐 opencode 版 tool.execute.after 语义：每次工具执行后刷新活动时间，使长任务中持续工具调用不再被误判 unresponsive。\n5. 同步更新相关 JSDoc 说明该监听的作用。\n\n验证：运行 typecheck 确认无类型错误；确认 tools/post-execute 监听正确调用 next() 委托、不改变工具结果链路。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_fffc9a7d4ffeRFpKolxKiEpNaD",
+  "modified_files": [
+    "src/index.ts"
+  ]
+}

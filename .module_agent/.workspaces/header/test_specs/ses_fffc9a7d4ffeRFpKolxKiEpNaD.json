@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_fffc9a7d4ffeRFpKolxKiEpNaD",
+  "content": "待测试功能说明（framework 模块，复验轮）：\n\n1. **修复上一轮缺陷**：src/index.ts:6 已补充导入 `PostToolDecision`（`import type { PostToolDecision, PreToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'`）。\n2. **复验目标**：`tsc --noEmit` 下项目自身 src/**/*.ts 类型错误归零（不含 harness 环境噪音）；tools/post-execute 监听返回类型 Promise<PostToolDecision> 解析正确。\n   - 涉及文件：src/index.ts\n   - 注意：环境噪音（F:/deepseek-harness 源码的 js-yaml/zod/@standard-schema/spec 缺失等 TS2307/TS5083）与项目无关，需区分。项目自带 tsconfig.json extends 指向 E:/deepseek-harness（实际 harness 在 F:/deepseek-harness），直接 npx tsc 会报 TS5083；请用指向 F:/deepseek-harness/tsconfig.base.json 的探测配置复验。",
+  "timestamp": "2026-08-14T12:26:45.180Z"
+}

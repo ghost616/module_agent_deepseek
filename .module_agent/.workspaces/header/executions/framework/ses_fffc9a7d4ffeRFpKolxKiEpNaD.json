@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_0f6b5596-8929-4b21-83b6-e03d2d1ec82a",
+    "plan": "修复空闲提醒逻辑不一致：dsh 版 tools/post-execute 监听持续刷新 lastActivity",
+    "modified_files": [
+      "src/index.ts"
+    ],
+    "summary": "已在 src/index.ts 的 registerCompletionNotification 中新增 tools/post-execute 监听：框架子智能体每次工具执行后 recordActivity(agent.id)，waterfall 语义返回 next() 委托；同步更新 JSDoc。agent/status 逻辑保持不变。",
+    "errors": []
+  }
+]

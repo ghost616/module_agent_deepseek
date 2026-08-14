@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_eff22319-5d79-4b1a-9d03-1b95608a4b22",
-  "module_name": "orchestration",
-  "development_plan": "修复：补齐\"力牧绑定离朱运行中禁止操作\"的守卫（dsh 版缺失，opencode 版有）。\n\n根因：opencode 版（E:\\open_code_plugin\\src\\index.ts 的 tool.execute.before）中，力牧（limu）若绑定离朱且离朱 isWorking，则禁止其所有操作（抛「力牧绑定的离朱仍在运行，请等待离朱测试完成后再操作。」）。dsh 版 src/lib/orchestration_guards.ts 的 tools/pre-execute limu 分支（约 69-76 行）只做了 checkLimuPlanActive，缺少此守卫。\n\n修复（仅改 src/lib/orchestration_guards.ts）：\n1. 补充导入：getBoundLizhu（from './module_session_tracker.ts'，签名 `getBoundLizhu(workspaceDir: string, starterSessionId: string): Promise<string | null>`，位于 module_session_tracker.ts:343）与 isWorking（from './limu_monitor.ts'）。注意该文件已导入 resolveWorkspace、getWorkspaceDir、getBoundStarter，可复用。\n2. 在 tools/pre-execute 的 limu 分支中，checkLimuPlanActive 通过之后、return next() 之前，补上：\n   - `const wsName = await resolveWorkspace(directory, agentId)`（用 try/catch 容错，失败视为无工作空间跳过）\n   - 若 wsName 非空：`const boundLizhu = await getBoundLizhu(getWorkspaceDir(directory, wsName), agentId)`\n   - 若 boundLizhu 非空且 `isWorking(boundLizhu)`：返回 `{ kind: 'deny', reason: '力牧绑定的离朱仍在运行，请等待离朱测试完成后再操作。' }`\n   - 否则继续 return next()\n3. 对齐 opencode 版语义：该守卫对力牧的所有非 module_agent 工具生效（tools/pre-execute 覆盖全部工具调用），bash/write/edit/read 等一律在离朱运行中被 deny。\n\n验证：运行 typecheck 确认无类型错误；确认力牧绑定离朱且离朱运行中时，其操作被 deny，离朱空闲后恢复。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
-  "session_id": "ses_fffde5489ffeVGcxba2vb1aOFG",
-  "modified_files": [
-    "src/lib/orchestration_guards.ts"
-  ]
-}
