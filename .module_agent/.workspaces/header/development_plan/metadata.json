@@ -1,18 +1,1 @@
-[
-  {
-    "plan_id": "plan_7bf4dee3-f377-4755-972d-a4487ed4e79e",
-    "plan_summary": "为 subagent 添加 toolFilter（工具过滤）支持",
-    "starter_session_id": "ses_ffb51ea86ffeysS1YCLhG3MV2O",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_2073293b-ec5e-4f7b-9aec-282edc6af79c",
-    "plan_summary": "子智能体创建时按静态权限传入 toolFilter",
-    "starter_session_id": "ses_ffb51ea86ffeysS1YCLhG3MV2O",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  }
-]
+[]

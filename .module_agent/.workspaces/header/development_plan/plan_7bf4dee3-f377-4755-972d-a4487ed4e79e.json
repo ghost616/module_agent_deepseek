@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_7bf4dee3-f377-4755-972d-a4487ed4e79e",
-  "module_name": "framework",
-  "development_plan": "为 subagent 添加 toolFilter（工具过滤）支持，让子智能体在创建时即可限制其可见工具集。\n\n任务（仅改 src/lib/subagent_host.ts）：\n1. 从 '@deepseek-ai/dsh-tools' 导入 type ToolRestriction（结构为 { allow?: string[]; deny?: string[] }）。\n2. StartChildOptions 接口增加可选字段 toolFilter?: ToolRestriction，并补 JSDoc 说明（子智能体工具范围限制，deny 的工具从子代理 prompt 中消失并拒绝执行）。\n3. startChild 的 ctx.subagents.startContinuable 的 request 中，当 options.toolFilter 存在时传入 toolFilter（与现有 persona/agentOptions 并列，写法参考：...(options.toolFilter !== undefined ? { toolFilter: options.toolFilter } : {})）。\n4. 不改动其他方法，保持类型正确。\n\n验证：typecheck（可用 .lizhu_env/typecheck-probe 或离朱）。",
-  "session_id": "ses_ffb51a408ffeqoCKyuW5b8gmE2",
-  "modified_files": [
-    "src/lib/subagent_host.ts"
-  ]
-}
