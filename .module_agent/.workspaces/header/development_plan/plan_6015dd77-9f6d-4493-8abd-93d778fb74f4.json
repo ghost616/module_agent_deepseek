@@ -1,0 +1,13 @@
+{
+  "plan_id": "plan_6015dd77-9f6d-4493-8abd-93d778fb74f4",
+  "module_name": "framework",
+  "development_plan": "删除 README 的 bundle 条目与 bundle/module-agent/ 目录。\n\n背景：此前为「不动 dsh 仓库」构建了 bundle/module-agent/ 配置，并在 README 写了「方式二：bundle 自动加载」。现用户确定改用「直接改 dsh 仓库 base bundle 的 cordis.patch.yml + package.json dependencies」实现零配置自动加载，不再需要独立 bundle 包，故删除相关内容。\n\n任务（仅改 framework 模块）：\n1. 删除 README.md 的「#### 方式二：bundle 自动加载」整节（约第 33-40 行）：包括标题、说明段落、以及 4 个步骤列表，连同其前导空行一并删除，使「方式一」之后直接衔接「插件通过 inject 声明依赖…」段落。\n2. 删除 bundle/module-agent/ 目录及其下 4 个文件：bundle/module-agent/package.json、bundle/module-agent/cordis.patch.yml、bundle/module-agent/src/index.ts、bundle/module-agent/tsconfig.json。删除后若 bundle/ 父目录为空，可一并删除 bundle/ 目录。\n3. 同步更新 module_definition.json：移除 bundle/ 相关文件条目（如有登记）；并 append_history 记录本次变更。\n\n验证：README 不再含 bundle 自动加载内容；bundle/ 目录已删除；其余章节无改动；README 结构完整。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更，并用 module_agent_updater(action=\"update_definition\") 移除已删除的 bundle 文件条目。",
+  "session_id": "ses_ffc8e5ad1ffeEyvKz9lreOirG8",
+  "modified_files": [
+    "README.md",
+    "bundle/module-agent/package.json",
+    "bundle/module-agent/cordis.patch.yml",
+    "bundle/module-agent/src/index.ts",
+    "bundle/module-agent/tsconfig.json"
+  ]
+}

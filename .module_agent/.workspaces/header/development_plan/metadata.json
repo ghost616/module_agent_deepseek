@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_f96c8d5e-be77-4e16-aa03-f14aa2608dd7",
-    "plan_summary": "构建 bundle/module-agent 配置 + README 补充 bundle 自动加载路径",
+    "plan_id": "plan_6015dd77-9f6d-4493-8abd-93d778fb74f4",
+    "plan_summary": "删除 README 的 bundle 条目与 bundle/module-agent/ 目录",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
