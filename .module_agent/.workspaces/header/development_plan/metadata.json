@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_8065955e-302e-4d39-92c2-d87fadbc8b3b",
-    "plan_summary": "去掉 README 第 3 步括号里无意义的依赖解析说明",
+    "plan_id": "plan_d264a9fd-564a-454f-b3df-520b40b14006",
+    "plan_summary": "修复备份 mapping.json 损坏：readMapping 容错 + writeMapping 原子写",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,

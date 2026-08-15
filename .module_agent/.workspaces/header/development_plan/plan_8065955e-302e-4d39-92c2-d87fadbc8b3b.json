@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_8065955e-302e-4d39-92c2-d87fadbc8b3b",
-  "module_name": "framework",
-  "development_plan": "修正 README.md 第 25 行，去掉「插件自动加载」后面括号里无意义的依赖解析说明。\n\n背景：README「安装与加载」第 3 步当前为「3. 启动 `dsh web`，插件自动加载（源码内 `@deepseek-ai/*` 依赖经 profile 目录的 node_modules 与 `$DSH_HOME/profiles/node_modules` fallback 解析）。」，括号内的依赖解析机制说明对用户无意义，需删除。\n\n修改（仅改 README.md 第 25 行）：\n1. 将「3. 启动 `dsh web`，插件自动加载（源码内 `@deepseek-ai/*` 依赖经 profile 目录的 node_modules 与 `$DSH_HOME/profiles/node_modules` fallback 解析）。」改为「3. 启动 `dsh web`，插件自动加载。」\n2. 不改动其他任何行。\n\n验证：第 25 行去掉括号说明后语句通顺，其余章节无改动。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
-  "session_id": "ses_ffc8e5ad1ffeEyvKz9lreOirG8",
-  "modified_files": [
-    "README.md"
-  ]
-}
