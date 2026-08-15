@@ -22,7 +22,7 @@
            subagentProvider: spawn
    ```
 
-3. 启动 `dsh web`，插件自动加载（源码内 `@deepseek-ai/*` 依赖经 profile 目录的 node_modules 与 `$DSH_HOME/profiles/node_modules` fallback 解析）。
+3. 启动 `dsh web`，插件自动加载。
 
 ## 快速开始
 
