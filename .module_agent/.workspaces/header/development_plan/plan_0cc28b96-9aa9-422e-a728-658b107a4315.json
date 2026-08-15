@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_0cc28b96-9aa9-422e-a728-658b107a4315",
+  "module_name": "framework",
+  "development_plan": "在 README.md 第 13 行补充注册 tsconfig.host.json 的具体条目示例。\n\n背景：当前第 13 行末尾写「复制进 dsh 仓库后，还需将该包注册到 dsh 仓库根目录 `tsconfig.host.json` 的 `references`（否则 `tsc -b` 不会编译该包，tsdown 会因找不到 `lib/types` 下的 entry 而报错）」，仅说明要注册，未给出具体条目。dsh 的 tsconfig.host.json references 数组条目格式为 `{ \"path\": \"./packages/<group>/<pkg>\" }`（如 `./packages/skill/skill`）。\n\n修改（仅改 README.md 第 13 行末尾的这句说明）：\n1. 将「还需将该包注册到 dsh 仓库根目录 `tsconfig.host.json` 的 `references`」改为「还需在 dsh 仓库根目录 `tsconfig.host.json` 的 `references` 数组中新增一条 `{ \"path\": \"./packages/module-agent/dsh-module-agent\" }`」。\n2. 保留「（否则 `tsc -b` 不会编译该包，tsdown 会因找不到 `lib/types` 下的 entry 而报错）」这句。\n3. 第 13 行其余内容（复制文件清单、pnpm install 说明）以及所有其他行不变。\n\n验证：确认第 13 行表述含具体注册条目、Markdown 内联代码正确，其余内容无改动。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_fff971a63ffeo9SKj37lQ3yAYg",
+  "modified_files": [
+    "README.md"
+  ]
+}

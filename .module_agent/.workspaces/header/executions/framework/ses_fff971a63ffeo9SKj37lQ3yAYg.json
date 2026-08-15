@@ -71,5 +71,14 @@
     ],
     "summary": "已将 tsconfig.json 重写为 dsh monorepo 构建约定：extends 改为相对路径 ../../../tsconfig.base.json（去掉 E 盘硬编码绝对路径与顶部独立开发注释）；compilerOptions 改为 rootDir: src + outDir: lib/types（去掉 noEmit/composite/incremental/declaration 等独立开发项，符合 skill 包约定）；include 改为 src；references 列出全部 9 个依赖包路径（../../../vendor/cordis、../../../vendor/schemastery、../../core/agent、../../core/scope、../../core/session、../../core/system-prompt、../../core/tools、../../llm/llm、../../subagent/subagent），已逐一核对 F:\\deepseek-harness 下各包实际目录存在。README「接入方式」第 13 行补充：复制进 dsh 仓库后需将该包注册到 dsh 仓库根目录 tsconfig.host.json 的 references，否则 tsc -b 不编译该包、tsdown 找不到 lib/types 下 entry。注意：本 tsconfig.json 面向放入 dsh 仓库后的构建，独立目录下相对路径无法直接 typecheck（预期行为）。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_0cc28b96-9aa9-422e-a728-658b107a4315",
+    "plan": "在 README.md 第 13 行补充注册 tsconfig.host.json 的具体条目示例",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "已将 README.md 第 13 行末尾的注册说明改为含具体条目：「还需在 dsh 仓库根目录 `tsconfig.host.json` 的 `references` 数组中新增一条 `{ \"path\": \"./packages/module-agent/dsh-module-agent\" }`」，保留「否则 tsc -b 不会编译该包，tsdown 会因找不到 lib/types 下的 entry 而报错」说明。第 13 行其余内容及所有其他行均未改动。",
+    "errors": []
   }
 ]
