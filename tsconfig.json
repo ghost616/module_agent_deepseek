@@ -1,23 +1,39 @@
 {
-  // 依赖解析：extends DeepSeek Harness 的 tsconfig.base.json，
-  // 其 paths 将 @deepseek-ai/* 映射到 E:\deepseek-harness 的源码（TS5.0+ 中
-  // 继承的 paths 相对声明它们的 base 文件解析），无需安装 node_modules。
-  // 仅做类型检查（noEmit），不改动 base 的严格选项。
-  // 不设置 rootDir：paths 将 @deepseek-ai/* 映射到 dsh 源码，编译器会把 dsh/vendor
-  // 源码一并纳入程序，设置 rootDir 会触发 TS6059 溢出噪音。
-  "extends": "E:/deepseek-harness/tsconfig.base.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": false,
-    "incremental": false,
-    "declaration": false,
-    "declarationMap": false,
-    "sourceMap": false,
-    "noEmit": true
+    "rootDir": "src",
+    "outDir": "lib/types"
   },
   "include": [
-    "src/**/*.ts"
+    "src"
   ],
-  "exclude": [
-    "node_modules"
+  "references": [
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../../vendor/schemastery"
+    },
+    {
+      "path": "../../core/agent"
+    },
+    {
+      "path": "../../core/scope"
+    },
+    {
+      "path": "../../core/session"
+    },
+    {
+      "path": "../../core/system-prompt"
+    },
+    {
+      "path": "../../core/tools"
+    },
+    {
+      "path": "../../llm/llm"
+    },
+    {
+      "path": "../../subagent/subagent"
+    }
   ]
 }
