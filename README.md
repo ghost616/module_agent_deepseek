@@ -14,9 +14,7 @@
 
 ### 挂载插件
 
-#### 方式一：用户显式写入 cordis.patch.yml
-
-接入 workspace 后，将以下条目写入 profile 目录下的 `cordis.patch.yml`（或 `$DSH_HOME/cordis.patch.yml`），dsh 启动时作为 patch 层加载该插件：
+将以下配置写入 `~/.dsh/profiles/<profile名>/cordis.patch.yml`（`<profile名>` 如 `web`、`headless`）：
 
 ```yaml
 - id: module-agent
@@ -27,13 +25,6 @@
     # 启动力牧/皋陶/离朱/夔子智能体使用的 subagent provider，默认 'spawn'
     subagentProvider: spawn
 ```
-
-`cordis.yml` 是框架自动管理的 profile 根文件（内容为空列表，由框架重写），无需编辑；用户配置写在 `cordis.patch.yml` 中。
-
-插件通过 `inject` 声明依赖以下 dsh 服务：`tools`、`systemPrompt`、`agents`、`subagents`、`llm`、`sessions`。配置项由 `src/config.ts` 提供 schemastery 校验：
-
-- `dataDir`：项目根目录兜底路径。
-- `subagentProvider`：子智能体 provider 名，默认 `'spawn'`。
 
 ## 快速开始
 
