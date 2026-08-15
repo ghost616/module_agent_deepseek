@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_450dbe9e-538f-4ae2-9406-0c85cf2de9bb",
-    "plan_summary": "精简 README 挂载插件章节为仅写配置位置 + yaml 示例",
+    "plan_id": "plan_234a73bf-fcba-4216-ab9f-153c4cd1cc84",
+    "plan_summary": "重写 README 安装与加载为 profile 目录本地加载流程，并新增 cordis.patch.yml 示例",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,

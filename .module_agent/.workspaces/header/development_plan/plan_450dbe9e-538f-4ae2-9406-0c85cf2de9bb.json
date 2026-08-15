@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_450dbe9e-538f-4ae2-9406-0c85cf2de9bb",
-  "module_name": "framework",
-  "development_plan": "精简 README.md「挂载插件」章节，只保留「写配置位置 + yaml 配置示例」，去掉机制说明与重复列项。\n\n背景：当前 README「挂载插件」章节（约 15-36 行）包含「#### 方式一」标题、「接入 workspace 后…patch 层加载」机制说明、「cordis.yml 是框架自动管理…」说明、以及「插件通过 inject 声明依赖…」「dataDir/subagentProvider 配置项」等冗余内容。用户要求：只有一种挂载方式（无需「方式」分级），只写挂载配置即可（不写插件怎么挂载的机制），并明确 profile 目录位置；inject 依赖说明与 dataDir/subagentProvider 重复列项（yaml 注释已说明）均去掉。\n\n修改（仅改 README.md「挂载插件」章节，即「### 挂载插件」到「## 快速开始」之前的内容）：\n1. 删除「#### 方式一：用户显式写入 cordis.patch.yml」标题。\n2. 将引导语改为：「将以下配置写入 `~/.dsh/profiles/<profile名>/cordis.patch.yml`（`<profile名>` 如 `web`、`headless`）：」——明确 profile 目录位置，去掉「接入 workspace 后…patch 层加载」机制说明。\n3. 保留 yaml 配置示例（含 dataDir、subagentProvider 的注释）不变。\n4. 删除「`cordis.yml` 是框架自动管理的…」这句。\n5. 删除「插件通过 `inject` 声明依赖以下 dsh 服务…」整段及下方「- `dataDir`：…」「- `subagentProvider`：…」两个列表项。\n\n最终该章节只保留：\n\n### 挂载插件\n\n将以下配置写入 `~/.dsh/profiles/<profile名>/cordis.patch.yml`（`<profile名>` 如 `web`、`headless`）：\n\n```yaml\n- id: module-agent\n  name: '@deepseek-ai/dsh-module-agent'\n  config:\n    # 项目根目录兜底（agent 会话无 cwd 时作为 .module_agent 数据目录的解析根）\n    dataDir: .\n    # 启动力牧/皋陶/离朱/夔子智能体使用的 subagent provider，默认 'spawn'\n    subagentProvider: spawn\n```\n\n验证：章节精简后 Markdown 结构完整，其余章节（快速开始、七级智能体等）无改动。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
-  "session_id": "ses_ffc8e5ad1ffeEyvKz9lreOirG8",
-  "modified_files": [
-    "README.md"
-  ]
-}

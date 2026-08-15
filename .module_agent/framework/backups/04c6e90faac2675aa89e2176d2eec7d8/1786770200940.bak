@@ -6,30 +6,25 @@
 
 ## 安装与加载
 
-### 发布 / 安装前置
+### 接入方式
 
-dsh 的 cordis.yml 中 `plugins` 引用的插件名必须能解析到已安装的 npm 包（bare 插件名须出现在 resolver manifest 的 `dependencies` 中）。当前 package.json 的 peerDependencies/dependencies 全部使用 `workspace:^` 协议，该协议是 pnpm monorepo 内部约定，插件无法据此独立发布到 npm，也无法被独立目录下的项目解析。接入前需先按以下两条路径之一完成发布/安装：
+本包 package.json 的 peerDependencies/dependencies 全部使用 `workspace:^` 协议（pnpm monorepo 内部约定），并标记 `"private": true`，设计上即 dsh monorepo 内部 workspace 包，不独立发布到 npm。因此唯一接入方式为：将本包放入 dsh 仓库的 `packages/module-agent/dsh-module-agent` 目录，由 monorepo 的 pnpm workspace 统一解析依赖（package.json 中的 `workspace:^` 依赖即在此解析），并确认其出现在 resolver manifest 的 `dependencies` 中，使 `cordis.patch.yml` 中的插件条目（`name` 字段）能解析到该已安装的 workspace 包。
 
-- **路径 A：发布到 npm**。将 package.json 中 `workspace:^` 依赖转换为实际 semver 版本号（并确认 `@deepseek-ai/dsh-*` 及 `@deepseek-ai/cordis` 依赖均已发布到 npm），执行 `pnpm publish` 发布 `@deepseek-ai/dsh-module-agent`，再在目标项目执行 `pnpm add @deepseek-ai/dsh-module-agent` 安装。
-- **路径 B：作为 dsh monorepo workspace 包**。将插件放入 dsh 仓库的 `packages/module-agent/dsh-module-agent` 目录，由 monorepo 的 pnpm workspace 统一解析依赖并加载。
+将以下文件和文件夹复制到 `packages/module-agent/dsh-module-agent` 目录：`package.json`、`tsconfig.json`、`src/`；放入 dsh 仓库后依赖由 monorepo 的 `pnpm install` 统一安装。复制进 dsh 仓库后，还需在 dsh 仓库根目录 `tsconfig.host.json` 的 `references` 数组中新增一条 `{ "path": "./packages/module-agent/dsh-module-agent" }`（否则 `tsc -b` 不会编译该包，tsdown 会因找不到 `lib/types` 下的 entry 而报错）。
 
-### 配置 cordis.yml
+### 挂载插件
 
-完成发布/安装后，将 `@deepseek-ai/dsh-module-agent` 加入项目的 cordis.yml，启动时由 dsh 自动加载：
+将以下配置写入 `~/.dsh/profiles/<profile名>/cordis.patch.yml`（`<profile名>` 如 `web`、`headless`）：
 
 ```yaml
-plugins:
-  module-agent:
+- id: module-agent
+  name: '@deepseek-ai/dsh-module-agent'
+  config:
     # 项目根目录兜底（agent 会话无 cwd 时作为 .module_agent 数据目录的解析根）
     dataDir: .
     # 启动力牧/皋陶/离朱/夔子智能体使用的 subagent provider，默认 'spawn'
     subagentProvider: spawn
 ```
-
-插件通过 `inject` 声明依赖以下 dsh 服务：`tools`、`systemPrompt`、`agents`、`subagents`、`llm`、`sessions`。配置项由 `src/config.ts` 提供 schemastery 校验：
-
-- `dataDir`：项目根目录兜底路径。
-- `subagentProvider`：子智能体 provider 名，默认 `'spawn'`。
 
 ## 快速开始
 
