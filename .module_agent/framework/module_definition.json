@@ -116,6 +116,22 @@
     {
       "path": "README.md",
       "description": "项目根目录 README 文档：@deepseek-ai/dsh-module-agent 插件的使用说明，含安装/加载（cordis.yml 挂载、inject 依赖、dataDir/subagentProvider 配置）、七级智能体角色表、架构总览、新手模式、工作流程、知识库，以及 opencode 版与 dsh 版实现方案差异对照表"
+    },
+    {
+      "path": "bundle/module-agent/package.json",
+      "description": "bundle 包 manifest：@deepseek-ai/dsh-module-agent-bundle（private workspace 包，version 0.1.0），type=module，main lib/index.js + types lib/types/index.d.ts；exports 暴露 . / ./cordis.patch.yml / ./src/* / ./package.json；dsh.bundle.patch 声明 ./cordis.patch.yml；dependencies 依赖 @deepseek-ai/dsh-module-agent（workspace:^）。不设 publishConfig/repository（private 不发布）"
+    },
+    {
+      "path": "bundle/module-agent/cordis.patch.yml",
+      "description": "bundle patch：通过 insert 列出 module-agent 插件行（id=module-agent，name=@deepseek-ai/dsh-module-agent，config dataDir=. + subagentProvider=spawn），供 profile composer 经 dsh.bundle.patch 解析后自动加载插件"
+    },
+    {
+      "path": "bundle/module-agent/src/index.ts",
+      "description": "bundle 纯 patch 入口：仅 export {}，包本体为 cordis.patch.yml（由 dsh.bundle.patch 声明，profile composer 经该字段解析），不携带运行时 API"
+    },
+    {
+      "path": "bundle/module-agent/tsconfig.json",
+      "description": "bundle 构建配置：extends ../../../tsconfig.base.json，compilerOptions rootDir=src + outDir=lib/types，include src，references 仅 vendor/cordis（src/index.ts 无实际依赖）；面向放入 dsh 仓库 packages/bundle/module-agent 后构建，独立目录下相对路径无法直接 typecheck（预期）"
     }
   ]
 }

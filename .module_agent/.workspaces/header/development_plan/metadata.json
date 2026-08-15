@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_0cc28b96-9aa9-422e-a728-658b107a4315",
-    "plan_summary": "README 第 13 行补充 tsconfig.host.json 注册条目的具体示例",
+    "plan_id": "plan_f96c8d5e-be77-4e16-aa03-f14aa2608dd7",
+    "plan_summary": "构建 bundle/module-agent 配置 + README 补充 bundle 自动加载路径",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,

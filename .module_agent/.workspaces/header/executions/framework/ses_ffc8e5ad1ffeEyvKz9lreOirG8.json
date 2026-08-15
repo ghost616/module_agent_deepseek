@@ -1,0 +1,15 @@
+[
+  {
+    "plan_id": "plan_f96c8d5e-be77-4e16-aa03-f14aa2608dd7",
+    "plan": "构建 dsh bundle 配置：新建 bundle/module-agent/（package.json、cordis.patch.yml、src/index.ts、tsconfig.json）并在 README「挂载插件」补充 bundle 自动加载方式",
+    "modified_files": [
+      "bundle/module-agent/package.json",
+      "bundle/module-agent/cordis.patch.yml",
+      "bundle/module-agent/src/index.ts",
+      "bundle/module-agent/tsconfig.json",
+      "README.md"
+    ],
+    "summary": "执行总结：已完成 dsh bundle 配置构建。新增 bundle/module-agent/ 四个文件——package.json（@deepseek-ai/dsh-module-agent-bundle，private，dsh.bundle.patch 声明 ./cordis.patch.yml，dependencies 依赖 @deepseek-ai/dsh-module-agent，不设 publishConfig/repository）、cordis.patch.yml（insert module-agent 插件行，config dataDir=. + subagentProvider=spawn）、src/index.ts（纯 patch bundle，仅 export {}）、tsconfig.json（extends ../../../tsconfig.base.json，references 仅 vendor/cordis，已确认 F:\\deepseek-harness\\vendor\\cordis 存在）；README「挂载插件」补充「方式二：bundle 自动加载」（复制至 packages/bundle/module-agent、tsconfig.host.json references 注册、dsh.profile.bundles 引用、pnpm install + pnpm run build 自动加载）。所有文件已核对为合法 JSON/YAML/TS。",
+    "errors": []
+  }
+]

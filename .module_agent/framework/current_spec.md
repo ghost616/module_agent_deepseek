@@ -33,3 +33,6 @@ framework 提供共享数据层，沿用 `.module_agent/*.json` 文件存储，�
 `package.json` 为 `@deepseek-ai/dsh-module-agent`（type=module，依赖 `@deepseek-ai/cordis`/`@deepseek-ai/schemastery` 与 dsh peer 包，workspace:^ 协议）。`tsconfig.json` extends `E:/deepseek-harness/tsconfig.base.json`（strict + noImplicitAny 等），通过其 paths 将 `@deepseek-ai/*` 映射到 dsh 源码做类型检查（noEmit，不设 rootDir）。
 
 注意：paths 指向 dsh 未构建源码时，编译器会把 dsh/vendor 源码纳入程序并按其依赖做类型检查，因此**在 deepseek-harness 未 `pnpm install`（缺少 @standard-schema/spec、js-yaml、zod 等）时，`tsc --noEmit` 会产生指向 dsh 源码的环境噪音报错**；本项目 `src/**/*.ts` 自身类型已通过离朱回归验证归零。后续模块修改 src 后如遇此类噪音，应先确认 deepseek-harness node_modules 已安装。
+## bundle 自动加载
+
+`bundle/module-agent/` 提供 dsh profile bundle 打包：`@deepseek-ai/dsh-module-agent-bundle`（private workspace 包），package.json 的 `dsh.bundle.patch` 声明 `./cordis.patch.yml`，profile composer 经该字段解析；`cordis.patch.yml` 通过 `insert` 列出 `module-agent` 插件行（name=@deepseek-ai/dsh-module-agent，config 含 dataDir/subagentProvider=spawn）。src/index.ts 仅 `export {}` 无 runtime API（纯 patch bundle），tsconfig.json extends ../../../tsconfig.base.json（rootDir=src、outDir=lib/types、references vendor/cordis），面向放入 dsh 仓库 packages/bundle/module-agent 后构建。profile 的 package.json 用 `dsh.profile.bundles` 引用该 bundle 即自动加载，无需手动写插件条目。
