@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_2073293b-ec5e-4f7b-9aec-282edc6af79c",
+  "module_name": "orchestration",
+  "development_plan": "在子智能体创建时按静态权限传入 toolFilter，让被限制的工具从子代理 prompt 消失（提升安全性与 prompt 清洁度）。\n\n任务（仅改 src/tools/module_agent_executor.ts）：\n1. handleStartReview（皋陶创建）：startChild 的 options 增加 toolFilter: { deny: ['write', 'edit'] }。\n2. handleStartLizhu（离朱创建）：startChild 的 options 增加 toolFilter: { deny: ['module_agent_admin', 'module_agent_executor', 'module_agent_done', 'module_agent_plan', 'module_agent_setup'] }。\n3. handleStartKui（夔创建）：startChild 的 options 增加 toolFilter: { allow: ['module_agent_executor', 'module_agent_reader', 'module_agent_updater', 'module_agent_plan', 'verification_code', 'read', 'grep'] }。\n4. handleStart（力牧创建）不加 toolFilter（其 .module_agent 检查与 bash 限制为动态权限，保留 guard 处理）。\n\n注意：先读 module_agent_executor.ts 确认三个 handle 中 startChild 的准确调用位置与现有 options 结构，再正确追加 toolFilter 字段。复用分支（复用已有离朱/皋陶/夔）不重新传 toolFilter（toolFilter 在创建时已生效，复用会话不重复应用）。\n\n验证：typecheck。",
+  "session_id": "ses_ffb4cee74ffeJxz62FSvZuPajk",
+  "modified_files": [
+    "src/tools/module_agent_executor.ts"
+  ]
+}
