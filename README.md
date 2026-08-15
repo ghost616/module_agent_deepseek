@@ -10,7 +10,7 @@
 
 本包 package.json 的 peerDependencies/dependencies 全部使用 `workspace:^` 协议（pnpm monorepo 内部约定），并标记 `"private": true`，设计上即 dsh monorepo 内部 workspace 包，不独立发布到 npm。因此唯一接入方式为：将本包放入 dsh 仓库的 `packages/module-agent/dsh-module-agent` 目录，由 monorepo 的 pnpm workspace 统一解析依赖（package.json 中的 `workspace:^` 依赖即在此解析），并确认其出现在 resolver manifest 的 `dependencies` 中，使 `cordis.patch.yml` 中的插件条目（`name` 字段）能解析到该已安装的 workspace 包。
 
-将以下文件和文件夹复制到 `packages/module-agent/dsh-module-agent` 目录：`package.json`、`tsconfig.json`、`src/`；放入 dsh 仓库后依赖由 monorepo 的 `pnpm install` 统一安装。复制进 dsh 仓库后，还需将该包注册到 dsh 仓库根目录 `tsconfig.host.json` 的 `references`（否则 `tsc -b` 不会编译该包，tsdown 会因找不到 `lib/types` 下的 entry 而报错）。
+将以下文件和文件夹复制到 `packages/module-agent/dsh-module-agent` 目录：`package.json`、`tsconfig.json`、`src/`；放入 dsh 仓库后依赖由 monorepo 的 `pnpm install` 统一安装。复制进 dsh 仓库后，还需在 dsh 仓库根目录 `tsconfig.host.json` 的 `references` 数组中新增一条 `{ "path": "./packages/module-agent/dsh-module-agent" }`（否则 `tsc -b` 不会编译该包，tsdown 会因找不到 `lib/types` 下的 entry 而报错）。
 
 ### 挂载插件
 
