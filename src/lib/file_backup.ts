@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { mkdir, readdir, unlink } from 'node:fs/promises'
+import { mkdir, readdir, rename, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import { moduleAgentDir } from './constants.ts'
 import { exists, readText, readJson, writeText } from './fs.ts'
@@ -23,7 +23,11 @@ function md5(input: string): string {
 async function readMapping(directory: string, moduleName: string): Promise<Record<string, string>> {
   const path = mappingPath(directory, moduleName)
   if (await exists(path)) {
-    return readJson<Record<string, string>>(path)
+    try {
+      return await readJson<Record<string, string>>(path)
+    } catch {
+      return {}
+    }
   }
   return {}
 }
@@ -31,7 +35,10 @@ async function readMapping(directory: string, moduleName: string): Promise<Recor
 async function writeMapping(directory: string, moduleName: string, mapping: Record<string, string>): Promise<void> {
   const root = backupsRoot(directory, moduleName)
   await mkdir(root, { recursive: true })
-  await writeText(mappingPath(directory, moduleName), JSON.stringify(mapping, null, 2))
+  const path = mappingPath(directory, moduleName)
+  const tmpPath = `${path}.tmp`
+  await writeText(tmpPath, JSON.stringify(mapping, null, 2))
+  await rename(tmpPath, path)
 }
 
 export async function backupFile(directory: string, moduleName: string, filePath: string): Promise<{ success: boolean; message: string }> {
