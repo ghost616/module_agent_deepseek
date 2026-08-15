@@ -3,7 +3,7 @@ import { join, dirname } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import { addModule, findModule } from '../lib/module_tree.ts'
-import { readModuleDefinition, writeModuleDefinition } from '../lib/module_definition.ts'
+import { readDefinitionSync, writeDefinitionSync } from '../lib/module_definition.ts'
 import { addOrUpdateModule } from '../lib/module_design.ts'
 import { exists, readJson, writeText, sanitizeIdSegment } from '../lib/fs.ts'
 import {
@@ -313,7 +313,7 @@ export function createModuleClassificationTool(options: ModuleClassificationTool
             await writeText(join(agentDir, CURRENT_SPEC_FILE), defaultCurrentSpec(moduleName))
             await writeText(join(agentDir, CHANGE_HISTORY_FILE), INITIAL_CHANGE_HISTORY)
 
-            await addModule(directory, { name: moduleName, description: moduleDescription })
+            addModule(directory, { name: moduleName, description: moduleDescription })
 
             const designEntry: { name: string; description: string; responsibilities?: string[]; functions?: { name: string; description: string }[] } = {
               name: moduleName,
@@ -321,7 +321,7 @@ export function createModuleClassificationTool(options: ModuleClassificationTool
             }
             if (args.responsibilities !== undefined) designEntry.responsibilities = args.responsibilities
             if (args.functions !== undefined) designEntry.functions = args.functions
-            await addOrUpdateModule(directory, designEntry, false)
+            addOrUpdateModule(directory, designEntry, false)
 
             isNewModule = true
           }
@@ -350,13 +350,13 @@ export function createModuleClassificationTool(options: ModuleClassificationTool
           const appliedNames: string[] = []
 
           for (const entry of targets) {
-            const currentDef = await readModuleDefinition(directory, entry.bound_module!)
+            const currentDef = readDefinitionSync(directory, entry.bound_module!)
             const existingPaths = new Set(currentDef.files.map(f => f.path))
 
             const newFiles = entry.files.filter(f => !existingPaths.has(f.path))
 
             if (newFiles.length > 0) {
-              await writeModuleDefinition(directory, entry.bound_module!, {
+              writeDefinitionSync(directory, entry.bound_module!, {
                 module_name: entry.bound_module!,
                 files: [
                   ...currentDef.files,

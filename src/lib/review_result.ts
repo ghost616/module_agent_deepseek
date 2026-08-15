@@ -1,6 +1,6 @@
-import { mkdir, unlink, readdir } from 'node:fs/promises'
+import { mkdirSync, unlinkSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { exists, readJson, writeText, sanitizeIdSegment, desanitizeIdSegment } from './fs.ts'
+import { existsSync, readJsonSync, writeJsonSync, sanitizeIdSegment, desanitizeIdSegment } from './fs.ts'
 import type { ReviewResult } from './types.ts'
 
 function reviewDir(workspaceDir: string): string {
@@ -11,36 +11,36 @@ function reviewPath(workspaceDir: string, reviewerSessionId: string): string {
   return join(reviewDir(workspaceDir), `${sanitizeIdSegment(reviewerSessionId)}.json`)
 }
 
-export async function writeReviewResult(
+export function writeReviewResult(
   workspaceDir: string,
   reviewerSessionId: string,
   result: ReviewResult,
-): Promise<void> {
+): void {
   const dir = reviewDir(workspaceDir)
-  await mkdir(dir, { recursive: true })
-  await writeText(reviewPath(workspaceDir, reviewerSessionId), JSON.stringify(result, null, 2))
+  mkdirSync(dir, { recursive: true })
+  writeJsonSync(reviewPath(workspaceDir, reviewerSessionId), result)
 }
 
-export async function readReviewResult(
+export function readReviewResult(
   workspaceDir: string,
   reviewerSessionId: string,
-): Promise<ReviewResult | null> {
+): ReviewResult | null {
   const path = reviewPath(workspaceDir, reviewerSessionId)
-  if (!(await exists(path))) return null
+  if (!existsSync(path)) return null
   try {
-    return await readJson<ReviewResult>(path)
+    return readJsonSync<ReviewResult>(path)
   } catch {
     return null
   }
 }
 
-export async function deleteReviewResult(
+export function deleteReviewResult(
   workspaceDir: string,
   reviewerSessionId: string,
-): Promise<boolean> {
+): boolean {
   const path = reviewPath(workspaceDir, reviewerSessionId)
-  if (!(await exists(path))) return false
-  await unlink(path)
+  if (!existsSync(path)) return false
+  unlinkSync(path)
   return true
 }
 
@@ -49,14 +49,14 @@ export async function cleanStaleReviewResults(
   isAlive: (sessionId: string) => Promise<boolean>,
 ): Promise<number> {
   const dir = reviewDir(workspaceDir)
-  if (!(await exists(dir))) return 0
+  if (!existsSync(dir)) return 0
   let removed = 0
-  const files = await readdir(dir)
+  const files = readdirSync(dir)
   for (const f of files) {
     if (!f.endsWith('.json')) continue
     const sid = desanitizeIdSegment(f.slice(0, -5))
     if (!(await isAlive(sid))) {
-      await unlink(join(dir, f))
+      unlinkSync(join(dir, f))
       removed++
     }
   }

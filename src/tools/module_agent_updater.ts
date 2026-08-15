@@ -4,7 +4,7 @@ import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import { moduleAgentDir, CHANGE_HISTORY_FILE } from '../lib/constants.ts'
 import { findModule } from '../lib/module_tree.ts'
 import { updateSpecSection } from '../lib/module_spec.ts'
-import { modifyDefinition, readModuleDefinition, writeModuleDefinition } from '../lib/module_definition.ts'
+import { modifyDefinition, readDefinitionSync, writeDefinitionSync } from '../lib/module_definition.ts'
 import { exists, readText, writeText } from '../lib/fs.ts'
 import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
 import { getKuiStarter } from '../lib/module_session_tracker.ts'
@@ -216,7 +216,7 @@ async function handleUpdateDefinition(
   if (files_to_add !== undefined) defArgs.files_to_add = files_to_add
   if (files_to_remove !== undefined) defArgs.files_to_remove = files_to_remove
   if (files_to_update !== undefined) defArgs.files_to_update = files_to_update
-  await modifyDefinition(directory, module_name, defArgs)
+  modifyDefinition(directory, module_name, defArgs)
   const changes: string[] = []
   if (files_to_add?.length) changes.push(`新增 ${files_to_add.length} 个文件`)
   if (files_to_remove?.length) changes.push(`移除 ${files_to_remove.length} 个文件`)
@@ -235,15 +235,15 @@ async function handleMoveDefinition(
   }
   await ensureModule(directory, module_name)
   await ensureModule(directory, target_module_name)
-  const srcDef = await readModuleDefinition(directory, module_name)
+  const srcDef = readDefinitionSync(directory, module_name)
   const moveSet = new Set(paths)
   const movedFiles = srcDef.files.filter((f) => moveSet.has(f.path))
   const remaining = srcDef.files.filter((f) => !moveSet.has(f.path))
-  await writeModuleDefinition(directory, module_name, { module_name, files: remaining })
-  const targetDef = await readModuleDefinition(directory, target_module_name)
+  writeDefinitionSync(directory, module_name, { module_name, files: remaining })
+  const targetDef = readDefinitionSync(directory, target_module_name)
   const targetExisting = new Set(targetDef.files.map((f) => f.path))
   const newFiles = movedFiles.filter((f) => !targetExisting.has(f.path))
-  await writeModuleDefinition(directory, target_module_name, { module_name: target_module_name, files: [...targetDef.files, ...newFiles] })
+  writeDefinitionSync(directory, target_module_name, { module_name: target_module_name, files: [...targetDef.files, ...newFiles] })
   const movedList = movedFiles.map((f) => f.path).join(', ')
   await doAppendHistory(directory, module_name, sessionId, `移出文件定义到 [${target_module_name}]: ${movedList}`)
   await doAppendHistory(directory, target_module_name, sessionId, `从 [${module_name}] 移入文件定义: ${movedList}`)
@@ -289,12 +289,12 @@ async function handleUpdateKuiPlan(
   }
   const wsDir = getWorkspaceDir(directory, boundWs)
 
-  const fengzhouSessionId = await getKuiStarter(wsDir, sessionId)
+  const fengzhouSessionId = getKuiStarter(wsDir, sessionId)
   if (!fengzhouSessionId) {
     return { status: 'error', error: '夔未绑定到风后' }
   }
 
-  const plan = await readKuiPlan(wsDir, fengzhouSessionId, kui_plan_id)
+  const plan = readKuiPlan(wsDir, fengzhouSessionId, kui_plan_id)
   if (!plan) {
     return { status: 'error', error: `夔计划 ${kui_plan_id} 不存在` }
   }
@@ -334,7 +334,7 @@ async function handleUpdateKuiPlan(
   if (status === 'running') plan.kui_session_id = sessionId
   if (result !== undefined) plan.result = result
 
-  await writeKuiPlan(wsDir, fengzhouSessionId, plan)
+  writeKuiPlan(wsDir, fengzhouSessionId, plan)
 
   return { action: 'update_kui_plan', status: 'ok', kui_plan_id }
 }

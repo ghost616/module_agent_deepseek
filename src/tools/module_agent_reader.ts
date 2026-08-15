@@ -4,14 +4,14 @@ import type { JsonValue } from '@deepseek-ai/dsh-session'
 import { findModule } from '../lib/module_tree.ts'
 import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import { readCurrentSpec, getSpecHeadings, getSpecSection } from '../lib/module_spec.ts'
-import { readModuleDefinition, getModuleParentDirs } from '../lib/module_definition.ts'
+import { readDefinitionSync, getModuleParentDirs } from '../lib/module_definition.ts'
 import { moduleAgentDir, CHANGE_HISTORY_FILE } from '../lib/constants.ts'
 import { exists, readText, readJson, sanitizeIdSegment } from '../lib/fs.ts'
 import { readPlanFiles } from '../lib/plan_files.ts'
 import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
 import { getBoundLizhu, getBoundStarter, unbindLizhu, getKuiStarter } from '../lib/module_session_tracker.ts'
 import { isWorking } from '../lib/limu_monitor.ts'
-import { readFirstPendingKuiPlan, readKuiPlan, readFengzhouPlans } from '../lib/kui_plan.ts'
+import { readFirstPendingKuiPlan, readKuiPlan, readFengzhouPlansSync } from '../lib/kui_plan.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
 
 export interface ModuleAgentReaderToolOptions {
@@ -130,7 +130,7 @@ export function createModuleAgentReaderTool(options: ModuleAgentReaderToolOption
         }
 
         if (action === 'read_definition') {
-          const def = await readModuleDefinition(directory, moduleName)
+          const def = readDefinitionSync(directory, moduleName)
           return { status: 'ok', module_name: moduleName, paths: def.files.map((f) => f.path) }
         }
 
@@ -139,7 +139,7 @@ export function createModuleAgentReaderTool(options: ModuleAgentReaderToolOption
           if (!paths || paths.length === 0) {
             return { status: 'error', error: 'read_descriptions 需提供非空的 paths 列表' }
           }
-          const def = await readModuleDefinition(directory, moduleName)
+          const def = readDefinitionSync(directory, moduleName)
           const fileMap = new Map(def.files.map((f) => [f.path, f.description]))
           const found: { path: string; description: string }[] = []
           const notFound: string[] = []
@@ -210,7 +210,7 @@ async function handleReadTestResults(directory: string, sessionId: string, args:
 
   let lizhuSid: string | null = typeof args.lizhu_session_id === 'string' ? args.lizhu_session_id : null
   if (!lizhuSid) {
-    lizhuSid = await getBoundLizhu(wsDir, sessionId)
+    lizhuSid = getBoundLizhu(wsDir, sessionId)
   }
   if (!lizhuSid) {
     return { status: 'ok', message: '当前无绑定的离朱测试报告' }
@@ -233,11 +233,11 @@ async function handleReadTestResults(directory: string, sessionId: string, args:
   try {
     report = await readJson<JsonValue>(reportPath)
   } catch (err) {
-    await unbindLizhu(wsDir, sessionId)
+    unbindLizhu(wsDir, sessionId)
     return { status: 'error', error: (err as Error).message, lizhu_session_id: lizhuSid }
   }
 
-  await unbindLizhu(wsDir, sessionId)
+  unbindLizhu(wsDir, sessionId)
 
   return { status: 'ok', report }
 }
@@ -253,7 +253,7 @@ async function handleReadTestSpecs(directory: string, sessionId: string, mode: s
   let specSessionId = sessionId
 
   if (mode === 'lizhu') {
-    const starter = await getBoundStarter(wsDir, sessionId)
+    const starter = getBoundStarter(wsDir, sessionId)
     if (!starter) {
       return { status: 'error', error: '离朱未绑定到任何启动者会话' }
     }
@@ -285,7 +285,7 @@ async function resolveFengzhouForKui(directory: string, sessionId: string, mode:
   if (mode === 'fengzhou') {
     fengzhouSessionId = sessionId
   } else {
-    const starter = await getKuiStarter(wsDir, sessionId)
+    const starter = getKuiStarter(wsDir, sessionId)
     if (!starter) {
       return null
     }
@@ -301,7 +301,7 @@ async function handleReadKuiPlan(directory: string, sessionId: string, mode: str
     return { status: 'error', error: '未绑定工作空间或夔未绑定到风后' }
   }
 
-  const plan = await readFirstPendingKuiPlan(resolved.wsDir, resolved.fengzhouSessionId)
+  const plan = readFirstPendingKuiPlan(resolved.wsDir, resolved.fengzhouSessionId)
   if (!plan) {
     return { status: 'ok', message: `风后 ${resolved.fengzhouSessionId} 没有待处理的夔计划` }
   }
@@ -315,7 +315,7 @@ async function handleReadAllKuiPlans(directory: string, sessionId: string, mode:
     return { status: 'error', error: '未绑定工作空间或夔未绑定到风后' }
   }
 
-  const plans = await readFengzhouPlans(resolved.wsDir, resolved.fengzhouSessionId)
+  const plans = readFengzhouPlansSync(resolved.wsDir, resolved.fengzhouSessionId)
   if (plans.length === 0) {
     return { status: 'ok', message: '没有夔计划', plans: [] }
   }
@@ -340,7 +340,7 @@ async function handleReadKuiPlanDetail(directory: string, sessionId: string, mod
     return { status: 'error', error: '未绑定工作空间或夔未绑定到风后' }
   }
 
-  const plan = await readKuiPlan(resolved.wsDir, resolved.fengzhouSessionId, kuiPlanId)
+  const plan = readKuiPlan(resolved.wsDir, resolved.fengzhouSessionId, kuiPlanId)
   if (!plan) {
     return { status: 'error', error: `夔计划 ${kuiPlanId} 不存在` }
   }

@@ -1,7 +1,7 @@
-import { mkdir, unlink, readdir } from 'node:fs/promises'
+import { mkdirSync, unlinkSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { ExecutionRecord, ExecutionRecords } from './types.ts'
-import { exists, readJson, writeText, sanitizeIdSegment, desanitizeIdSegment } from './fs.ts'
+import { existsSync, readJsonSync, writeJsonSync, sanitizeIdSegment, desanitizeIdSegment } from './fs.ts'
 
 function resultsDir(workspaceDir: string, moduleName: string): string {
   return join(workspaceDir, 'executions', moduleName)
@@ -11,20 +11,20 @@ function resultPath(workspaceDir: string, moduleName: string, sessionId: string)
   return join(resultsDir(workspaceDir, moduleName), `${sanitizeIdSegment(sessionId)}.json`)
 }
 
-export async function writeExecutionRecord(
+export function writeExecutionRecord(
   workspaceDir: string,
   moduleName: string,
   sessionId: string,
   record: ExecutionRecord,
-): Promise<void> {
+): void {
   const dir = resultsDir(workspaceDir, moduleName)
-  await mkdir(dir, { recursive: true })
+  mkdirSync(dir, { recursive: true })
   const path = resultPath(workspaceDir, moduleName, sessionId)
 
   let records: ExecutionRecords = []
-  if (await exists(path)) {
+  if (existsSync(path)) {
     try {
-      records = await readJson<ExecutionRecords>(path)
+      records = readJsonSync<ExecutionRecords>(path)
     } catch {
       records = []
     }
@@ -41,20 +41,20 @@ export async function writeExecutionRecord(
     records.push(record)
   }
 
-  await writeText(path, JSON.stringify(records, null, 2))
+  writeJsonSync(path, records)
 }
 
-export async function readAndCleanExecutionRecords(
+export function readAndCleanExecutionRecords(
   workspaceDir: string,
   moduleName: string,
   sessionId: string,
-): Promise<ExecutionRecord[]> {
+): ExecutionRecord[] {
   const path = resultPath(workspaceDir, moduleName, sessionId)
-  if (!(await exists(path))) return []
+  if (!existsSync(path)) return []
 
   let records: ExecutionRecords
   try {
-    records = await readJson<ExecutionRecords>(path)
+    records = readJsonSync<ExecutionRecords>(path)
   } catch {
     return []
   }
@@ -62,14 +62,14 @@ export async function readAndCleanExecutionRecords(
   return records
 }
 
-export async function deleteExecutionRecords(
+export function deleteExecutionRecords(
   workspaceDir: string,
   moduleName: string,
   sessionId: string,
-): Promise<boolean> {
+): boolean {
   const path = resultPath(workspaceDir, moduleName, sessionId)
-  if (!(await exists(path))) return false
-  await unlink(path)
+  if (!existsSync(path)) return false
+  unlinkSync(path)
   return true
 }
 
@@ -78,18 +78,18 @@ export async function cleanStaleExecutions(
   isAlive: (sessionId: string) => Promise<boolean>,
 ): Promise<number> {
   const root = join(workspaceDir, 'executions')
-  if (!(await exists(root))) return 0
+  if (!existsSync(root)) return 0
   let removed = 0
-  const modules = await readdir(root, { withFileTypes: true })
+  const modules = readdirSync(root, { withFileTypes: true })
   for (const m of modules) {
     if (!m.isDirectory()) continue
     const modDir = join(root, m.name)
-    const files = await readdir(modDir)
+    const files = readdirSync(modDir)
     for (const f of files) {
       if (!f.endsWith('.json')) continue
       const sid = desanitizeIdSegment(f.slice(0, -5))
       if (!(await isAlive(sid))) {
-        await unlink(join(modDir, f))
+        unlinkSync(join(modDir, f))
         removed++
       }
     }

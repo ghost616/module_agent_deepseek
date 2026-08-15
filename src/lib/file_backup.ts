@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto'
-import { mkdir, readdir, rename, unlink } from 'node:fs/promises'
+import { mkdirSync } from 'node:fs'
+import { mkdir, readdir, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import { moduleAgentDir } from './constants.ts'
-import { exists, readText, readJson, writeText } from './fs.ts'
+import { exists, readText, writeText, existsSync, readJsonSync, writeJsonSync } from './fs.ts'
 
 const BACKUPS_DIR = 'backups'
 const MAPPING_FILE = 'mapping.json'
@@ -20,11 +21,11 @@ function md5(input: string): string {
   return createHash('md5').update(input).digest('hex')
 }
 
-async function readMapping(directory: string, moduleName: string): Promise<Record<string, string>> {
+function readMappingSync(directory: string, moduleName: string): Record<string, string> {
   const path = mappingPath(directory, moduleName)
-  if (await exists(path)) {
+  if (existsSync(path)) {
     try {
-      return await readJson<Record<string, string>>(path)
+      return readJsonSync<Record<string, string>>(path)
     } catch {
       return {}
     }
@@ -32,13 +33,10 @@ async function readMapping(directory: string, moduleName: string): Promise<Recor
   return {}
 }
 
-async function writeMapping(directory: string, moduleName: string, mapping: Record<string, string>): Promise<void> {
+function writeMappingSync(directory: string, moduleName: string, mapping: Record<string, string>): void {
   const root = backupsRoot(directory, moduleName)
-  await mkdir(root, { recursive: true })
-  const path = mappingPath(directory, moduleName)
-  const tmpPath = `${path}.tmp`
-  await writeText(tmpPath, JSON.stringify(mapping, null, 2))
-  await rename(tmpPath, path)
+  mkdirSync(root, { recursive: true })
+  writeJsonSync(mappingPath(directory, moduleName), mapping)
 }
 
 export async function backupFile(directory: string, moduleName: string, filePath: string): Promise<{ success: boolean; message: string }> {
@@ -50,10 +48,10 @@ export async function backupFile(directory: string, moduleName: string, filePath
   const content = await readText(absFilePath)
   const hash = md5(filePath)
 
-  const mapping = await readMapping(directory, moduleName)
+  const mapping = readMappingSync(directory, moduleName)
   if (!mapping[filePath]) {
     mapping[filePath] = hash
-    await writeMapping(directory, moduleName, mapping)
+    writeMappingSync(directory, moduleName, mapping)
   }
 
   const backupDir = join(backupsRoot(directory, moduleName), hash)
@@ -74,7 +72,7 @@ export async function backupFile(directory: string, moduleName: string, filePath
 }
 
 export async function listBackups(directory: string, moduleName: string, filePath: string): Promise<{ success: boolean; files?: string[]; message: string }> {
-  const mapping = await readMapping(directory, moduleName)
+  const mapping = readMappingSync(directory, moduleName)
   const hash = mapping[filePath]
   if (!hash) {
     return { success: true, files: [], message: `该文件无备份: ${filePath}` }
@@ -97,7 +95,7 @@ export async function readBackupContent(
   startLine: number,
   endLine?: number,
 ): Promise<{ success: boolean; content?: string; message: string }> {
-  const mapping = await readMapping(directory, moduleName)
+  const mapping = readMappingSync(directory, moduleName)
   const hash = mapping[filePath]
   if (!hash) {
     return { success: false, message: `该文件无备份: ${filePath}` }
@@ -121,7 +119,7 @@ export async function readBackupContent(
 }
 
 export async function readLatestBackup(directory: string, moduleName: string, filePath: string): Promise<{ success: boolean; content?: string; message: string }> {
-  const mapping = await readMapping(directory, moduleName)
+  const mapping = readMappingSync(directory, moduleName)
   const hash = mapping[filePath]
   if (!hash) {
     return { success: false, message: `该文件无备份: ${filePath}` }

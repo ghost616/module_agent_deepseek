@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { JsonValue } from '@deepseek-ai/dsh-session'
 import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
-import { readModuleDesign, addOrUpdateModule } from '../lib/module_design.ts'
+import { readDesignSync, addOrUpdateModule } from '../lib/module_design.ts'
 import { MODULE_AGENT_DIR, REQUIREMENTS_DESIGN_FILE, CODE_CONVENTIONS_FILE } from '../lib/constants.ts'
 import { exists, readText, writeText } from '../lib/fs.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
@@ -96,7 +96,7 @@ export function createModuleDesignAdminTool(options: ModuleDesignAdminToolOption
 
       try {
         if (action === 'read') {
-          const design = await readModuleDesign(directory)
+          const design = readDesignSync(directory)
           // module_design.json 读取自 JSON 文件，天然符合 lossless JSON；
           // 其条目含可选字段，按 JsonValue 返回以匹配 output.schema。
           return { status: 'ok', design: design as unknown as JsonValue }
@@ -144,14 +144,14 @@ export function createModuleDesignAdminTool(options: ModuleDesignAdminToolOption
         if (action === 'add_module') {
           const result = await checkPrerequisites(directory, mode)
           if (result) return result
-          await addOrUpdateModule(directory, buildDesignEntry(moduleName, args), false)
+          addOrUpdateModule(directory, buildDesignEntry(moduleName, args), false)
           return { status: 'ok', action: 'add_module', module_name: moduleName }
         }
 
         if (action === 'update_module') {
           const result = await checkPrerequisites(directory, mode)
           if (result) return result
-          await addOrUpdateModule(directory, buildDesignEntry(moduleName, args), true)
+          addOrUpdateModule(directory, buildDesignEntry(moduleName, args), true)
           return { status: 'ok', action: 'update_module', module_name: moduleName }
         }
 

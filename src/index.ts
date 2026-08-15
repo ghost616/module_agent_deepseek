@@ -326,7 +326,7 @@ async function notifyLimuAfterLizhu(
     const wsName = await resolveWorkspace(directory, agentId)
     if (!wsName) return
     const workspaceDir = getWorkspaceDir(directory, wsName)
-    const boundLizhu = await getBoundLizhu(workspaceDir, agentId)
+    const boundLizhu = getBoundLizhu(workspaceDir, agentId)
     if (boundLizhu && isWorking(boundLizhu)) {
       ctx.logger.info(`module-agent: 力牧 ${agentId} 空闲但绑定的离朱 ${boundLizhu} 仍在运行，跳过完成通知`)
       return
@@ -338,7 +338,7 @@ async function notifyLimuAfterLizhu(
     if (!isNotifiableOwner('limu', ownerMode)) return
 
     state.markIdleNotified(agentId)
-    const moduleName = await getModuleNameBySession(workspaceDir, agentId)
+    const moduleName = getModuleNameBySession(workspaceDir, agentId)
     const text = `力牧（会话 ${agentId}）任务完成。请调用 module_agent_executor(action="status", module_name="${moduleName ?? '<模块名>'}", session_id="${agentId}") 获取力牧完成情况。`
     const message = createUserMessage({
       content: [{ type: 'text', text }] satisfies ContentBlock[],

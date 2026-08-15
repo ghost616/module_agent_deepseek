@@ -16,7 +16,7 @@ import { savePlan, getFirstPendingReview, readAllMetadata } from '../lib/develop
 import { recordMapping, getPlanIdBySession } from '../lib/session_plan_map.ts'
 import {
   writeKuiPlan,
-  readFengzhouPlans,
+  readFengzhouPlansSync,
   hasUncompletedKuiPlan,
   getCompletedKuiPlans,
   deleteCompletedKuiPlans,
@@ -354,7 +354,7 @@ export function createModuleAgentExecutorTool(options: ModuleAgentExecutorToolOp
         }
 
         if (action === 'list_unbound_lizhu') {
-          const sessions = await getAllUnboundLizhuSessions(workspaceDir)
+          const sessions = getAllUnboundLizhuSessions(workspaceDir)
           return { unbound_lizhu_sessions: sessions }
         }
 
@@ -409,8 +409,8 @@ async function handleStart(handler: HandlerContext, args: ExecutorArgs): Promise
   const reusable = await getModuleLimuSession(workspaceDir, module_name, isAlive, callerId)
 
   if (reusable) {
-    await clearSessionChecked(workspaceDir, reusable)
-    await bindLimuStarter(workspaceDir, callerId, reusable)
+    clearSessionChecked(workspaceDir, reusable)
+    bindLimuStarter(workspaceDir, callerId, reusable)
     sessionState.setAgentMode(reusable, 'limu')
 
     try {
@@ -441,9 +441,9 @@ async function handleStart(handler: HandlerContext, args: ExecutorArgs): Promise
 
     const callerMode = sessionState.getAgentMode(callerId)
     if (callerMode === 'kui') {
-      const kuiFengzhouSid = await getKuiStarter(workspaceDir, callerId)
+      const kuiFengzhouSid = getKuiStarter(workspaceDir, callerId)
       if (kuiFengzhouSid) {
-        await appendPlanIdToRunningKuiPlan(workspaceDir, kuiFengzhouSid, callerId, plan_id)
+        appendPlanIdToRunningKuiPlan(workspaceDir, kuiFengzhouSid, callerId, plan_id)
       }
     }
 
@@ -497,8 +497,8 @@ async function handleStart(handler: HandlerContext, args: ExecutorArgs): Promise
 
   const sessionId = started.childId
   sessionState.setAgentMode(sessionId, 'limu')
-  await addModuleSession(workspaceDir, module_name, sessionId)
-  await bindLimuStarter(workspaceDir, callerId, sessionId)
+  addModuleSession(workspaceDir, module_name, sessionId)
+  bindLimuStarter(workspaceDir, callerId, sessionId)
 
   recordActivity(sessionId)
 
@@ -522,9 +522,9 @@ async function handleStart(handler: HandlerContext, args: ExecutorArgs): Promise
 
   const callerMode = sessionState.getAgentMode(callerId)
   if (callerMode === 'kui') {
-    const kuiFengzhouSid = await getKuiStarter(workspaceDir, callerId)
+    const kuiFengzhouSid = getKuiStarter(workspaceDir, callerId)
     if (kuiFengzhouSid) {
-      await appendPlanIdToRunningKuiPlan(workspaceDir, kuiFengzhouSid, callerId, plan_id)
+      appendPlanIdToRunningKuiPlan(workspaceDir, kuiFengzhouSid, callerId, plan_id)
     }
   }
 
@@ -592,7 +592,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
   const reviewerSessionId = started.childId
   sessionState.setAgentMode(reviewerSessionId, 'gaotao')
-  await bindGaotao(workspaceDir, callerId, reviewerSessionId)
+  bindGaotao(workspaceDir, callerId, reviewerSessionId)
 
   recordActivity(reviewerSessionId)
 
@@ -622,7 +622,7 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
 
   const allRecords = await readAndCleanExecutionRecords(workspaceDir, module_name, session_id)
 
-  const lizhuSid = await getBoundLizhu(workspaceDir, session_id)
+  const lizhuSid = getBoundLizhu(workspaceDir, session_id)
   const lizhuWorking = lizhuSid ? isWorking(lizhuSid) : false
 
   if (allRecords.length > 0) {
@@ -645,7 +645,7 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
       activity = lizhuIdle.lastActivity
     }
     if (!isActive) {
-      await clearSessionChecked(workspaceDir, session_id)
+      clearSessionChecked(workspaceDir, session_id)
     }
     const lastRecord = allRecords[allRecords.length - 1]
     return {
@@ -674,7 +674,7 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
   }
 
   if (meta.plan_completed) {
-    await clearSessionChecked(workspaceDir, session_id)
+    clearSessionChecked(workspaceDir, session_id)
     return { type: 'limu', finished: true, plan_id: lastPlanId, plan_completed: true, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
   }
 
@@ -770,8 +770,8 @@ async function handleKuiStatus(handler: HandlerContext): Promise<JsonValue> {
     }
   }
 
-  const hasUncompleted = await hasUncompletedKuiPlan(workspaceDir, callerId)
-  const completedPlans = await getCompletedKuiPlans(workspaceDir, callerId)
+  const hasUncompleted = hasUncompletedKuiPlan(workspaceDir, callerId)
+  const completedPlans = getCompletedKuiPlans(workspaceDir, callerId)
 
   const output: Record<string, unknown> = {
     bound: true,
@@ -784,7 +784,7 @@ async function handleKuiStatus(handler: HandlerContext): Promise<JsonValue> {
   }
 
   if (completedPlans.length > 0) {
-    await deleteCompletedKuiPlans(workspaceDir, callerId)
+    deleteCompletedKuiPlans(workspaceDir, callerId)
     output.message = `夔及所有子智能体均已空闲，已获取 ${completedPlans.length} 个已完成的夔计划（已清理）。`
   } else if (hasUncompleted) {
     output.unresponsive = true
@@ -818,7 +818,7 @@ async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<
   }
 
   if (targetMode === 'limu') {
-    const lizhuSid = await getBoundLizhu(workspaceDir, sessionId)
+    const lizhuSid = getBoundLizhu(workspaceDir, sessionId)
     if (lizhuSid) {
       const lizhuIdle = getSessionIdle(lizhuSid)
       if (!lizhuIdle.unresponsive) {
@@ -842,14 +842,14 @@ async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<
   if (targetMode === 'kui') {
     await host.followup(caller, sessionId, `${prefix}：请先调用 module_agent_reader(action="read_all_kui_plans") 获取所有夔计划的状态，优先执行 status="running" 的夔计划。如果没有 status 为 pending 或 running 的夔计划，则结束会话。`, signal)
     recordActivity(sessionId)
-    await markSessionChecked(workspaceDir, sessionId)
+    markSessionChecked(workspaceDir, sessionId)
     return { status: 'ok', message: `已向夔会话 ${sessionId} 发送提醒。` }
   }
 
   await host.followup(caller, sessionId, `${prefix}：请尽快完成当前任务并写入执行总结 module_agent_updater_plan(action="write_result", summary="执行总结")。如果没有测试，请先判断是否需要测试，再调用 module_agent_plan(action="plan_complete", files=["..."])。`, signal)
 
   recordActivity(sessionId)
-  await markSessionChecked(workspaceDir, sessionId)
+  markSessionChecked(workspaceDir, sessionId)
 
   return { status: 'ok', message: `已向会话 ${sessionId} 发送提醒并标记二次检查。` }
 }
@@ -861,14 +861,14 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
 
   const starterSessionId = callerId
 
-  const boundLizhu = await getBoundLizhu(workspaceDir, starterSessionId)
+  const boundLizhu = getBoundLizhu(workspaceDir, starterSessionId)
   if (boundLizhu) {
     return { status: 'error', error: '已有绑定的离朱，请先调用 module_agent_reader(action="read_test_results") 读取测试结果后重试。', lizhu_session_id: boundLizhu }
   }
 
-  const available = await getAvailableLizhuSession(workspaceDir, isAlive)
+  const available = await getAvailableLizhuSession(workspaceDir, isAlive, starterSessionId, (childId, parentId) => host.childAlive(childId, parentId))
   if (available) {
-    await bindLizhu(workspaceDir, starterSessionId, available)
+    bindLizhu(workspaceDir, starterSessionId, available)
     sessionState.setAgentMode(available, 'lizhu')
 
     await host.followup(caller, available, '请读取测试说明并执行测试：调用 module_agent_reader(action="read_test_specs") 获取待测试功能说明，然后按需执行测试。', signal)
@@ -910,13 +910,13 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
 
   const lizhuSessionId = started.childId
   sessionState.setAgentMode(lizhuSessionId, 'lizhu')
-  await addLizhuSession(workspaceDir, lizhuSessionId)
-  await bindLizhu(workspaceDir, starterSessionId, lizhuSessionId)
+  addLizhuSession(workspaceDir, lizhuSessionId)
+  bindLizhu(workspaceDir, starterSessionId, lizhuSessionId)
 
   if (callerModeIsLimu(sessionState, callerId)) {
-    const fengzhouSessionId = await getLimuStarter(workspaceDir, starterSessionId)
+    const fengzhouSessionId = getLimuStarter(workspaceDir, starterSessionId)
     if (fengzhouSessionId) {
-      await bindLizhuFengzhou(workspaceDir, lizhuSessionId, fengzhouSessionId)
+      bindLizhuFengzhou(workspaceDir, lizhuSessionId, fengzhouSessionId)
     }
   }
 
@@ -942,7 +942,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
   const kui_plan_id = generateId('kui_plan')
 
-  const existingPlans = await readFengzhouPlans(workspaceDir, callerId)
+  const existingPlans = readFengzhouPlansSync(workspaceDir, callerId)
   const existingPlanTexts = new Set(
     existingPlans.filter(p => p.status !== 'completed').flatMap(p => p.plans.map(m => m.development_plan))
   )
@@ -961,7 +961,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
   const boundKui = await getBoundKui(workspaceDir, callerId, isAlive)
   if (boundKui) {
-    await writeKuiPlan(workspaceDir, callerId, {
+    writeKuiPlan(workspaceDir, callerId, {
       kui_plan_id,
       plans: dedupedPlans,
       plan_ids: [],
@@ -997,7 +997,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
     return { status: 'error', error: kuiError.error, hint: '配置的模型可能在当前环境中不可用，请使用 agent_model_config(action="get") 查看当前配置，再通过 agent_model_config(action="set", ...) 重新设置' }
   }
 
-  await writeKuiPlan(workspaceDir, callerId, {
+  writeKuiPlan(workspaceDir, callerId, {
     kui_plan_id,
     plans: dedupedPlans,
     plan_ids: [],
@@ -1025,7 +1025,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
   const kuiSessionId = started.childId
   sessionState.setAgentMode(kuiSessionId, 'kui')
-  await bindKui(workspaceDir, callerId, kuiSessionId)
+  bindKui(workspaceDir, callerId, kuiSessionId)
 
   recordActivity(kuiSessionId)
 

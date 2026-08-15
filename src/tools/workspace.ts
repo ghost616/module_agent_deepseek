@@ -48,8 +48,8 @@ export function createWorkspaceTool(options: WorkspaceToolOptions) {
 
       try {
         if (action === 'list') {
-          const workspaces = await listWorkspaces(directory)
-          const boundName = await getBoundWorkspace(directory, sessionId)
+          const workspaces = listWorkspaces(directory)
+          const boundName = getBoundWorkspace(directory, sessionId)
           return { status: 'ok', workspaces: workspaces as unknown as JsonValue, bound: boundName }
         }
 
@@ -58,8 +58,8 @@ export function createWorkspaceTool(options: WorkspaceToolOptions) {
           if (!name) {
             return { status: 'error', error: 'create 需要 name（仅支持英文、数字、下划线）' }
           }
-          await createWorkspace(directory, name)
-          await bindFengzhou(directory, sessionId, name)
+          createWorkspace(directory, name)
+          bindFengzhou(directory, sessionId, name)
           return { status: 'ok', workspace_name: name, bound: true }
         }
 
@@ -68,18 +68,18 @@ export function createWorkspaceTool(options: WorkspaceToolOptions) {
           if (!name) {
             return { status: 'error', error: 'bind 需要 workspace_name' }
           }
-          await bindFengzhou(directory, sessionId, name)
+          bindFengzhou(directory, sessionId, name)
           return { status: 'ok', workspace_name: name }
         }
 
         if (action === 'status') {
-          const boundName = await getBoundWorkspace(directory, sessionId)
+          const boundName = getBoundWorkspace(directory, sessionId)
           if (!boundName) {
             return { status: 'ok', bound: null, message: '当前未绑定工作空间，请先调用 create 或 bind' }
           }
-          const workspaces = await listWorkspaces(directory)
+          const workspaces = listWorkspaces(directory)
           const ws = workspaces.find(w => w.name === boundName)
-          const config = await getWorkspaceConfig(directory, boundName)
+          const config = getWorkspaceConfig(directory, boundName)
           return {
             status: 'ok',
             bound: boundName,
@@ -89,16 +89,16 @@ export function createWorkspaceTool(options: WorkspaceToolOptions) {
         }
 
         if (action === 'get_config') {
-          const boundName = await getBoundWorkspace(directory, sessionId)
+          const boundName = getBoundWorkspace(directory, sessionId)
           if (!boundName) {
             return { status: 'error', error: '当前未绑定工作空间，请先调用 create 或 bind' }
           }
-          const config = await getWorkspaceConfig(directory, boundName)
+          const config = getWorkspaceConfig(directory, boundName)
           return { status: 'ok', workspace_name: boundName, development_mode: config.development_mode }
         }
 
         if (action === 'set_development_mode') {
-          const boundName = await getBoundWorkspace(directory, sessionId)
+          const boundName = getBoundWorkspace(directory, sessionId)
           if (!boundName) {
             return { status: 'error', error: '当前未绑定工作空间，请先调用 create 或 bind' }
           }
@@ -106,7 +106,7 @@ export function createWorkspaceTool(options: WorkspaceToolOptions) {
           if (!modeValue || (modeValue !== 'beginner' && modeValue !== 'expert')) {
             return { status: 'error', error: 'development_mode 必须为 beginner 或 expert' }
           }
-          await setDevelopmentMode(directory, boundName, modeValue)
+          setDevelopmentMode(directory, boundName, modeValue)
           return { status: 'ok', workspace_name: boundName, development_mode: modeValue }
         }
 

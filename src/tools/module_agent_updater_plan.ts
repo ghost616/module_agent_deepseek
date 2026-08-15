@@ -36,12 +36,12 @@ async function handleWriteResult(
   }
   const workspaceDir = getWorkspaceDir(directory, wsName)
 
-  const plan_id = await getPlanIdBySession(workspaceDir, sessionId)
+  const plan_id = getPlanIdBySession(workspaceDir, sessionId)
   if (!plan_id) {
     return { status: 'error', error: `会话 ${sessionId} 未绑定计划` }
   }
   await ensureModule(directory, module_name)
-  await writeExecutionRecord(workspaceDir, module_name, sessionId, {
+  writeExecutionRecord(workspaceDir, module_name, sessionId, {
     plan_id,
     plan,
     modified_files,
@@ -61,7 +61,7 @@ async function handleAddPlanFiles(
     return { status: 'error', error: 'add_plan_files 需提供 module_name、files、status' }
   }
   await ensureModule(directory, module_name)
-  await addPlanFiles(directory, module_name, sessionId, files, status)
+  addPlanFiles(directory, module_name, sessionId, files, status)
   return { action: 'add_plan_files', status: 'ok', files_count: files.length }
 }
 
@@ -75,7 +75,7 @@ async function handleRemovePlanFiles(
     return { status: 'error', error: 'remove_plan_files 需提供 module_name、files' }
   }
   await ensureModule(directory, module_name)
-  await removePlanFiles(directory, module_name, sessionId, files)
+  removePlanFiles(directory, module_name, sessionId, files)
   return { action: 'remove_plan_files', status: 'ok', removed: files.length }
 }
 
@@ -86,17 +86,17 @@ async function handleCheckActivePlan(directory: string, sessionId: string) {
   }
   const workspaceDir = getWorkspaceDir(directory, wsName)
 
-  const planId = await getPlanIdBySession(workspaceDir, sessionId)
+  const planId = getPlanIdBySession(workspaceDir, sessionId)
   if (!planId) {
     return { status: 'error', error: '当前会话未关联任何开发计划，无法执行文件修改。' }
   }
 
-  const plan = await readPlan(workspaceDir, planId)
+  const plan = readPlan(workspaceDir, planId)
   if (!plan) {
     return { status: 'error', error: `计划 ${planId} 不存在。` }
   }
 
-  const metadata = await readAllMetadata(workspaceDir)
+  const metadata = readAllMetadata(workspaceDir)
   const meta = metadata.find(m => m.plan_id === planId)
   if (meta?.plan_completed) {
     return { status: 'error', error: `计划 ${planId} 已标记完成，无法继续修改文件。` }

@@ -1,7 +1,7 @@
-import { mkdir, rm } from 'node:fs/promises'
+import { mkdirSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { isWorking } from './limu_monitor.ts'
-import { exists, readJson, writeText } from './fs.ts'
+import { existsSync, readJsonSync, writeJsonSync } from './fs.ts'
 
 /** 会话存活判定：dsh 侧由 subagent_host 的 liveness checker 提供。 */
 export type IsAlive = (sessionId: string) => Promise<boolean>
@@ -10,42 +10,42 @@ function filePath(workspaceDir: string): string {
   return join(workspaceDir, 'module_sessions.json')
 }
 
-async function readSessions(workspaceDir: string): Promise<Record<string, string[]>> {
+function readSessionsSync(workspaceDir: string): Record<string, string[]> {
   const path = filePath(workspaceDir)
-  if (!(await exists(path))) return {}
+  if (!existsSync(path)) return {}
   try {
-    return await readJson<Record<string, string[]>>(path)
+    return readJsonSync<Record<string, string[]>>(path)
   } catch {
     return {}
   }
 }
 
-async function writeSessions(workspaceDir: string, data: Record<string, string[]>): Promise<void> {
+function writeSessionsSync(workspaceDir: string, data: Record<string, string[]>): void {
   const path = filePath(workspaceDir)
-  await mkdir(dirname(path), { recursive: true })
-  await writeText(path, JSON.stringify(data, null, 2))
+  mkdirSync(dirname(path), { recursive: true })
+  writeJsonSync(path, data)
 }
 
 /** 记录模块 → 力牧会话 id 列表（会话复用与关闭清理的依据）。 */
-export async function addModuleSession(workspaceDir: string, moduleName: string, sessionId: string): Promise<void> {
-  const data = await readSessions(workspaceDir)
+export function addModuleSession(workspaceDir: string, moduleName: string, sessionId: string): void {
+  const data = readSessionsSync(workspaceDir)
   const sessions = data[moduleName] ?? (data[moduleName] = [])
   if (!sessions.includes(sessionId)) {
     sessions.push(sessionId)
   }
-  await writeSessions(workspaceDir, data)
+  writeSessionsSync(workspaceDir, data)
 }
 
-export async function removeModuleSession(workspaceDir: string, moduleName: string, sessionId: string): Promise<void> {
-  await unbindLizhu(workspaceDir, sessionId)
-  await unbindLimuStarter(workspaceDir, sessionId)
+export function removeModuleSession(workspaceDir: string, moduleName: string, sessionId: string): void {
+  unbindLizhu(workspaceDir, sessionId)
+  unbindLimuStarter(workspaceDir, sessionId)
 
-  const data = await readSessions(workspaceDir)
+  const data = readSessionsSync(workspaceDir)
   const sessions = data[moduleName]
   if (!sessions) return
   data[moduleName] = sessions.filter((s) => s !== sessionId)
   if (data[moduleName]?.length === 0) delete data[moduleName]
-  await writeSessions(workspaceDir, data)
+  writeSessionsSync(workspaceDir, data)
 }
 
 /**
@@ -58,19 +58,19 @@ export async function getModuleLimuSession(
   isAlive: IsAlive,
   starterSessionId: string,
 ): Promise<string | null> {
-  const data = await readSessions(workspaceDir)
+  const data = readSessionsSync(workspaceDir)
   const sessionIds = data[moduleName]
   if (!sessionIds || sessionIds.length === 0) return null
 
   for (const sid of sessionIds) {
     if (!(await isAlive(sid))) {
-      await removeModuleSession(workspaceDir, moduleName, sid)
+      removeModuleSession(workspaceDir, moduleName, sid)
       continue
     }
     if (isWorking(sid)) continue
-    const boundLizhu = await getBoundLizhu(workspaceDir, sid)
+    const boundLizhu = getBoundLizhu(workspaceDir, sid)
     if (boundLizhu && isWorking(boundLizhu)) continue
-    const limuStarter = await getLimuStarter(workspaceDir, sid)
+    const limuStarter = getLimuStarter(workspaceDir, sid)
     if (limuStarter && limuStarter !== starterSessionId) continue
     return sid
   }
@@ -78,8 +78,8 @@ export async function getModuleLimuSession(
   return null
 }
 
-export async function getModuleNameBySession(workspaceDir: string, sessionId: string): Promise<string | null> {
-  const data = await readSessions(workspaceDir)
+export function getModuleNameBySession(workspaceDir: string, sessionId: string): string | null {
+  const data = readSessionsSync(workspaceDir)
   for (const [moduleName, sids] of Object.entries(data)) {
     if (moduleName === '_checked') continue
     if (sids.includes(sessionId)) return moduleName
@@ -87,27 +87,27 @@ export async function getModuleNameBySession(workspaceDir: string, sessionId: st
   return null
 }
 
-export async function markSessionChecked(workspaceDir: string, sessionId: string): Promise<void> {
-  const data = await readSessions(workspaceDir)
+export function markSessionChecked(workspaceDir: string, sessionId: string): void {
+  const data = readSessionsSync(workspaceDir)
   const checked = data._checked ?? (data._checked = [])
   if (!checked.includes(sessionId)) {
     checked.push(sessionId)
   }
-  await writeSessions(workspaceDir, data)
+  writeSessionsSync(workspaceDir, data)
 }
 
-export async function isSessionChecked(workspaceDir: string, sessionId: string): Promise<boolean> {
-  const data = await readSessions(workspaceDir)
+export function isSessionChecked(workspaceDir: string, sessionId: string): boolean {
+  const data = readSessionsSync(workspaceDir)
   return data._checked ? data._checked.includes(sessionId) : false
 }
 
-export async function clearSessionChecked(workspaceDir: string, sessionId: string): Promise<void> {
-  const data = await readSessions(workspaceDir)
+export function clearSessionChecked(workspaceDir: string, sessionId: string): void {
+  const data = readSessionsSync(workspaceDir)
   const checked = data._checked
   if (!checked) return
   data._checked = checked.filter((s) => s !== sessionId)
   if (data._checked.length === 0) delete data._checked
-  await writeSessions(workspaceDir, data)
+  writeSessionsSync(workspaceDir, data)
 }
 
 // ============================================================
@@ -137,19 +137,24 @@ function bindingsPath(workspaceDir: string): string {
   return join(workspaceDir, 'session_bindings.json')
 }
 
-async function readBindings(workspaceDir: string): Promise<SessionBindings> {
+function readBindingsSync(workspaceDir: string): SessionBindings {
   const path = bindingsPath(workspaceDir)
-  if (await exists(path)) {
-    const data = await readJson<Partial<SessionBindings>>(path).catch(() => ({} as Partial<SessionBindings>))
+  if (existsSync(path)) {
+    let data: Partial<SessionBindings>
+    try {
+      data = readJsonSync<Partial<SessionBindings>>(path)
+    } catch {
+      data = {}
+    }
     return { gaotao: data.gaotao ?? {}, limu: data.limu ?? {}, lizhu: data.lizhu ?? {}, lizhu_fengzhou: data.lizhu_fengzhou ?? {}, kui: data.kui ?? {} }
   }
 
   const bindings: SessionBindings = { gaotao: {}, limu: {}, lizhu: {}, lizhu_fengzhou: {}, kui: {} }
   for (const { key, file } of LEGACY_FILES) {
     const legacyPath = join(workspaceDir, file)
-    if (await exists(legacyPath)) {
+    if (existsSync(legacyPath)) {
       try {
-        bindings[key] = await readJson<Record<string, string>>(legacyPath)
+        bindings[key] = readJsonSync<Record<string, string>>(legacyPath)
       } catch {
         // ignore corrupt legacy file
       }
@@ -158,12 +163,16 @@ async function readBindings(workspaceDir: string): Promise<SessionBindings> {
   return bindings
 }
 
-async function writeBindings(workspaceDir: string, data: SessionBindings): Promise<void> {
+function writeBindingsSync(workspaceDir: string, data: SessionBindings): void {
   const path = bindingsPath(workspaceDir)
-  await mkdir(dirname(path), { recursive: true })
-  await writeText(path, JSON.stringify(data, null, 2))
+  mkdirSync(dirname(path), { recursive: true })
+  writeJsonSync(path, data)
   for (const { file } of LEGACY_FILES) {
-    await rm(join(workspaceDir, file), { force: true }).catch(() => {})
+    try {
+      rmSync(join(workspaceDir, file), { force: true })
+    } catch {
+      // 旧文件已不存在时忽略
+    }
   }
 }
 
@@ -171,17 +180,17 @@ async function writeBindings(workspaceDir: string, data: SessionBindings): Promi
 // 风后 ↔ 皋陶 会话绑定（在 workspace 内）
 // ============================================================
 
-export async function bindGaotao(workspaceDir: string, fengzhouSessionId: string, gaotaoSessionId: string): Promise<void> {
-  const data = await readBindings(workspaceDir)
+export function bindGaotao(workspaceDir: string, fengzhouSessionId: string, gaotaoSessionId: string): void {
+  const data = readBindingsSync(workspaceDir)
   data.gaotao[fengzhouSessionId] = gaotaoSessionId
-  await writeBindings(workspaceDir, data)
+  writeBindingsSync(workspaceDir, data)
 }
 
-export async function unbindGaotao(workspaceDir: string, fengzhouSessionId: string): Promise<void> {
-  const data = await readBindings(workspaceDir)
+export function unbindGaotao(workspaceDir: string, fengzhouSessionId: string): void {
+  const data = readBindingsSync(workspaceDir)
   if (!(fengzhouSessionId in data.gaotao)) return
   delete data.gaotao[fengzhouSessionId]
-  await writeBindings(workspaceDir, data)
+  writeBindingsSync(workspaceDir, data)
 }
 
 /** 读取风后绑定的皋陶；会话已失效则删除绑定并返回 null。 */
@@ -190,34 +199,34 @@ export async function getBoundGaotao(
   fengzhouSessionId: string,
   isAlive: IsAlive,
 ): Promise<string | null> {
-  const data = await readBindings(workspaceDir)
+  const data = readBindingsSync(workspaceDir)
   const sid = data.gaotao[fengzhouSessionId]
   if (!sid) return null
 
   if (!(await isAlive(sid))) {
     delete data.gaotao[fengzhouSessionId]
-    await writeBindings(workspaceDir, data)
+    writeBindingsSync(workspaceDir, data)
     return null
   }
   return sid
 }
 
-export async function isGaotaoBoundToFengzhou(
+export function isGaotaoBoundToFengzhou(
   workspaceDir: string,
   fengzhouSessionId: string,
   gaotaoSessionId: string,
-): Promise<boolean> {
-  const data = await readBindings(workspaceDir)
+): boolean {
+  const data = readBindingsSync(workspaceDir)
   return data.gaotao[fengzhouSessionId] === gaotaoSessionId
 }
 
-export async function hasGaotaoBound(workspaceDir: string, starterSessionId: string): Promise<boolean> {
-  const data = await readBindings(workspaceDir)
+export function hasGaotaoBound(workspaceDir: string, starterSessionId: string): boolean {
+  const data = readBindingsSync(workspaceDir)
   return starterSessionId in data.gaotao
 }
 
-export async function getGaotaoStarter(workspaceDir: string, gaotaoSessionId: string): Promise<string | null> {
-  const data = await readBindings(workspaceDir)
+export function getGaotaoStarter(workspaceDir: string, gaotaoSessionId: string): string | null {
+  const data = readBindingsSync(workspaceDir)
   for (const [fsid, gsid] of Object.entries(data.gaotao)) {
     if (gsid === gaotaoSessionId) return fsid
   }
@@ -228,7 +237,7 @@ export async function cleanStaleModuleSessions(
   workspaceDir: string,
   isAlive: IsAlive,
 ): Promise<number> {
-  const data = await readSessions(workspaceDir)
+  const data = readSessionsSync(workspaceDir)
   let removed = 0
   for (const key of Object.keys(data)) {
     const kept: string[] = []
@@ -239,7 +248,7 @@ export async function cleanStaleModuleSessions(
     if (kept.length === 0) delete data[key]
     else data[key] = kept
   }
-  if (removed > 0) await writeSessions(workspaceDir, data)
+  if (removed > 0) writeSessionsSync(workspaceDir, data)
   return removed
 }
 
@@ -247,7 +256,7 @@ export async function cleanStaleGaotaoMap(
   workspaceDir: string,
   isAlive: IsAlive,
 ): Promise<number> {
-  const data = await readBindings(workspaceDir)
+  const data = readBindingsSync(workspaceDir)
   let removed = 0
   for (const [fsid, gsid] of Object.entries(data.gaotao)) {
     if (!(await isAlive(fsid)) || !(await isAlive(gsid))) {
@@ -255,7 +264,7 @@ export async function cleanStaleGaotaoMap(
       removed++
     }
   }
-  if (removed > 0) await writeBindings(workspaceDir, data)
+  if (removed > 0) writeBindingsSync(workspaceDir, data)
   return removed
 }
 
@@ -263,26 +272,26 @@ export async function cleanStaleGaotaoMap(
 // 风后 ↔ 力牧 会话绑定（在 workspace 内）
 // ============================================================
 
-export async function bindLimuStarter(workspaceDir: string, fengzhouSessionId: string, limuSessionId: string): Promise<void> {
-  const data = await readBindings(workspaceDir)
+export function bindLimuStarter(workspaceDir: string, fengzhouSessionId: string, limuSessionId: string): void {
+  const data = readBindingsSync(workspaceDir)
   data.limu[limuSessionId] = fengzhouSessionId
-  await writeBindings(workspaceDir, data)
+  writeBindingsSync(workspaceDir, data)
 }
 
-export async function unbindLimuStarter(workspaceDir: string, limuSessionId: string): Promise<void> {
-  const data = await readBindings(workspaceDir)
+export function unbindLimuStarter(workspaceDir: string, limuSessionId: string): void {
+  const data = readBindingsSync(workspaceDir)
   if (!(limuSessionId in data.limu)) return
   delete data.limu[limuSessionId]
-  await writeBindings(workspaceDir, data)
+  writeBindingsSync(workspaceDir, data)
 }
 
-export async function getLimuStarter(workspaceDir: string, limuSessionId: string): Promise<string | null> {
-  const data = await readBindings(workspaceDir)
+export function getLimuStarter(workspaceDir: string, limuSessionId: string): string | null {
+  const data = readBindingsSync(workspaceDir)
   return data.limu[limuSessionId] ?? null
 }
 
-export async function getFengzhouLimuSessions(workspaceDir: string, fengzhouSessionId: string): Promise<string[]> {
-  const data = await readBindings(workspaceDir)
+export function getFengzhouLimuSessions(workspaceDir: string, fengzhouSessionId: string): string[] {
+  const data = readBindingsSync(workspaceDir)
   const starters = new Set([fengzhouSessionId])
   const kuiSid = data.kui[fengzhouSessionId]
   if (kuiSid) starters.add(kuiSid)
@@ -291,19 +300,19 @@ export async function getFengzhouLimuSessions(workspaceDir: string, fengzhouSess
     .map(([lsid]) => lsid)
 }
 
-export async function getLimuSessionsByStarter(workspaceDir: string, starterSessionId: string): Promise<string[]> {
-  const data = await readBindings(workspaceDir)
+export function getLimuSessionsByStarter(workspaceDir: string, starterSessionId: string): string[] {
+  const data = readBindingsSync(workspaceDir)
   return Object.entries(data.limu)
     .filter(([, fsid]) => fsid === starterSessionId)
     .map(([lsid]) => lsid)
 }
 
-export async function isLimuBoundToFengzhou(
+export function isLimuBoundToFengzhou(
   workspaceDir: string,
   fengzhouSessionId: string,
   limuSessionId: string,
-): Promise<boolean> {
-  const data = await readBindings(workspaceDir)
+): boolean {
+  const data = readBindingsSync(workspaceDir)
   return data.limu[limuSessionId] === fengzhouSessionId
 }
 
@@ -311,7 +320,7 @@ export async function cleanStaleLimuMap(
   workspaceDir: string,
   isAlive: IsAlive,
 ): Promise<number> {
-  const data = await readBindings(workspaceDir)
+  const data = readBindingsSync(workspaceDir)
   let removed = 0
   for (const [lsid, fsid] of Object.entries(data.limu)) {
     if (!(await isAlive(lsid)) || !(await isAlive(fsid))) {
@@ -319,7 +328,7 @@ export async function cleanStaleLimuMap(
       removed++
     }
   }
-  if (removed > 0) await writeBindings(workspaceDir, data)
+  if (removed > 0) writeBindingsSync(workspaceDir, data)
   return removed
 }
 
@@ -327,26 +336,26 @@ export async function cleanStaleLimuMap(
 // 离朱会话绑定（starter → 离朱）
 // ============================================================
 
-export async function bindLizhu(workspaceDir: string, starterSessionId: string, lizhuSessionId: string): Promise<void> {
-  const data = await readBindings(workspaceDir)
+export function bindLizhu(workspaceDir: string, starterSessionId: string, lizhuSessionId: string): void {
+  const data = readBindingsSync(workspaceDir)
   data.lizhu[starterSessionId] = lizhuSessionId
-  await writeBindings(workspaceDir, data)
+  writeBindingsSync(workspaceDir, data)
 }
 
-export async function unbindLizhu(workspaceDir: string, starterSessionId: string): Promise<void> {
-  const data = await readBindings(workspaceDir)
+export function unbindLizhu(workspaceDir: string, starterSessionId: string): void {
+  const data = readBindingsSync(workspaceDir)
   if (!(starterSessionId in data.lizhu)) return
   delete data.lizhu[starterSessionId]
-  await writeBindings(workspaceDir, data)
+  writeBindingsSync(workspaceDir, data)
 }
 
-export async function getBoundLizhu(workspaceDir: string, starterSessionId: string): Promise<string | null> {
-  const data = await readBindings(workspaceDir)
+export function getBoundLizhu(workspaceDir: string, starterSessionId: string): string | null {
+  const data = readBindingsSync(workspaceDir)
   return data.lizhu[starterSessionId] ?? null
 }
 
-export async function getBoundStarter(workspaceDir: string, lizhuSessionId: string): Promise<string | null> {
-  const data = await readBindings(workspaceDir)
+export function getBoundStarter(workspaceDir: string, lizhuSessionId: string): string | null {
+  const data = readBindingsSync(workspaceDir)
   for (const [starter, lizhu] of Object.entries(data.lizhu)) {
     if (lizhu === lizhuSessionId) return starter
   }
@@ -357,26 +366,26 @@ export async function getBoundStarter(workspaceDir: string, lizhuSessionId: stri
 // 离朱 ↔ 风后 会话绑定（力牧新开离朱时绑定所属风后）
 // ============================================================
 
-export async function bindLizhuFengzhou(workspaceDir: string, lizhuSessionId: string, fengzhouSessionId: string): Promise<void> {
-  const data = await readBindings(workspaceDir)
+export function bindLizhuFengzhou(workspaceDir: string, lizhuSessionId: string, fengzhouSessionId: string): void {
+  const data = readBindingsSync(workspaceDir)
   data.lizhu_fengzhou[lizhuSessionId] = fengzhouSessionId
-  await writeBindings(workspaceDir, data)
+  writeBindingsSync(workspaceDir, data)
 }
 
-export async function unbindLizhuFengzhou(workspaceDir: string, lizhuSessionId: string): Promise<void> {
-  const data = await readBindings(workspaceDir)
+export function unbindLizhuFengzhou(workspaceDir: string, lizhuSessionId: string): void {
+  const data = readBindingsSync(workspaceDir)
   if (!(lizhuSessionId in data.lizhu_fengzhou)) return
   delete data.lizhu_fengzhou[lizhuSessionId]
-  await writeBindings(workspaceDir, data)
+  writeBindingsSync(workspaceDir, data)
 }
 
-export async function getLizhuFengzhou(workspaceDir: string, lizhuSessionId: string): Promise<string | null> {
-  const data = await readBindings(workspaceDir)
+export function getLizhuFengzhou(workspaceDir: string, lizhuSessionId: string): string | null {
+  const data = readBindingsSync(workspaceDir)
   return data.lizhu_fengzhou[lizhuSessionId] ?? null
 }
 
-export async function getFengzhouLizhuSessions(workspaceDir: string, fengzhouSessionId: string): Promise<string[]> {
-  const data = await readBindings(workspaceDir)
+export function getFengzhouLizhuSessions(workspaceDir: string, fengzhouSessionId: string): string[] {
+  const data = readBindingsSync(workspaceDir)
   const result = new Set<string>()
   const kuiSid = data.kui[fengzhouSessionId]
   const starterIds = [fengzhouSessionId]
@@ -402,7 +411,7 @@ export async function cleanStaleLizhuFengzhouMap(
   workspaceDir: string,
   isAlive: IsAlive,
 ): Promise<number> {
-  const data = await readBindings(workspaceDir)
+  const data = readBindingsSync(workspaceDir)
   let removed = 0
   for (const [lsid, fsid] of Object.entries(data.lizhu_fengzhou)) {
     if (!(await isAlive(lsid)) || !(await isAlive(fsid))) {
@@ -410,37 +419,40 @@ export async function cleanStaleLizhuFengzhouMap(
       removed++
     }
   }
-  if (removed > 0) await writeBindings(workspaceDir, data)
+  if (removed > 0) writeBindingsSync(workspaceDir, data)
   return removed
 }
 
-/** 查找可复用的离朱会话：未绑定、存活、非活跃。 */
+/** 查找可复用的离朱会话：未绑定、存活、非活跃、且属于当前启动者（dsh parent 关系匹配）。 */
 export async function getAvailableLizhuSession(
   workspaceDir: string,
   isAlive: IsAlive,
+  starterSessionId: string,
+  isChildOf: (childId: string, parentId: string) => Promise<boolean>,
 ): Promise<string | null> {
-  const data = await readBindings(workspaceDir)
+  const data = readBindingsSync(workspaceDir)
   const boundSet = new Set(Object.values(data.lizhu))
 
-  const sessions = await readLizhuSessions(workspaceDir)
+  const sessions = readLizhuSessionsSync(workspaceDir)
   for (const sid of sessions) {
     if (boundSet.has(sid)) continue
 
     if (!(await isAlive(sid))) {
-      await removeLizhuSession(workspaceDir, sid)
+      removeLizhuSession(workspaceDir, sid)
       continue
     }
     if (isWorking(sid)) continue
+    if (!(await isChildOf(sid, starterSessionId))) continue
     return sid
   }
 
   return null
 }
 
-export async function getAllUnboundLizhuSessions(workspaceDir: string): Promise<string[]> {
-  const data = await readBindings(workspaceDir)
+export function getAllUnboundLizhuSessions(workspaceDir: string): string[] {
+  const data = readBindingsSync(workspaceDir)
   const boundSet = new Set(Object.values(data.lizhu))
-  const sessions = await readLizhuSessions(workspaceDir)
+  const sessions = readLizhuSessionsSync(workspaceDir)
   return sessions.filter(sid => !boundSet.has(sid))
 }
 
@@ -448,45 +460,45 @@ function lizhuSessionsPath(workspaceDir: string): string {
   return join(workspaceDir, 'lizhu_sessions.json')
 }
 
-async function readLizhuSessions(workspaceDir: string): Promise<string[]> {
+function readLizhuSessionsSync(workspaceDir: string): string[] {
   const path = lizhuSessionsPath(workspaceDir)
-  if (!(await exists(path))) return []
+  if (!existsSync(path)) return []
   try {
-    return await readJson<string[]>(path)
+    return readJsonSync<string[]>(path)
   } catch {
     return []
   }
 }
 
-async function writeLizhuSessions(workspaceDir: string, data: string[]): Promise<void> {
+function writeLizhuSessionsSync(workspaceDir: string, data: string[]): void {
   const path = lizhuSessionsPath(workspaceDir)
-  await mkdir(dirname(path), { recursive: true })
-  await writeText(path, JSON.stringify(data, null, 2))
+  mkdirSync(dirname(path), { recursive: true })
+  writeJsonSync(path, data)
 }
 
-export async function addLizhuSession(workspaceDir: string, sessionId: string): Promise<void> {
-  const sessions = await readLizhuSessions(workspaceDir)
+export function addLizhuSession(workspaceDir: string, sessionId: string): void {
+  const sessions = readLizhuSessionsSync(workspaceDir)
   if (!sessions.includes(sessionId)) {
     sessions.push(sessionId)
   }
-  await writeLizhuSessions(workspaceDir, sessions)
+  writeLizhuSessionsSync(workspaceDir, sessions)
 }
 
-export async function removeLizhuSession(workspaceDir: string, sessionId: string): Promise<void> {
-  const starter = await getBoundStarter(workspaceDir, sessionId)
-  if (starter) await unbindLizhu(workspaceDir, starter)
-  await unbindLizhuFengzhou(workspaceDir, sessionId)
+export function removeLizhuSession(workspaceDir: string, sessionId: string): void {
+  const starter = getBoundStarter(workspaceDir, sessionId)
+  if (starter) unbindLizhu(workspaceDir, starter)
+  unbindLizhuFengzhou(workspaceDir, sessionId)
 
-  const sessions = await readLizhuSessions(workspaceDir)
+  const sessions = readLizhuSessionsSync(workspaceDir)
   const filtered = sessions.filter(s => s !== sessionId)
-  await writeLizhuSessions(workspaceDir, filtered)
+  writeLizhuSessionsSync(workspaceDir, filtered)
 }
 
 export async function cleanStaleLizhuMap(
   workspaceDir: string,
   isAlive: IsAlive,
 ): Promise<number> {
-  const data = await readBindings(workspaceDir)
+  const data = readBindingsSync(workspaceDir)
   let removed = 0
   for (const [ssid, lsid] of Object.entries(data.lizhu)) {
     if (!(await isAlive(ssid)) || !(await isAlive(lsid))) {
@@ -494,7 +506,7 @@ export async function cleanStaleLizhuMap(
       removed++
     }
   }
-  if (removed > 0) await writeBindings(workspaceDir, data)
+  if (removed > 0) writeBindingsSync(workspaceDir, data)
   return removed
 }
 
@@ -502,17 +514,17 @@ export async function cleanStaleLizhuMap(
 // 风后 ↔ 夔 会话绑定（在 workspace 内）
 // ============================================================
 
-export async function bindKui(workspaceDir: string, fengzhouSessionId: string, kuiSessionId: string): Promise<void> {
-  const data = await readBindings(workspaceDir)
+export function bindKui(workspaceDir: string, fengzhouSessionId: string, kuiSessionId: string): void {
+  const data = readBindingsSync(workspaceDir)
   data.kui[fengzhouSessionId] = kuiSessionId
-  await writeBindings(workspaceDir, data)
+  writeBindingsSync(workspaceDir, data)
 }
 
-export async function unbindKui(workspaceDir: string, fengzhouSessionId: string): Promise<void> {
-  const data = await readBindings(workspaceDir)
+export function unbindKui(workspaceDir: string, fengzhouSessionId: string): void {
+  const data = readBindingsSync(workspaceDir)
   if (!(fengzhouSessionId in data.kui)) return
   delete data.kui[fengzhouSessionId]
-  await writeBindings(workspaceDir, data)
+  writeBindingsSync(workspaceDir, data)
 }
 
 /** 读取风后绑定的夔；会话已失效则删除绑定并返回 null。 */
@@ -521,32 +533,32 @@ export async function getBoundKui(
   fengzhouSessionId: string,
   isAlive: IsAlive,
 ): Promise<string | null> {
-  const data = await readBindings(workspaceDir)
+  const data = readBindingsSync(workspaceDir)
   const sid = data.kui[fengzhouSessionId]
   if (!sid) return null
 
   if (!(await isAlive(sid))) {
     delete data.kui[fengzhouSessionId]
-    await writeBindings(workspaceDir, data)
+    writeBindingsSync(workspaceDir, data)
     return null
   }
   return sid
 }
 
-export async function getKuiStarter(workspaceDir: string, kuiSessionId: string): Promise<string | null> {
-  const data = await readBindings(workspaceDir)
+export function getKuiStarter(workspaceDir: string, kuiSessionId: string): string | null {
+  const data = readBindingsSync(workspaceDir)
   for (const [fsid, ksid] of Object.entries(data.kui)) {
     if (ksid === kuiSessionId) return fsid
   }
   return null
 }
 
-export async function isKuiBoundToFengzhou(
+export function isKuiBoundToFengzhou(
   workspaceDir: string,
   fengzhouSessionId: string,
   kuiSessionId: string,
-): Promise<boolean> {
-  const data = await readBindings(workspaceDir)
+): boolean {
+  const data = readBindingsSync(workspaceDir)
   return data.kui[fengzhouSessionId] === kuiSessionId
 }
 
@@ -554,7 +566,7 @@ export async function cleanStaleKuiMap(
   workspaceDir: string,
   isAlive: IsAlive,
 ): Promise<number> {
-  const data = await readBindings(workspaceDir)
+  const data = readBindingsSync(workspaceDir)
   let removed = 0
   for (const [fsid, ksid] of Object.entries(data.kui)) {
     if (!(await isAlive(fsid)) || !(await isAlive(ksid))) {
@@ -562,7 +574,7 @@ export async function cleanStaleKuiMap(
       removed++
     }
   }
-  if (removed > 0) await writeBindings(workspaceDir, data)
+  if (removed > 0) writeBindingsSync(workspaceDir, data)
   return removed
 }
 
@@ -586,12 +598,12 @@ export async function getKuiSubAgentsStatus(
     }
   }
 
-  const limuSids = await getLimuSessionsByStarter(workspaceDir, kuiSessionId)
+  const limuSids = getLimuSessionsByStarter(workspaceDir, kuiSessionId)
   for (const limuSid of limuSids) {
     if (isWorking(limuSid)) {
       runningAgents.push('力牧')
     }
-    const lizhuSid = await getBoundLizhu(workspaceDir, limuSid)
+    const lizhuSid = getBoundLizhu(workspaceDir, limuSid)
     if (lizhuSid && isWorking(lizhuSid)) {
       runningAgents.push('离朱')
     }

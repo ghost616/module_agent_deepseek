@@ -4,7 +4,7 @@ import {
   moduleAgentDir,
   MODULE_DEFINITION_FILE,
 } from './constants.ts'
-import { exists, readJson, writeText } from './fs.ts'
+import { existsSync, readJsonSync, writeJsonSync } from './fs.ts'
 import { readModuleTree } from './module_tree.ts'
 
 function definitionPath(directory: string, moduleName: string): string {
@@ -18,25 +18,25 @@ export function emptyModuleDef(moduleName: string) {
   }
 }
 
-export async function readModuleDefinition(directory: string, moduleName: string): Promise<{ module_name: string; files: FileEntry[] }> {
+export function readDefinitionSync(directory: string, moduleName: string): { module_name: string; files: FileEntry[] } {
   const path = definitionPath(directory, moduleName)
-  if (!(await exists(path))) {
+  if (!existsSync(path)) {
     return emptyModuleDef('')
   }
   try {
-    return await readJson(path)
+    return readJsonSync<{ module_name: string; files: FileEntry[] }>(path)
   } catch {
     return emptyModuleDef('')
   }
 }
 
-export async function writeModuleDefinition(
+export function writeDefinitionSync(
   directory: string,
   moduleName: string,
   def: { module_name: string; files: FileEntry[] },
-): Promise<void> {
+): void {
   const path = definitionPath(directory, moduleName)
-  await writeText(path, JSON.stringify(def, null, 2))
+  writeJsonSync(path, def)
 }
 
 export interface ModifyDefinitionArgs {
@@ -45,12 +45,12 @@ export interface ModifyDefinitionArgs {
   files_to_update?: FileEntry[]
 }
 
-export async function modifyDefinition(
+export function modifyDefinition(
   directory: string,
   moduleName: string,
   args: ModifyDefinitionArgs,
-): Promise<void> {
-  const current = await readModuleDefinition(directory, moduleName)
+): void {
+  const current = readDefinitionSync(directory, moduleName)
   let files = current.files || []
 
   if (args.files_to_remove) {
@@ -77,7 +77,7 @@ export async function modifyDefinition(
     })
   }
 
-  await writeModuleDefinition(directory, moduleName, {
+  writeDefinitionSync(directory, moduleName, {
     module_name: moduleName,
     files,
   })
@@ -87,7 +87,7 @@ export async function modifyDefinition(
  * 获取模块所有文件所在的父目录列表（去重）
  */
 export async function getModuleParentDirs(directory: string, moduleName: string): Promise<string[]> {
-  const def = await readModuleDefinition(directory, moduleName)
+  const def = readDefinitionSync(directory, moduleName)
   const dirs = new Set<string>()
   for (const f of def.files) {
     const d = dirname(f.path)
@@ -103,7 +103,7 @@ export async function findModulesByFilePath(directory: string, filePath: string)
   const tree = await readModuleTree(directory)
   const result: string[] = []
   for (const m of tree.modules) {
-    const def = await readModuleDefinition(directory, m.name)
+    const def = readDefinitionSync(directory, m.name)
     if (def.files.some((f) => f.path === filePath)) {
       result.push(m.name)
     }
@@ -114,11 +114,11 @@ export async function findModulesByFilePath(directory: string, filePath: string)
 /**
  * 删除指定模块 module_definition 中匹配 paths 的文件条目
  */
-export async function removeFilesFromModule(directory: string, moduleName: string, paths: string[]): Promise<void> {
+export function removeFilesFromModule(directory: string, moduleName: string, paths: string[]): void {
   const removeSet = new Set(paths)
-  const current = await readModuleDefinition(directory, moduleName)
+  const current = readDefinitionSync(directory, moduleName)
   const remaining = current.files.filter((f) => !removeSet.has(f.path))
-  await writeModuleDefinition(directory, moduleName, {
+  writeDefinitionSync(directory, moduleName, {
     module_name: moduleName,
     files: remaining,
   })

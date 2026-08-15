@@ -42,7 +42,7 @@ export function createCorrectionTool(options: CorrectionToolOptions) {
         return { status: 'error', error: 'module_agent_correction 仅供风后调用。' }
       }
 
-      const ws = await resolveWorkspace(directory, sessionId)
+      const ws = resolveWorkspace(directory, sessionId)
       if (!ws) {
         return { status: 'error', error: '未关联工作空间' }
       }
@@ -52,12 +52,12 @@ export function createCorrectionTool(options: CorrectionToolOptions) {
         if (!args.content) {
           return { status: 'error', error: 'action=add 时必须提供 content' }
         }
-        await appendCorrection(workspaceDir, args.content)
+        appendCorrection(workspaceDir, args.content)
         return { status: 'ok', message: '用户纠正已记录' }
       }
 
       if (args.action === 'read') {
-        const corrections = await readCorrections(workspaceDir)
+        const corrections = readCorrections(workspaceDir)
         const entries = corrections.map((c, i) => ({ index: i, content: c.content, timestamp: c.timestamp }))
         return { status: 'ok', corrections: entries }
       }
@@ -66,7 +66,7 @@ export function createCorrectionTool(options: CorrectionToolOptions) {
         if (args.index === undefined) {
           return { status: 'error', error: 'action=remove 时必须提供 index' }
         }
-        const ok = await removeCorrection(workspaceDir, args.index)
+        const ok = removeCorrection(workspaceDir, args.index)
         if (!ok) {
           return { status: 'error', error: `索引 ${args.index} 不存在` }
         }

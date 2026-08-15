@@ -64,14 +64,14 @@ export function createKnowledgeBaseTool(options: KnowledgeBaseToolOptions) {
       const action = args.action
 
       try {
-        const boundName = await getBoundWorkspace(directory, sessionId)
+        const boundName = getBoundWorkspace(directory, sessionId)
         if (!boundName) {
           return { status: 'error', error: '当前未绑定工作空间，请先调用 workspace(action="create"|"bind")' }
         }
         const wsDir = getWorkspaceDir(directory, boundName)
 
         if (action === 'list') {
-          const bases = await listKnowledgeBases(wsDir)
+          const bases = listKnowledgeBases(wsDir)
           return { status: 'ok', workspace_name: boundName, knowledge_bases: bases as unknown as JsonValue }
         }
 
@@ -85,7 +85,7 @@ export function createKnowledgeBaseTool(options: KnowledgeBaseToolOptions) {
               return { status: 'error', error: '每个知识库需包含 dir 和 description' }
             }
           }
-          await setKnowledgeBases(wsDir, list as KnowledgeBase[])
+          setKnowledgeBases(wsDir, list as KnowledgeBase[])
           return { status: 'ok', workspace_name: boundName, knowledge_bases: list as unknown as JsonValue }
         }
 
@@ -95,8 +95,8 @@ export function createKnowledgeBaseTool(options: KnowledgeBaseToolOptions) {
           if (!dir || !description) {
             return { status: 'error', error: 'add 需要 dir 和 description' }
           }
-          await addKnowledgeBase(wsDir, { dir, description })
-          const bases = await listKnowledgeBases(wsDir)
+          addKnowledgeBase(wsDir, { dir, description })
+          const bases = listKnowledgeBases(wsDir)
           return { status: 'ok', workspace_name: boundName, knowledge_bases: bases as unknown as JsonValue }
         }
 
@@ -105,8 +105,8 @@ export function createKnowledgeBaseTool(options: KnowledgeBaseToolOptions) {
           if (!dir) {
             return { status: 'error', error: 'remove 需要 dir' }
           }
-          const removed = await removeKnowledgeBase(wsDir, dir)
-          const bases = await listKnowledgeBases(wsDir)
+          const removed = removeKnowledgeBase(wsDir, dir)
+          const bases = listKnowledgeBases(wsDir)
           return { status: 'ok', removed, workspace_name: boundName, knowledge_bases: bases as unknown as JsonValue }
         }
 

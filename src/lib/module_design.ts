@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 import { MODULE_AGENT_DIR, MODULE_DESIGN_FILE } from './constants.ts'
-import { exists, readJson, writeText } from './fs.ts'
+import { existsSync, readJsonSync, writeJsonSync } from './fs.ts'
 
 export interface ModuleDesignEntry {
   name: string
@@ -23,29 +23,28 @@ function emptyDesign(): ModuleDesign {
   return { requirements: 'requirements_design.md', modules: [] }
 }
 
-export async function readModuleDesign(directory: string): Promise<ModuleDesign> {
+export function readDesignSync(directory: string): ModuleDesign {
   const path = designPath(directory)
-  if (!(await exists(path))) {
+  if (!existsSync(path)) {
     return emptyDesign()
   }
   try {
-    return await readJson<ModuleDesign>(path)
+    return readJsonSync<ModuleDesign>(path)
   } catch {
     return emptyDesign()
   }
 }
 
-export async function writeModuleDesign(directory: string, design: ModuleDesign): Promise<void> {
-  const path = designPath(directory)
-  await writeText(path, JSON.stringify(design, null, 2))
+export function writeDesignSync(directory: string, design: ModuleDesign): void {
+  writeJsonSync(designPath(directory), design)
 }
 
-export async function addOrUpdateModule(
+export function addOrUpdateModule(
   directory: string,
   entry: ModuleDesignEntry,
   isUpdate: boolean,
-): Promise<void> {
-  const design = await readModuleDesign(directory)
+): void {
+  const design = readDesignSync(directory)
   const idx = design.modules.findIndex((m) => m.name === entry.name)
 
   if (idx === -1) {
@@ -66,16 +65,16 @@ export async function addOrUpdateModule(
     }
   }
 
-  await writeModuleDesign(directory, design)
+  writeDesignSync(directory, design)
 }
 
-export async function removeModuleDesign(
+export function removeModuleDesign(
   directory: string,
   moduleName: string,
-): Promise<void> {
-  const design = await readModuleDesign(directory)
+): void {
+  const design = readDesignSync(directory)
   const remaining = design.modules.filter((m) => m.name !== moduleName)
   if (remaining.length === design.modules.length) return
   design.modules = remaining
-  await writeModuleDesign(directory, design)
+  writeDesignSync(directory, design)
 }

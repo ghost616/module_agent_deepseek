@@ -1,4 +1,4 @@
-import { accessSync, readFileSync } from 'node:fs'
+import { accessSync, readFileSync, writeFileSync } from 'node:fs'
 import { access, readFile, writeFile } from 'node:fs/promises'
 
 export async function exists(path: string): Promise<boolean> {
@@ -41,6 +41,13 @@ export function existsSync(path: string): boolean {
  */
 export function readJsonSync<T>(path: string): T {
   return JSON.parse(readFileSync(path, 'utf-8'))
+}
+
+/**
+ * 同步写 JSON 文件（2 空格缩进）。与 readJsonSync 配套，用于同步 read-modify-write 避免并发竞态。
+ */
+export function writeJsonSync(path: string, data: unknown): void {
+  writeFileSync(path, JSON.stringify(data, null, 2))
 }
 
 /**

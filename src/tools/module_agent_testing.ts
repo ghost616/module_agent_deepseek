@@ -71,7 +71,7 @@ export function createModuleAgentTestingTool(options: ModuleAgentTestingToolOpti
       // 离朱启动者绑定校验（orchestration：会话绑定跟踪）。未绑定启动者的离朱不得写入测试报告。
       if (action === 'write_report' && mode === 'lizhu') {
         if (workspaceDir) {
-          const starter = await getBoundStarter(workspaceDir, agentId)
+          const starter = getBoundStarter(workspaceDir, agentId)
           if (!starter) {
             return { status: 'error', error: '离朱未绑定启动者，无法写入测试报告。' }
           }
@@ -86,7 +86,7 @@ export function createModuleAgentTestingTool(options: ModuleAgentTestingToolOpti
         if (!workspaceDir) {
           return { status: 'error', error: '未关联工作空间，无法存储测试说明。' }
         }
-        await writeTestSpec(workspaceDir, agentId, content)
+        writeTestSpec(workspaceDir, agentId, content)
         return { action: 'write_spec', status: 'ok', path: `test_specs/${agentId}.json` }
       }
 
@@ -98,7 +98,7 @@ export function createModuleAgentTestingTool(options: ModuleAgentTestingToolOpti
         if (!workspaceDir) {
           return { status: 'error', error: '未关联工作空间，无法存储测试报告。' }
         }
-        await writeTestReport(workspaceDir, agentId, content)
+        writeTestReport(workspaceDir, agentId, content)
         return { action: 'write_report', status: 'ok', path: `test_reports/${agentId}.json` }
       }
 

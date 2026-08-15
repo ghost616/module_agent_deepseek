@@ -14,7 +14,7 @@ import {
   deleteCompletedPlans,
   createReviewPlan,
 } from '../lib/development_plan.ts'
-import { readModuleDefinition } from '../lib/module_definition.ts'
+import { readDefinitionSync } from '../lib/module_definition.ts'
 import { getPlanIdBySession, removeMappingByPlanId } from '../lib/session_plan_map.ts'
 import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
 import { releasePlanFilesSession } from '../lib/plan_files.ts'
@@ -127,7 +127,7 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
 
       try {
         if (action === 'read_metadata') {
-          const meta = await readAllMetadata(wsDir)
+          const meta = readAllMetadata(wsDir)
           return { status: 'ok', plans: meta as unknown as JsonValue[] }
         }
 
@@ -136,12 +136,12 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
           if (!files || files.length === 0) {
             return { status: 'error', error: 'plan_complete 需提供非空的 files 列表' }
           }
-          const planId = await getPlanIdBySession(wsDir, agentId)
+          const planId = getPlanIdBySession(wsDir, agentId)
           if (!planId) {
             return { status: 'error', error: '当前会话未关联任何计划' }
           }
 
-          const allMeta = await readAllMetadata(wsDir)
+          const allMeta = readAllMetadata(wsDir)
           const currentMeta = allMeta.find(m => m.plan_id === planId)
           if (!currentMeta || !currentMeta.test_passed) {
             return {
@@ -150,27 +150,27 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
             }
           }
 
-          const plan = await readPlan(wsDir, planId)
-          const ok = await markPlanComplete(wsDir, planId, files)
+          const plan = readPlan(wsDir, planId)
+          const ok = markPlanComplete(wsDir, planId, files)
           if (!ok) {
             return { status: 'error', error: `计划 ${planId} 不存在` }
           }
           if (plan) {
-            await releasePlanFilesSession(directory, plan.module_name, agentId)
+            releasePlanFilesSession(directory, plan.module_name, agentId)
           }
-          await removeMappingByPlanId(wsDir, planId)
+          removeMappingByPlanId(wsDir, planId)
           return { status: 'ok', plan_id: planId, modified_files: files }
         }
 
         if (action === 'set_test_passed') {
           const passed = args.test_passed ?? false
-          const planId = await getPlanIdBySession(wsDir, agentId)
+          const planId = getPlanIdBySession(wsDir, agentId)
           if (!planId) {
             return { status: 'error', error: '当前会话未关联任何计划' }
           }
 
           // 离朱绑定与测试报告已读取校验（orchestration：会话绑定跟踪）。
-          const lizhuSid = await getBoundLizhu(wsDir, agentId)
+          const lizhuSid = getBoundLizhu(wsDir, agentId)
           if (lizhuSid) {
             const reportPath = join(wsDir, 'test_reports', `${sanitizeIdSegment(lizhuSid)}.json`)
             if (!(await exists(reportPath))) {
@@ -205,7 +205,7 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
             }
           }
 
-          const ok = await markTestPassed(wsDir, planId, passed)
+          const ok = markTestPassed(wsDir, planId, passed)
           if (!ok) {
             return { status: 'error', error: `计划 ${planId} 不存在` }
           }
@@ -214,8 +214,8 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
 
         if (action === 'get_pending_review') {
           // 皋陶启动者过滤（orchestration：会话绑定跟踪）。
-          const starterSid = await getGaotaoStarter(wsDir, agentId)
-          const plan = await getFirstPendingReview(wsDir, starterSid ?? undefined)
+          const starterSid = getGaotaoStarter(wsDir, agentId)
+          const plan = getFirstPendingReview(wsDir, starterSid ?? undefined)
           if (!plan) {
             return { status: 'ok', message: '当前没有已完成且未审查的计划' }
           }
@@ -247,7 +247,7 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
 
           const resolvedFiles: string[] = []
           if (module_name) {
-            const def = await readModuleDefinition(directory, module_name)
+            const def = readDefinitionSync(directory, module_name)
             for (const f of def.files) {
               resolvedFiles.push(f.path)
             }
@@ -263,7 +263,7 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
             return { status: 'error', error: '未解析到任何待审查文件，请检查 module_name 下的文件定义或 file_paths' }
           }
 
-          await createReviewPlan(
+          createReviewPlan(
             wsDir,
             planId,
             resolvedFiles,
@@ -294,7 +294,7 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
         }
 
         if (action === 'clean_completed') {
-          const count = await deleteCompletedPlans(wsDir)
+          const count = deleteCompletedPlans(wsDir)
           return { status: 'ok', deleted: count }
         }
 
@@ -304,7 +304,7 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
         }
 
         if (action === 'read_plan') {
-          const plan = await readPlan(wsDir, planId)
+          const plan = readPlan(wsDir, planId)
           if (!plan) {
             return { status: 'error', error: `计划 ${planId} 不存在` }
           }
@@ -319,24 +319,24 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
         }
 
         if (action === 'delete_plan') {
-          const ok = await deletePlan(wsDir, planId)
+          const ok = deletePlan(wsDir, planId)
           if (!ok) {
             return { status: 'error', error: `计划 ${planId} 不存在` }
           }
-          await removeMappingByPlanId(wsDir, planId)
+          removeMappingByPlanId(wsDir, planId)
           return { status: 'ok', plan_id: planId }
         }
 
         if (action === 'review_complete') {
           // 夔绑定皋陶校验（orchestration：会话绑定跟踪）。
           if (mode === 'kui') {
-            const hasGaotao = await hasGaotaoBound(wsDir, agentId)
+            const hasGaotao = hasGaotaoBound(wsDir, agentId)
             if (!hasGaotao) {
               return { status: 'error', error: '夔未绑定皋陶，请先调用 module_agent_executor(action="start_review") 启动皋陶审查。' }
             }
           }
 
-          const ok = await markReviewComplete(wsDir, planId)
+          const ok = markReviewComplete(wsDir, planId)
           if (!ok) {
             return { status: 'error', error: `计划 ${planId} 不存在` }
           }

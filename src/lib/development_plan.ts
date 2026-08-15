@@ -1,6 +1,6 @@
 import { join } from 'node:path'
-import { mkdir, readdir, unlink } from 'node:fs/promises'
-import { exists, readJson, writeText } from './fs.ts'
+import { mkdirSync, readdirSync, unlinkSync } from 'node:fs'
+import { existsSync, readJsonSync, writeJsonSync } from './fs.ts'
 import type { PlanDetail, PlanMeta } from './types.ts'
 
 function getPlanDir(workspaceDir: string): string {
@@ -15,45 +15,56 @@ function getPlanFilePath(workspaceDir: string, planId: string): string {
   return join(workspaceDir, 'development_plan', `${planId}.json`)
 }
 
-async function ensureDir(workspaceDir: string): Promise<void> {
+function ensureDir(workspaceDir: string): void {
   const dir = getPlanDir(workspaceDir)
-  if (!(await exists(dir))) {
-    await mkdir(dir, { recursive: true })
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true })
   }
 }
 
-export async function readAllMetadata(workspaceDir: string): Promise<PlanMeta[]> {
+/** 同步读取 metadata.json（PlanMeta 数组），缺失或解析失败返回空数组。 */
+export function readAllMetadataSync(workspaceDir: string): PlanMeta[] {
   const path = getMetadataPath(workspaceDir)
-  if (!(await exists(path))) return []
+  if (!existsSync(path)) return []
   try {
-    return await readJson<PlanMeta[]>(path)
+    return readJsonSync<PlanMeta[]>(path)
   } catch {
     return []
   }
 }
 
-export async function readPlan(workspaceDir: string, planId: string): Promise<PlanDetail | null> {
+/** 同步写入 metadata.json。 */
+export function writeMetadataSync(workspaceDir: string, metadata: PlanMeta[]): void {
+  ensureDir(workspaceDir)
+  writeJsonSync(getMetadataPath(workspaceDir), metadata)
+}
+
+export function readAllMetadata(workspaceDir: string): PlanMeta[] {
+  return readAllMetadataSync(workspaceDir)
+}
+
+export function readPlan(workspaceDir: string, planId: string): PlanDetail | null {
   const path = getPlanFilePath(workspaceDir, planId)
-  if (!(await exists(path))) return null
+  if (!existsSync(path)) return null
   try {
-    return await readJson<PlanDetail>(path)
+    return readJsonSync<PlanDetail>(path)
   } catch {
     return null
   }
 }
 
-export async function savePlan(
+export function savePlan(
   workspaceDir: string,
   planId: string,
   planData: PlanDetail,
   planSummary: string,
   starterSessionId: string,
-): Promise<void> {
-  await ensureDir(workspaceDir)
+): void {
+  ensureDir(workspaceDir)
 
-  await writeText(getPlanFilePath(workspaceDir, planId), JSON.stringify(planData, null, 2))
+  writeJsonSync(getPlanFilePath(workspaceDir, planId), planData)
 
-  const metadata = await readAllMetadata(workspaceDir)
+  const metadata = readAllMetadataSync(workspaceDir)
   const existing = metadata.findIndex(m => m.plan_id === planId)
   const entry: PlanMeta = {
     plan_id: planId,
@@ -68,18 +79,18 @@ export async function savePlan(
   } else {
     metadata.push(entry)
   }
-  await writeText(getMetadataPath(workspaceDir), JSON.stringify(metadata, null, 2))
+  writeMetadataSync(workspaceDir, metadata)
 }
 
-export async function createReviewPlan(
+export function createReviewPlan(
   workspaceDir: string,
   planId: string,
   filePaths: string[],
   reviewDescription: string,
   planSummary: string,
   starterSessionId: string,
-): Promise<void> {
-  await savePlan(workspaceDir, planId, {
+): void {
+  savePlan(workspaceDir, planId, {
     plan_id: planId,
     module_name: '',
     development_plan: reviewDescription,
@@ -87,44 +98,44 @@ export async function createReviewPlan(
     modified_files: filePaths,
   }, planSummary, starterSessionId)
 
-  await markPlanComplete(workspaceDir, planId, filePaths)
+  markPlanComplete(workspaceDir, planId, filePaths)
 }
 
-export async function markPlanComplete(
+export function markPlanComplete(
   workspaceDir: string,
   planId: string,
   files: string[],
-): Promise<boolean> {
-  const plan = await readPlan(workspaceDir, planId)
+): boolean {
+  const plan = readPlan(workspaceDir, planId)
   if (!plan) return false
 
   plan.modified_files = files
-  await writeText(getPlanFilePath(workspaceDir, planId), JSON.stringify(plan, null, 2))
+  writeJsonSync(getPlanFilePath(workspaceDir, planId), plan)
 
-  const metadata = await readAllMetadata(workspaceDir)
+  const metadata = readAllMetadataSync(workspaceDir)
   const entry = metadata.find(m => m.plan_id === planId)
   if (entry) {
     entry.plan_completed = true
-    await writeText(getMetadataPath(workspaceDir), JSON.stringify(metadata, null, 2))
+    writeMetadataSync(workspaceDir, metadata)
   }
   return true
 }
 
-export async function markTestPassed(
+export function markTestPassed(
   workspaceDir: string,
   planId: string,
   testPassed: boolean,
-): Promise<boolean> {
-  const metadata = await readAllMetadata(workspaceDir)
+): boolean {
+  const metadata = readAllMetadataSync(workspaceDir)
   const entry = metadata.find(m => m.plan_id === planId)
   if (!entry) return false
   entry.test_passed = testPassed
-  await writeText(getMetadataPath(workspaceDir), JSON.stringify(metadata, null, 2))
+  writeMetadataSync(workspaceDir, metadata)
   return true
 }
 
-export async function getFirstPendingReview(workspaceDir: string, starterSessionId?: string): Promise<PlanDetail | null> {
-  const metadata = await readAllMetadata(workspaceDir)
+export function getFirstPendingReview(workspaceDir: string, starterSessionId?: string): PlanDetail | null {
+  const metadata = readAllMetadataSync(workspaceDir)
   for (const meta of metadata) {
     if (!meta.plan_completed || meta.code_reviewed) continue
     if (starterSessionId && meta.starter_session_id !== starterSessionId) continue
@@ -133,40 +144,40 @@ export async function getFirstPendingReview(workspaceDir: string, starterSession
   return null
 }
 
-export async function markReviewComplete(workspaceDir: string, planId: string): Promise<boolean> {
-  const metadata = await readAllMetadata(workspaceDir)
+export function markReviewComplete(workspaceDir: string, planId: string): boolean {
+  const metadata = readAllMetadataSync(workspaceDir)
   const entry = metadata.find(m => m.plan_id === planId)
   if (!entry) return false
   entry.code_reviewed = true
-  await writeText(getMetadataPath(workspaceDir), JSON.stringify(metadata, null, 2))
+  writeMetadataSync(workspaceDir, metadata)
   return true
 }
 
-export async function deletePlan(workspaceDir: string, planId: string): Promise<boolean> {
+export function deletePlan(workspaceDir: string, planId: string): boolean {
   const planPath = getPlanFilePath(workspaceDir, planId)
   let deleted = false
 
-  if (await exists(planPath)) {
-    await unlink(planPath)
+  if (existsSync(planPath)) {
+    unlinkSync(planPath)
     deleted = true
   }
 
-  const metadata = await readAllMetadata(workspaceDir)
+  const metadata = readAllMetadataSync(workspaceDir)
   const filtered = metadata.filter(m => m.plan_id !== planId)
   if (filtered.length !== metadata.length) {
-    await writeText(getMetadataPath(workspaceDir), JSON.stringify(filtered, null, 2))
+    writeMetadataSync(workspaceDir, filtered)
     deleted = true
   }
 
   return deleted
 }
 
-export async function deleteCompletedPlans(workspaceDir: string): Promise<number> {
-  const metadata = await readAllMetadata(workspaceDir)
+export function deleteCompletedPlans(workspaceDir: string): number {
+  const metadata = readAllMetadataSync(workspaceDir)
   let deleted = 0
   for (const meta of metadata) {
     if (meta.plan_completed && meta.code_reviewed) {
-      if (await deletePlan(workspaceDir, meta.plan_id)) {
+      if (deletePlan(workspaceDir, meta.plan_id)) {
         deleted++
       }
     }
@@ -179,15 +190,15 @@ export async function cleanStalePlans(
   isAlive: (sessionId: string) => Promise<boolean>,
 ): Promise<string[]> {
   const dir = getPlanDir(workspaceDir)
-  if (!(await exists(dir))) return []
-  const files = await readdir(dir)
+  if (!existsSync(dir)) return []
+  const files = readdirSync(dir)
   const deleted: string[] = []
   for (const f of files) {
     if (!f.endsWith('.json') || f === 'metadata.json') continue
     const planId = f.slice(0, -5)
-    const plan = await readPlan(workspaceDir, planId)
+    const plan = readPlan(workspaceDir, planId)
     if (!plan || !(await isAlive(plan.session_id))) {
-      if (await deletePlan(workspaceDir, planId)) {
+      if (deletePlan(workspaceDir, planId)) {
         deleted.push(planId)
       }
     }

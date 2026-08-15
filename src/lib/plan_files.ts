@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { moduleAgentDir, PLAN_FILES_FILE } from './constants.ts'
-import { exists, readJson, writeText } from './fs.ts'
-import { unlink } from 'node:fs/promises'
+import { existsSync, readJsonSync, writeJsonSync } from './fs.ts'
+import { unlinkSync } from 'node:fs'
 
 export interface PlanSession {
   session_id: string
@@ -21,24 +21,24 @@ function emptyPlanFiles(): PlanFiles {
   return { sessions: [] }
 }
 
-export async function readPlanFiles(directory: string, moduleName: string): Promise<PlanFiles | null> {
+export function readPlanFiles(directory: string, moduleName: string): PlanFiles | null {
   const path = planFilesPath(directory, moduleName)
-  if (!(await exists(path))) return null
+  if (!existsSync(path)) return null
   try {
-    return await readJson<PlanFiles>(path)
+    return readJsonSync<PlanFiles>(path)
   } catch {
     return null
   }
 }
 
-export async function addPlanFiles(
+export function addPlanFiles(
   directory: string,
   moduleName: string,
   sessionId: string,
   files: string[],
   status: 'started' | 'running',
-): Promise<void> {
-  const existing = await readPlanFiles(directory, moduleName)
+): void {
+  const existing = readPlanFiles(directory, moduleName)
   const data: PlanFiles = existing || emptyPlanFiles()
 
   // 查找匹配的 session 条目
@@ -57,16 +57,16 @@ export async function addPlanFiles(
   }
 
   const path = planFilesPath(directory, moduleName)
-  await writeText(path, JSON.stringify(data, null, 2))
+  writeJsonSync(path, data)
 }
 
-export async function removePlanFiles(
+export function removePlanFiles(
   directory: string,
   moduleName: string,
   sessionId: string,
   files: string[],
-): Promise<void> {
-  const existing = await readPlanFiles(directory, moduleName)
+): void {
+  const existing = readPlanFiles(directory, moduleName)
   if (!existing) return
 
   const sessionIdx = existing.sessions.findIndex((s) => s.session_id === sessionId)
@@ -83,18 +83,18 @@ export async function removePlanFiles(
 
   const path = planFilesPath(directory, moduleName)
   if (existing.sessions.length === 0) {
-    try { await unlink(path) } catch { /* 文件已不存在时无需删除 */ }
+    try { unlinkSync(path) } catch { /* 文件已不存在时无需删除 */ }
   } else {
-    await writeText(path, JSON.stringify(existing, null, 2))
+    writeJsonSync(path, existing)
   }
 }
 
-export async function releasePlanFilesSession(
+export function releasePlanFilesSession(
   directory: string,
   moduleName: string,
   sessionId: string,
-): Promise<void> {
-  const existing = await readPlanFiles(directory, moduleName)
+): void {
+  const existing = readPlanFiles(directory, moduleName)
   if (!existing) return
 
   const idx = existing.sessions.findIndex((s) => s.session_id === sessionId)
@@ -103,9 +103,9 @@ export async function releasePlanFilesSession(
 
   const path = planFilesPath(directory, moduleName)
   if (existing.sessions.length === 0) {
-    try { await unlink(path) } catch { /* 文件已不存在时无需删除 */ }
+    try { unlinkSync(path) } catch { /* 文件已不存在时无需删除 */ }
   } else {
-    await writeText(path, JSON.stringify(existing, null, 2))
+    writeJsonSync(path, existing)
   }
 }
 
@@ -114,13 +114,13 @@ export async function cleanStalePlanFilesForModule(
   moduleName: string,
   isAlive: (sessionId: string) => Promise<boolean>,
 ): Promise<number> {
-  const existing = await readPlanFiles(directory, moduleName)
+  const existing = readPlanFiles(directory, moduleName)
   if (!existing) return 0
   const sessionIds = existing.sessions.map((s) => s.session_id)
   let removed = 0
   for (const sid of sessionIds) {
     if (!(await isAlive(sid))) {
-      await releasePlanFilesSession(directory, moduleName, sid)
+      releasePlanFilesSession(directory, moduleName, sid)
       removed++
     }
   }

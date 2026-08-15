@@ -1,6 +1,6 @@
 import { join, isAbsolute, resolve } from 'node:path'
-import { mkdir } from 'node:fs/promises'
-import { exists, existsSync, readJson, readJsonSync, writeText } from './fs.ts'
+import { mkdirSync } from 'node:fs'
+import { existsSync, readJsonSync, writeJsonSync } from './fs.ts'
 
 export interface KnowledgeBase {
   dir: string
@@ -17,25 +17,25 @@ function filePath(workspaceDir: string): string {
   return join(workspaceDir, FILE_NAME)
 }
 
-async function readFile(workspaceDir: string): Promise<KnowledgeBaseFile> {
+function readFileSync(workspaceDir: string): KnowledgeBaseFile {
   const path = filePath(workspaceDir)
-  if (!(await exists(path))) return { knowledge_bases: [] }
+  if (!existsSync(path)) return { knowledge_bases: [] }
   try {
-    const data = await readJson<Partial<KnowledgeBaseFile>>(path)
+    const data = readJsonSync<Partial<KnowledgeBaseFile>>(path)
     return { knowledge_bases: Array.isArray(data.knowledge_bases) ? data.knowledge_bases : [] }
   } catch {
     return { knowledge_bases: [] }
   }
 }
 
-async function writeFile(workspaceDir: string, data: KnowledgeBaseFile): Promise<void> {
+function writeFileSync(workspaceDir: string, data: KnowledgeBaseFile): void {
   const path = filePath(workspaceDir)
-  await mkdir(workspaceDir, { recursive: true })
-  await writeText(path, JSON.stringify(data, null, 2))
+  mkdirSync(workspaceDir, { recursive: true })
+  writeJsonSync(path, data)
 }
 
-export async function listKnowledgeBases(workspaceDir: string): Promise<KnowledgeBase[]> {
-  const data = await readFile(workspaceDir)
+export function listKnowledgeBases(workspaceDir: string): KnowledgeBase[] {
+  const data = readFileSync(workspaceDir)
   return data.knowledge_bases
 }
 
@@ -44,36 +44,29 @@ export async function listKnowledgeBases(workspaceDir: string): Promise<Knowledg
  * 仅在提示词注入路径使用；文件缺失或解析失败返回空列表。
  */
 export function listKnowledgeBasesSync(workspaceDir: string): KnowledgeBase[] {
-  const path = filePath(workspaceDir)
-  if (!existsSync(path)) return []
-  try {
-    const data = readJsonSync<Partial<KnowledgeBaseFile>>(path)
-    return Array.isArray(data.knowledge_bases) ? data.knowledge_bases : []
-  } catch {
-    return []
-  }
+  return listKnowledgeBases(workspaceDir)
 }
 
-export async function setKnowledgeBases(workspaceDir: string, bases: KnowledgeBase[]): Promise<void> {
-  await writeFile(workspaceDir, { knowledge_bases: bases })
+export function setKnowledgeBases(workspaceDir: string, bases: KnowledgeBase[]): void {
+  writeFileSync(workspaceDir, { knowledge_bases: bases })
 }
 
-export async function addKnowledgeBase(workspaceDir: string, base: KnowledgeBase): Promise<void> {
-  const data = await readFile(workspaceDir)
+export function addKnowledgeBase(workspaceDir: string, base: KnowledgeBase): void {
+  const data = readFileSync(workspaceDir)
   const target = normalizeDir(resolveToAbsolute(base.dir, ''))
   const idx = data.knowledge_bases.findIndex((b) => normalizeDir(resolveToAbsolute(b.dir, '')) === target)
   if (idx >= 0) data.knowledge_bases[idx] = base
   else data.knowledge_bases.push(base)
-  await writeFile(workspaceDir, data)
+  writeFileSync(workspaceDir, data)
 }
 
-export async function removeKnowledgeBase(workspaceDir: string, dir: string): Promise<boolean> {
-  const data = await readFile(workspaceDir)
+export function removeKnowledgeBase(workspaceDir: string, dir: string): boolean {
+  const data = readFileSync(workspaceDir)
   const target = normalizeDir(resolveToAbsolute(dir, ''))
   const before = data.knowledge_bases.length
   data.knowledge_bases = data.knowledge_bases.filter((b) => normalizeDir(resolveToAbsolute(b.dir, '')) !== target)
   const removed = data.knowledge_bases.length !== before
-  if (removed) await writeFile(workspaceDir, data)
+  if (removed) writeFileSync(workspaceDir, data)
   return removed
 }
 

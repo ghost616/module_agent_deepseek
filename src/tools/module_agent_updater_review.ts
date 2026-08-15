@@ -22,7 +22,7 @@ async function handleWriteReview(
     return { status: 'error', error: 'write_review 需要 plan_id' }
   }
 
-  const existing = await readReviewResult(workspaceDir, reviewerSessionId)
+  const existing = readReviewResult(workspaceDir, reviewerSessionId)
   const planReviews: PlanReview[] = existing?.planReviews ?? []
 
   const idx = planReviews.findIndex(p => p.plan_id === planId)
@@ -39,7 +39,7 @@ async function handleWriteReview(
     planReviews.push(review)
   }
 
-  await writeReviewResult(workspaceDir, reviewerSessionId, {
+  writeReviewResult(workspaceDir, reviewerSessionId, {
     reviewer_session_id: reviewerSessionId,
     planReviews,
   })

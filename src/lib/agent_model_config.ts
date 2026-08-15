@@ -1,6 +1,6 @@
 import { join } from 'node:path'
-import { mkdir } from 'node:fs/promises'
-import { exists, readJson, writeText } from './fs.ts'
+import { mkdirSync } from 'node:fs'
+import { existsSync, readJsonSync, writeJsonSync } from './fs.ts'
 
 export interface AgentModelEntry {
   providerID: string
@@ -37,20 +37,20 @@ function configPath(workspaceDir: string): string {
   return join(workspaceDir, FILE_NAME)
 }
 
-export async function readAgentModelConfig(workspaceDir: string): Promise<AgentModelConfig | null> {
+export function readAgentModelConfig(workspaceDir: string): AgentModelConfig | null {
   const path = configPath(workspaceDir)
-  if (!(await exists(path))) return null
+  if (!existsSync(path)) return null
   try {
-    return await readJson<AgentModelConfig>(path)
+    return readJsonSync<AgentModelConfig>(path)
   } catch {
     return null
   }
 }
 
-export async function writeAgentModelConfig(workspaceDir: string, config: AgentModelConfig): Promise<void> {
+export function writeAgentModelConfig(workspaceDir: string, config: AgentModelConfig): void {
   const path = configPath(workspaceDir)
-  await mkdir(workspaceDir, { recursive: true })
-  await writeText(path, JSON.stringify(config, null, 2))
+  mkdirSync(workspaceDir, { recursive: true })
+  writeJsonSync(path, config)
 }
 
 export async function validateModelConfig(

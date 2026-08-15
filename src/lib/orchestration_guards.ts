@@ -80,7 +80,7 @@ export function registerOrchestrationGuards(ctx: Context, options: Orchestration
         // 工作空间解析失败视为无工作空间，跳过绑定离朱运行守卫
       }
       if (wsName !== null) {
-        const boundLizhu = await getBoundLizhu(getWorkspaceDir(directory, wsName), agentId)
+        const boundLizhu = getBoundLizhu(getWorkspaceDir(directory, wsName), agentId)
         if (boundLizhu !== null && isWorking(boundLizhu)) {
           return { kind: 'deny', reason: '力牧绑定的离朱仍在运行，请等待离朱测试完成后再操作。' }
         }
@@ -98,7 +98,7 @@ export function registerOrchestrationGuards(ctx: Context, options: Orchestration
       if (wsName === null) {
         return { kind: 'deny', reason: '离朱未绑定启动者，无法执行操作。' }
       }
-      const starter = await getBoundStarter(getWorkspaceDir(directory, wsName), agentId)
+      const starter = getBoundStarter(getWorkspaceDir(directory, wsName), agentId)
       if (starter === null) {
         return { kind: 'deny', reason: '离朱未绑定启动者，无法执行操作。' }
       }

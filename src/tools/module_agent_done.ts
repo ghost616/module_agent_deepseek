@@ -93,14 +93,14 @@ async function getLimuBlockReason(wsDir: string, moduleName: string | null, sess
     const meta = metadata.find(m => m.plan_id === planId)
     isActive = meta ? !meta.plan_completed : false
   }
-  if (isActive && !(await isSessionChecked(wsDir, sessionId))) {
+  if (isActive && !isSessionChecked(wsDir, sessionId)) {
     return '力牧正在执行任务且未经过二次检查，无法关闭。请先通过 module_agent_executor(action="ping", ...) 进行二次检查。'
   }
   return null
 }
 
 async function getLizhuBlockReason(wsDir: string, sessionId: string, checkBusy: boolean): Promise<string | null> {
-  const starter = await getBoundStarter(wsDir, sessionId)
+  const starter = getBoundStarter(wsDir, sessionId)
   if (starter) {
     return '离朱的测试结果尚未被读取（仍绑定到启动者会话），请先调用 module_agent_reader(action="read_test_results") 读取结果。'
   }
@@ -133,7 +133,7 @@ async function cleanupLizhu(c: CleanupContext, wsDir: string, sessionId: string,
   }
   c.sessionState.clearAgentMode(sessionId)
   clearActivity(sessionId)
-  await removeLizhuSession(wsDir, sessionId)
+  removeLizhuSession(wsDir, sessionId)
   await removeSessionWorkspace(c.directory, sessionId)
 }
 
@@ -144,7 +144,7 @@ async function cleanupGaotao(c: CleanupContext, wsDir: string, fengzhouSessionId
   c.sessionState.clearAgentMode(sessionId)
   clearActivity(sessionId)
   await deleteReviewResult(wsDir, sessionId)
-  await unbindGaotao(wsDir, fengzhouSessionId)
+  unbindGaotao(wsDir, fengzhouSessionId)
   await removeSessionWorkspace(c.directory, sessionId)
 }
 
@@ -152,13 +152,13 @@ async function cleanupLimu(c: CleanupContext, wsDir: string, moduleName: string 
   if (alive) {
     await c.host.stop(sessionId)
   }
-  await removeModuleSession(wsDir, moduleName ?? '', sessionId)
+  removeModuleSession(wsDir, moduleName ?? '', sessionId)
   c.sessionState.clearAgentMode(sessionId)
   if (moduleName) {
     await deleteExecutionRecords(wsDir, moduleName, sessionId)
     await releasePlanFilesSession(c.directory, moduleName, sessionId)
   }
-  await clearSessionChecked(wsDir, sessionId)
+  clearSessionChecked(wsDir, sessionId)
   clearActivity(sessionId)
   const planId = await getPlanIdBySession(wsDir, sessionId)
   if (planId) {
@@ -174,7 +174,7 @@ async function cleanupKui(c: CleanupContext, wsDir: string, fengzhouSessionId: s
   }
   c.sessionState.clearAgentMode(sessionId)
   clearActivity(sessionId)
-  await unbindKui(wsDir, fengzhouSessionId)
+  unbindKui(wsDir, fengzhouSessionId)
   await removeSessionWorkspace(c.directory, sessionId)
 }
 
@@ -266,7 +266,7 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
       }
 
       if (targetMode === 'gaotao') {
-        if (!(await isGaotaoBoundToFengzhou(wsDir, agentId, sessionId))) {
+        if (!isGaotaoBoundToFengzhou(wsDir, agentId, sessionId)) {
           return { status: 'error', error: '该皋陶不是当前风后开启的，无法关闭。' }
         }
         const reason = await getGaotaoBlockReason(wsDir, sessionId, false)
@@ -280,11 +280,11 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
       }
 
       if (targetMode === 'kui') {
-        if (!(await isKuiBoundToFengzhou(wsDir, agentId, sessionId))) {
+        if (!isKuiBoundToFengzhou(wsDir, agentId, sessionId)) {
           return { status: 'error', error: '该夔不是当前风后开启的，无法关闭。' }
         }
 
-        const kuiLimuSids = await getLimuSessionsByStarter(wsDir, sessionId)
+        const kuiLimuSids = getLimuSessionsByStarter(wsDir, sessionId)
         const kuiGaotaoSid = await getBoundGaotao(wsDir, sessionId, isAlive)
 
         const blockers: Array<{ session_id: string; agent: string; reason: string }> = []
@@ -296,7 +296,7 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
 
         for (const limuSid of kuiLimuSids) {
           if (!(await isAlive(limuSid))) continue
-          const limuModule = await getModuleNameBySession(wsDir, limuSid)
+          const limuModule = getModuleNameBySession(wsDir, limuSid)
           const reason = await getLimuBlockReason(wsDir, limuModule, limuSid)
           if (reason) blockers.push({ session_id: limuSid, agent: 'limu', reason })
         }
@@ -307,7 +307,7 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
         }
 
         for (const limuSid of kuiLimuSids) {
-          const lizhuSid = await getBoundLizhu(wsDir, limuSid)
+          const lizhuSid = getBoundLizhu(wsDir, limuSid)
           if (lizhuSid && (await isAlive(lizhuSid))) {
             const reason = await getLizhuBlockReason(wsDir, lizhuSid, true)
             if (reason) blockers.push({ session_id: lizhuSid, agent: 'lizhu', reason })
@@ -321,7 +321,7 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
         const closed: string[] = []
 
         for (const limuSid of kuiLimuSids) {
-          const lizhuSid = await getBoundLizhu(wsDir, limuSid)
+          const lizhuSid = getBoundLizhu(wsDir, limuSid)
           if (lizhuSid) {
             await cleanupLizhu(cleanup, wsDir, lizhuSid, await isAlive(lizhuSid))
             closed.push(lizhuSid)
@@ -329,7 +329,7 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
         }
 
         for (const limuSid of kuiLimuSids) {
-          const limuModule = await getModuleNameBySession(wsDir, limuSid)
+          const limuModule = getModuleNameBySession(wsDir, limuSid)
           await cleanupLimu(cleanup, wsDir, limuModule, limuSid, await isAlive(limuSid))
           closed.push(limuSid)
         }
@@ -346,9 +346,9 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
       }
 
       if (alive) {
-        const limuStarter = await getLimuStarter(wsDir, sessionId)
+        const limuStarter = getLimuStarter(wsDir, sessionId)
         if (limuStarter && limuStarter !== agentId) {
-          const kuiBound = await isKuiBoundToFengzhou(wsDir, agentId, limuStarter)
+          const kuiBound = isKuiBoundToFengzhou(wsDir, agentId, limuStarter)
           if (!kuiBound) {
             return { status: 'error', error: '该力牧不是当前风后开启的，无法关闭。' }
           }
@@ -376,8 +376,8 @@ async function handleCloseAll(
   const gaotaoSid = await getBoundGaotao(wsDir, fengzhouSessionId, isAlive)
   const kuiSid = await getBoundKui(wsDir, fengzhouSessionId, isAlive)
   const kuiGaotaoSid = kuiSid ? await getBoundGaotao(wsDir, kuiSid, isAlive) : null
-  const limuSids = await getFengzhouLimuSessions(wsDir, fengzhouSessionId)
-  const lizhuSids = await getFengzhouLizhuSessions(wsDir, fengzhouSessionId)
+  const limuSids = getFengzhouLimuSessions(wsDir, fengzhouSessionId)
+  const lizhuSids = getFengzhouLizhuSessions(wsDir, fengzhouSessionId)
 
   if (!gaotaoSid && !kuiGaotaoSid && !kuiSid && limuSids.length === 0 && lizhuSids.length === 0) {
     return { status: 'ok', message: '当前风后没有关联的皋陶、力牧、离朱或夔会话。', notice: CODE_CONSUMED_NOTICE }
@@ -398,7 +398,7 @@ async function handleCloseAll(
 
   const limuModules = new Map<string, string | null>()
   for (const limuSid of limuSids) {
-    const limuModule = await getModuleNameBySession(wsDir, limuSid)
+    const limuModule = getModuleNameBySession(wsDir, limuSid)
     limuModules.set(limuSid, limuModule)
     if (!(await isAlive(limuSid))) continue
 
@@ -466,8 +466,8 @@ async function handleListIdle(
 ): Promise<JsonValue> {
   const gaotaoSid = await getBoundGaotao(wsDir, fengzhouSessionId, isAlive)
   const kuiSid = await getBoundKui(wsDir, fengzhouSessionId, isAlive)
-  const limuSids = await getFengzhouLimuSessions(wsDir, fengzhouSessionId)
-  const lizhuSids = await getFengzhouLizhuSessions(wsDir, fengzhouSessionId)
+  const limuSids = getFengzhouLimuSessions(wsDir, fengzhouSessionId)
+  const lizhuSids = getFengzhouLizhuSessions(wsDir, fengzhouSessionId)
 
   const idleSessions = { gaotao: [] as IdleSessionInfo[], limu: [] as IdleSessionInfo[], lizhu: [] as IdleSessionInfo[], kui: [] as IdleSessionInfo[] }
 
@@ -477,7 +477,7 @@ async function handleListIdle(
 
   for (const limuSid of limuSids) {
     if (!(await isAlive(limuSid)) || isBusy(limuSid)) continue
-    const moduleName = await getModuleNameBySession(wsDir, limuSid)
+    const moduleName = getModuleNameBySession(wsDir, limuSid)
     idleSessions.limu.push({ session_id: limuSid, module_name: moduleName, idle_seconds: getSessionIdle(limuSid).idleSeconds })
   }
 

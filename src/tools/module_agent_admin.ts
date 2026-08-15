@@ -18,11 +18,12 @@ import {
   addModule,
   findModule,
   readModuleTree,
-  writeModuleTree,
+  readModuleTreeSync,
   removeModule,
+  writeModuleTreeSync,
 } from '../lib/module_tree.ts'
 import { writeAgentProfile } from '../lib/agent_profile.ts'
-import { readModuleDefinition } from '../lib/module_definition.ts'
+import { readDefinitionSync } from '../lib/module_definition.ts'
 import { removeModuleDesign } from '../lib/module_design.ts'
 import { writeText } from '../lib/fs.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
@@ -141,7 +142,7 @@ async function handleCreate(
   await writeText(join(agentDir, CURRENT_SPEC_FILE), specContent)
   await writeText(join(agentDir, CHANGE_HISTORY_FILE), INITIAL_CHANGE_HISTORY)
 
-  await addModule(directory, { name: module_name, description: description || '' })
+  addModule(directory, { name: module_name, description: description || '' })
 
   const paths = [
     join('.module_agent', module_name, AGENT_PROFILE_FILE),
@@ -172,10 +173,10 @@ async function handleUpdate(
   const changedFiles: string[] = []
 
   if (description !== undefined) {
-    const tree = await readModuleTree(directory)
+    const tree = readModuleTreeSync(directory)
     const modEntry = tree.modules.find((m) => m.name === module_name)
     if (modEntry) modEntry.description = description
-    await writeModuleTree(directory, tree)
+    writeModuleTreeSync(directory, tree)
     changedFiles.push('.module_agent/module_tree.json')
   }
 
@@ -193,7 +194,7 @@ async function handleDelete(directory: string, moduleName: string) {
     return { status: 'error', error: `模块 '${moduleName}' 不存在` }
   }
 
-  const def = await readModuleDefinition(directory, moduleName)
+  const def = readDefinitionSync(directory, moduleName)
   if (def.files.length > 0) {
     return {
       status: 'error',
@@ -202,8 +203,8 @@ async function handleDelete(directory: string, moduleName: string) {
     }
   }
 
-  await removeModule(directory, moduleName)
-  await removeModuleDesign(directory, moduleName)
+  removeModule(directory, moduleName)
+  removeModuleDesign(directory, moduleName)
   await rm(moduleAgentDir(directory, moduleName), { recursive: true, force: true })
 
   return {
@@ -223,7 +224,7 @@ async function handleListDirs(directory: string, ignore: string[]) {
   const assignedFiles = new Set<string>()
   for (const m of tree.modules) {
     try {
-      const def = await readModuleDefinition(directory, m.name)
+      const def = readDefinitionSync(directory, m.name)
       for (const f of def.files) {
         assignedFiles.add(f.path)
       }

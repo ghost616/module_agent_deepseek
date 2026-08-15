@@ -51,7 +51,7 @@ export function createAgentModelConfigTool(options: AgentModelConfigToolOptions)
 
       const action = args.action
 
-      const boundWs = await getBoundWorkspace(directory, sessionId)
+      const boundWs = getBoundWorkspace(directory, sessionId)
       if (!boundWs) {
         return { status: 'error', error: '请先通过 workspace(action="create"|"bind") 绑定工作空间' }
       }
@@ -59,12 +59,12 @@ export function createAgentModelConfigTool(options: AgentModelConfigToolOptions)
 
       try {
         if (action === 'get') {
-          const config = await readAgentModelConfig(workspaceDir)
+          const config = readAgentModelConfig(workspaceDir)
           return { status: 'ok', config: (config ?? null) as unknown as JsonValue }
         }
 
         if (action === 'set') {
-          const existing: AgentModelConfig = (await readAgentModelConfig(workspaceDir)) ?? {}
+          const existing: AgentModelConfig = readAgentModelConfig(workspaceDir) ?? {}
 
           const limuProviderId = args.limu_provider_id
           const limuModelId = args.limu_model_id
@@ -117,7 +117,7 @@ export function createAgentModelConfigTool(options: AgentModelConfigToolOptions)
             return { status: 'error', errors: validationErrors as unknown as JsonValue }
           }
 
-          await writeAgentModelConfig(workspaceDir, candidate)
+          writeAgentModelConfig(workspaceDir, candidate)
 
           return { status: 'ok', config: candidate as unknown as JsonValue }
         }

@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { exists, readJson, writeText } from './fs.ts'
+import { existsSync, readJsonSync, writeJsonSync } from './fs.ts'
 
 export interface CorrectionEntry {
   content: string
@@ -14,19 +14,19 @@ function getPath(workspaceDir: string): string {
   return join(workspaceDir, 'corrections.json')
 }
 
-export async function readCorrections(workspaceDir: string): Promise<CorrectionEntry[]> {
+export function readCorrections(workspaceDir: string): CorrectionEntry[] {
   const path = getPath(workspaceDir)
-  if (!(await exists(path))) return []
+  if (!existsSync(path)) return []
   try {
-    const data = await readJson<CorrectionsFile>(path)
+    const data = readJsonSync<CorrectionsFile>(path)
     return data?.corrections ?? []
   } catch {
     return []
   }
 }
 
-export async function appendCorrection(workspaceDir: string, content: string): Promise<void> {
-  const corrections = await readCorrections(workspaceDir)
+export function appendCorrection(workspaceDir: string, content: string): void {
+  const corrections = readCorrections(workspaceDir)
 
   // dedup: skip if content identical to last entry
   const last = corrections[corrections.length - 1]
@@ -36,13 +36,13 @@ export async function appendCorrection(workspaceDir: string, content: string): P
 
   corrections.push({ content, timestamp: new Date().toISOString() })
 
-  await writeText(getPath(workspaceDir), JSON.stringify({ corrections }, null, 2))
+  writeJsonSync(getPath(workspaceDir), { corrections })
 }
 
-export async function removeCorrection(workspaceDir: string, index: number): Promise<boolean> {
-  const corrections = await readCorrections(workspaceDir)
+export function removeCorrection(workspaceDir: string, index: number): boolean {
+  const corrections = readCorrections(workspaceDir)
   if (index < 0 || index >= corrections.length) return false
   corrections.splice(index, 1)
-  await writeText(getPath(workspaceDir), JSON.stringify({ corrections }, null, 2))
+  writeJsonSync(getPath(workspaceDir), { corrections })
   return true
 }
