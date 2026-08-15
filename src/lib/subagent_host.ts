@@ -2,6 +2,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { Agent, AgentOptions } from '@deepseek-ai/dsh-agent'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type { ContinuableStart, SubagentListEntry } from '@deepseek-ai/dsh-subagent'
+import type { ToolRestriction } from '@deepseek-ai/dsh-tools'
 // Type-only: pulls the subagent service augmentation into the program.
 import type {} from '@deepseek-ai/dsh-subagent'
 
@@ -10,6 +11,8 @@ export interface StartChildOptions {
   readonly persona?: string
   /** 子智能体模型路由（provider + model）。 */
   readonly agentOptions?: AgentOptions
+  /** 子智能体工具范围限制：deny 的工具从子代理 prompt 中消失并拒绝执行。 */
+  readonly toolFilter?: ToolRestriction
 }
 
 /**
@@ -42,6 +45,7 @@ export class SubagentHost {
         parent,
         ...(options.persona !== undefined ? { persona: options.persona } : {}),
         ...(options.agentOptions !== undefined ? { agentOptions: options.agentOptions } : {}),
+        ...(options.toolFilter !== undefined ? { toolFilter: options.toolFilter } : {}),
       },
       signal,
     })

@@ -583,6 +583,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
       {
         persona,
         agentOptions: { provider: modelConfig.gaotao.providerID, model: modelConfig.gaotao.modelID },
+        toolFilter: { deny: ['write', 'edit'] },
       },
       signal,
     )
@@ -901,6 +902,7 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
       {
         persona,
         agentOptions: { provider: modelConfig.lizhu.providerID, model: modelConfig.lizhu.modelID },
+        toolFilter: { deny: ['module_agent_admin', 'module_agent_executor', 'module_agent_done', 'module_agent_plan', 'module_agent_setup'] },
       },
       signal,
     )
@@ -1016,6 +1018,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
       {
         persona,
         agentOptions: { provider: modelConfig.kui.providerID, model: modelConfig.kui.modelID },
+        toolFilter: { allow: ['module_agent_executor', 'module_agent_reader', 'module_agent_updater', 'module_agent_plan', 'verification_code', 'read', 'grep'] },
       },
       signal,
     )
