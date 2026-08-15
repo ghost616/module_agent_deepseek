@@ -1,0 +1,7 @@
+# dsh-module-agent bundle patch：通过 profile 声明自动加载 module-agent 插件。
+- insert:
+    - id: module-agent
+      name: '@deepseek-ai/dsh-module-agent'
+      config:
+        dataDir: .
+        subagentProvider: spawn

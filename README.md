@@ -14,6 +14,8 @@
 
 ### 挂载插件
 
+#### 方式一：用户显式写入 cordis.patch.yml
+
 接入 workspace 后，将以下条目写入 profile 目录下的 `cordis.patch.yml`（或 `$DSH_HOME/cordis.patch.yml`），dsh 启动时作为 patch 层加载该插件：
 
 ```yaml
@@ -27,6 +29,15 @@
 ```
 
 `cordis.yml` 是框架自动管理的 profile 根文件（内容为空列表，由框架重写），无需编辑；用户配置写在 `cordis.patch.yml` 中。
+
+#### 方式二：bundle 自动加载
+
+dsh 的 bundle 机制可让插件随 profile 声明自动加载：bundle 的 package.json 用 `dsh.bundle.patch` 声明指向 `cordis.patch.yml`，profile 的 package.json 用 `dsh.profile.bundles` 引用该 bundle。本插件随附 `bundle/module-agent/` 目录，按以下步骤启用：
+
+1. 将本项目的 `bundle/module-agent/` 目录复制到 dsh 仓库的 `packages/bundle/module-agent/`；
+2. 在 dsh 仓库根目录 `tsconfig.host.json` 的 `references` 数组中新增一条 `{ "path": "./packages/bundle/module-agent" }`；
+3. 在 profile 目录 package.json 的 `dsh.profile.bundles` 中加入 `"@deepseek-ai/dsh-module-agent-bundle"`，例如 `["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-module-agent-bundle"]`；
+4. `pnpm install` + `pnpm run build` 后启动即自动加载，无需再手动写插件条目。
 
 插件通过 `inject` 声明依赖以下 dsh 服务：`tools`、`systemPrompt`、`agents`、`subagents`、`llm`、`sessions`。配置项由 `src/config.ts` 提供 schemastery 校验：
 
