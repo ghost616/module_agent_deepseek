@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_131ebf1d-69b6-4562-ac0e-f4c0fb604403",
-    "plan_summary": "修改 package.json description 为体现插件功能（去掉移植表述）",
+    "plan_id": "plan_b5824660-51b0-416e-acdc-9d854ef9547c",
+    "plan_summary": "tsconfig.json 改为 dsh monorepo 构建约定 + README 补充注册 tsconfig.host.json",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
