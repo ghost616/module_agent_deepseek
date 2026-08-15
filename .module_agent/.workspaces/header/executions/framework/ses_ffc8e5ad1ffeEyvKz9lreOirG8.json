@@ -43,5 +43,14 @@
     ],
     "summary": "执行总结：已将 README「## 安装与加载」章节重写为单一 out-of-tree 加载流程——删除「### 接入方式」整节（workspace 协议、复制到 packages/module-agent/dsh-module-agent、注册 tsconfig.host.json references 等内容）与「### 挂载插件」整节（name 写 @deepseek-ai/dsh-module-agent 包名 + 非 insert 格式）；新章节为三步：1) 将 src/ 复制到 profile 目录 module-agent/ 子目录（如 ~/.dsh/profiles/web/module-agent/），2) 在 profile 的 cordis.patch.yml（~/.dsh/profiles/web/cordis.patch.yml）中用 insert 声明插件行（id=module-agent，name='./module-agent/src/index.ts'，config 含 dataDir/subagentProvider），3) 启动 dsh web 自动加载（@deepseek-ai/* 依赖经 profile 目录 node_modules 与 $DSH_HOME/profiles/node_modules fallback 解析）。新增项目根目录 cordis.patch.yml 示例文件（insert 声明 + 使用说明注释，合法 YAML）。已验证 README「安装与加载」无旧的 workspace 接入/包名挂载残留，其余章节（快速开始、七级智能体等）无改动。纯文档与配置变更，无测试适用。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_8065955e-302e-4d39-92c2-d87fadbc8b3b",
+    "plan": "修正 README 第 25 行：删除「插件自动加载」后括号内依赖解析说明",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "执行总结：已将 README「安装与加载」第 3 步的「插件自动加载（源码内 @deepseek-ai/* 依赖经 profile 目录 node_modules 与 $DSH_HOME/profiles/node_modules fallback 解析）」括号说明删除，改为「3. 启动 `dsh web`，插件自动加载。」，语句通顺，其余行未改动。纯文档变更，无测试适用。",
+    "errors": []
   }
 ]

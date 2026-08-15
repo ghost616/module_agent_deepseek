@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_234a73bf-fcba-4216-ab9f-153c4cd1cc84",
-    "plan_summary": "重写 README 安装与加载为 profile 目录本地加载流程，并新增 cordis.patch.yml 示例",
+    "plan_id": "plan_8065955e-302e-4d39-92c2-d87fadbc8b3b",
+    "plan_summary": "去掉 README 第 3 步括号里无意义的依赖解析说明",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
