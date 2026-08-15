@@ -1,0 +1,18 @@
+{
+  "plan_id": "plan_e38d0a9b-3c6e-4801-9c76-73e4cff791c0",
+  "module_name": "orchestration",
+  "development_plan": "将 orchestration 模块的 JSON 读写改为同步 read-modify-write，避免并发写竞态与 JSON 损坏。\n\n背景：依赖 framework 模块 fs.ts 的 writeJsonSync/readJsonSync。将各数据文件的「读 JSON → 改 → 写 JSON」抽成同步函数（全程无 await）。\n\n任务（仅改 orchestration 模块文件）：\n1. src/lib/kui_plan.ts：kui_plans/<fengzhouSession>.json（KuiPlan 数组）读改写抽同步（readFengzhouPlansSync/writeFengzhouPlansSync），writeKuiPlan/readKuiPlan 等读改写处全程同步。\n2. src/lib/module_session_tracker.ts：module_sessions.json、session_bindings.json、lizhu_sessions.json 读改写抽同步（addModuleSession/removeModuleSession、bind/unbind 系列、addLizhuSession/removeLizhuSession 等）。注意该文件已有部分 readJson 容错（.catch），同步化时保留容错语义。\n\n注意：同步函数去掉 async/Promise 返回；调用方（src/tools/module_agent_executor.ts、module_agent_done.ts 等）相应去掉 await。保持对外功能与 JSON 结构不变。完成后 typecheck。",
+  "session_id": "ses_ffbada33dffeYwtzN0NZn73Dzw",
+  "modified_files": [
+    "src/lib/kui_plan.ts",
+    "src/lib/module_session_tracker.ts",
+    "src/tools/module_agent_executor.ts",
+    "src/tools/module_agent_done.ts",
+    "src/tools/module_agent_reader.ts",
+    "src/tools/module_agent_updater.ts",
+    "src/tools/module_agent_plan.ts",
+    "src/tools/module_agent_testing.ts",
+    "src/lib/orchestration_guards.ts",
+    "src/index.ts"
+  ]
+}

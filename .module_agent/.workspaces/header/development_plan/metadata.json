@@ -1,7 +1,47 @@
 [
   {
-    "plan_id": "plan_d264a9fd-564a-454f-b3df-520b40b14006",
-    "plan_summary": "修复备份 mapping.json 损坏：readMapping 容错 + writeMapping 原子写",
+    "plan_id": "plan_4d003bbd-2124-466a-bec5-57998df55a91",
+    "plan_summary": "framework 模块 JSON 读写改为同步 read-modify-write",
+    "starter_session_id": "ses_ffbcc95f0ffeVXOUasGz8YcSji",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_c2dcb9f5-a1f3-418a-97ad-60b127fd7a82",
+    "plan_summary": "workspace 模块 JSON 读写改为同步 read-modify-write",
+    "starter_session_id": "ses_ffbcc95f0ffeVXOUasGz8YcSji",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_99a7e508-d513-442c-b1b0-be6fb760bbb5",
+    "plan_summary": "module-management 模块 JSON 读写改为同步 read-modify-write",
+    "starter_session_id": "ses_ffbcc95f0ffeVXOUasGz8YcSji",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_ca00d4df-9ff9-4686-8dbc-e9f1b738cbaa",
+    "plan_summary": "workflow 模块 JSON 读写改为同步 read-modify-write",
+    "starter_session_id": "ses_ffbcc95f0ffeVXOUasGz8YcSji",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_e38d0a9b-3c6e-4801-9c76-73e4cff791c0",
+    "plan_summary": "orchestration 模块 JSON 读写改为同步 read-modify-write",
+    "starter_session_id": "ses_ffbcc95f0ffeVXOUasGz8YcSji",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_ff89744a-f8a8-4300-8c41-997647114e22",
+    "plan_summary": "修复离朱复用 parent 不匹配：getAvailableLizhuSession 只复用属于当前启动者的离朱",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,

@@ -8,5 +8,12 @@
   "README.md": "04c6e90faac2675aa89e2176d2eec7d8",
   "package.json": "b9cfc7f2cdf78a7f4b91a753d10865a2",
   "tsconfig.json": "e5e546dd2eb0351f813d63d1b39dbc48",
-  "src/lib/file_backup.ts": "f705d566d95cb45cf6db188657b34d1c"
+  "src/lib/file_backup.ts": "f705d566d95cb45cf6db188657b34d1c",
+  "src/lib/module_definition.ts": "42cae07df7118a65d37e4de2f3b8cc0b",
+  "src/lib/module_tree.ts": "56cf8e8e6831a67ad21619882545bb60",
+  "src/tools/module_agent_admin.ts": "b0583440128019ac92c99a32c86d2b42",
+  "src/tools/module_agent_reader.ts": "ee0c33c8cb57fdf75d5a5d8de8d144d7",
+  "src/tools/module_agent_updater.ts": "a5d099b9a95bf5af14cd88016b118e25",
+  "src/tools/module_classification.ts": "b329d9e5996ad595540d5fc815c07c34",
+  "src/tools/module_agent_plan.ts": "663a7ddcfd7958b2d49f40581b31df05"
 }

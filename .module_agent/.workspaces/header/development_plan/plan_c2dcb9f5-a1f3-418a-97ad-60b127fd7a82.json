@@ -1,0 +1,18 @@
+{
+  "plan_id": "plan_c2dcb9f5-a1f3-418a-97ad-60b127fd7a82",
+  "module_name": "workspace",
+  "development_plan": "将 workspace 模块的 JSON 读写改为同步 read-modify-write，避免并发写竞态与 JSON 损坏。\n\n背景：依赖 framework 模块已提供的 fs.ts writeJsonSync（配套 readJsonSync/existsSync）。将各数据文件的「读 JSON → 改 → 写 JSON」抽成同步函数（全程无 await），利用 Node 单线程原子性消除竞态。\n\n任务（仅改 workspace 模块文件）：\n1. src/lib/workspace.ts：.workspaces/index.json（workspaces 列表 + bindings）读改写抽同步（readIndexSync/writeIndexSync），bindWorkspace/createWorkspace 等读改写处全程同步。\n2. src/lib/session_workspace.ts：session_workspaces.json 读改写抽同步（setSessionWorkspace/getSessionWorkspace 等）。注意已有 readJsonSync/getSessionWorkspaceSync，补充同步写。\n3. src/lib/workspace_config.ts：config.json（development_mode）读改写抽同步。\n4. src/lib/corrections.ts：corrections.json 读改写抽同步（addCorrection/removeCorrection 等）。\n5. src/lib/knowledge_base.ts：knowledge_bases.json 读改写抽同步（set/add/remove knowledge base）。\n6. src/lib/agent_model_config.ts：agent_model_config.json 读改写抽同步。\n\n注意：同步函数去掉 async/Promise 返回；调用方（src/tools/*.ts）相应去掉 await。保持对外功能不变。完成后 typecheck。",
+  "session_id": "ses_ffbaddfbfffeykXdLLMv4TwWsA",
+  "modified_files": [
+    "src/lib/workspace.ts",
+    "src/lib/session_workspace.ts",
+    "src/lib/workspace_config.ts",
+    "src/lib/corrections.ts",
+    "src/lib/knowledge_base.ts",
+    "src/lib/agent_model_config.ts",
+    "src/tools/workspace.ts",
+    "src/tools/knowledge_base.ts",
+    "src/tools/correction.ts",
+    "src/tools/agent_model_config.ts"
+  ]
+}

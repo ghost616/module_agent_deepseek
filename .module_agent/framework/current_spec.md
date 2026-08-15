@@ -15,8 +15,8 @@ orchestration 模块尚未移植的能力（力牧计划守卫、bash 命令守�
 
 framework 提供共享数据层，沿用 `.module_agent/*.json` 文件存储，逻辑与原 opencode 版保持一致，仅调整类型/导入：
 
-- 公共基础：`src/lib/types.ts`（共享类型）、`src/lib/constants.ts`（路径常量与默认模板）、`src/lib/fs.ts`（异步读写 + 同步 existsSync/readJsonSync，供 systemPrompt 同步 section 使用）。
-- 数据模型：module_tree、module_definition、development_plan、execution_result、review_result、kui_plan、plan_files、session_plan_map、session_workspace、workspace_config、corrections、file_backup 共 12 个，均提供读写与 cleanStale* 失效清理。
+- 公共基础：`src/lib/types.ts`（共享类型）、`src/lib/constants.ts`（路径常量与默认模板）、`src/lib/fs.ts`（异步读写 + 同步 existsSync/readJsonSync/writeJsonSync）。writeJsonSync 与 readJsonSync 配套，用于同步 read-modify-write：利用 Node 单线程同步代码块原子性，将「读 JSON → 改 → 写 JSON」抽成同步函数（全程无 await），避免多 agent 并发写竞态与 JSON 损坏。
+- 数据模型：module_tree、module_definition、development_plan、execution_result、review_result、kui_plan、plan_files、session_plan_map、session_workspace、workspace_config、corrections、file_backup 共 12 个，均提供读写与 cleanStale* 失效清理。其中 module_tree（readModuleTreeSync/writeModuleTreeSync + addModule/removeModule）、module_definition（readDefinitionSync/writeDefinitionSync + modifyDefinition/removeFilesFromModule）、file_backup（readMappingSync/writeMappingSync，backupFile 内 mapping 读改写同步）三类数据的读改写已同步化。
 - 共享读写：workspace.ts（工作空间索引与风后绑定）、knowledge_base.ts（知识库清单与提示词构造）作为跨模块共享数据访问层；beginner_tips.ts 提供新手模式规则常量。
 - tool_output.ts 提供全部 module-agent 工具的 defineTool 公共输出声明（schema={type:json} + 文本 render）。
 ## 工具注册

@@ -1,0 +1,19 @@
+[
+  {
+    "plan_id": "plan_4d003bbd-2124-466a-bec5-57998df55a91",
+    "plan": "将 JSON 读写改为同步 read-modify-write，避免并发写竞态与 JSON 损坏",
+    "modified_files": [
+      "src/lib/fs.ts",
+      "src/lib/file_backup.ts",
+      "src/lib/module_definition.ts",
+      "src/lib/module_tree.ts",
+      "src/tools/module_agent_admin.ts",
+      "src/tools/module_agent_reader.ts",
+      "src/tools/module_agent_updater.ts",
+      "src/tools/module_classification.ts",
+      "src/tools/module_agent_plan.ts"
+    ],
+    "summary": "已完成 4 个 lib 文件（fs.ts 新增 writeJsonSync；file_backup.ts readMappingSync/writeMappingSync 同步；module_definition.ts readDefinitionSync/writeDefinitionSync 同步、modifyDefinition/removeFilesFromModule 同步；module_tree.ts 新增 readModuleTreeSync/writeModuleTreeSync，addModule/removeModule 及 handleUpdate 的 module_tree 读改写同步）与 5 个 tools 调用方同步更新（去掉 await、导入新函数名）。待测试验证。",
+    "errors": []
+  }
+]

@@ -1,3 +1,11 @@
 {
-  "src/tools/knowledge_base.ts": "1f7c1786fe3330bd17e6f032479c3113"
+  "src/tools/knowledge_base.ts": "1f7c1786fe3330bd17e6f032479c3113",
+  "src/lib/session_workspace.ts": "0adb4860d471b613cfb4b5dbd1e0cc13",
+  "src/lib/workspace_config.ts": "39044c7c4195f3255bd6ebb80996f37e",
+  "src/lib/corrections.ts": "0303dfcaa696bd49015ab1ca674aef10",
+  "src/lib/knowledge_base.ts": "4102d5d225dbad0f12fa4956c93026dc",
+  "src/lib/agent_model_config.ts": "8e11daa70fc64c5901568c363ea3786c",
+  "src/tools/workspace.ts": "bab20f6810d24c7096b8a598233e1bf9",
+  "src/tools/correction.ts": "ee20b9a642f218cf68d4a94246a0138a",
+  "src/tools/agent_model_config.ts": "016c8e7c962141b29f239938ece017fe"
 }

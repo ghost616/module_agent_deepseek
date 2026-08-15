@@ -3,5 +3,8 @@
   "src/tools/skeleton.ts": "7d70b1b57bfa4c45bf080a0bc6b41a27",
   "src/tools/module_agent_updater.ts": "a5d099b9a95bf5af14cd88016b118e25",
   "src/tools/module_agent_reader.ts": "ee0c33c8cb57fdf75d5a5d8de8d144d7",
-  "src/tools/module_classification.ts": "b329d9e5996ad595540d5fc815c07c34"
+  "src/tools/module_classification.ts": "b329d9e5996ad595540d5fc815c07c34",
+  "src/lib/module_design.ts": "ef9425045c8305c788fbd7b654ea2c9e",
+  "src/tools/module_design_admin.ts": "aa679b58d2e804b000617c4927b25802",
+  "src/tools/module_agent_admin.ts": "b0583440128019ac92c99a32c86d2b42"
 }

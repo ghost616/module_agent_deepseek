@@ -27,7 +27,7 @@
     },
     {
       "path": "src/lib/fs.ts",
-      "description": "文件读写工具：异步 exists/readText/readJson/writeText，以及 systemPrompt 同步 section 使用的 existsSync/readJsonSync；另提供 sanitizeIdSegment/desanitizeIdSegment 一对可逆函数，将 sessionId 等不透明 id 编码为安全的文件名字段（保留 [A-Za-z0-9-_.!~*'()]，其余特殊字符如 / \\ : 经 encodeURIComponent 转 %XX），防止路径穿越，写/读/删与 cleanStale 反推一致。"
+      "description": "文件读写工具：异步 exists/readText/readJson/writeText，以及同步 existsSync/readJsonSync/writeJsonSync（供 systemPrompt 同步 section 与同步 read-modify-write 使用，writeJsonSync 与 readJsonSync 配套避免并发竞态）；另提供 sanitizeIdSegment/desanitizeIdSegment 一对可逆函数，将 sessionId 等不透明 id 编码为安全的文件名字段（保留 [A-Za-z0-9-_.!~*'()]，其余特殊字符如 / \\ : 经 encodeURIComponent 转 %XX），防止路径穿越，写/读/删与 cleanStale 反推一致。"
     },
     {
       "path": "src/lib/session_state.ts",
@@ -35,11 +35,11 @@
     },
     {
       "path": "src/lib/module_tree.ts",
-      "description": "模块树数据模型：.module_agent/module_tree.json 的读取/写入/查找模块/增删模块"
+      "description": "模块树数据模型：.module_agent/module_tree.json 的读取/写入/查找模块/增删模块；提供同步 readModuleTreeSync/writeModuleTreeSync（容错同 readModuleTree）支撑 addModule/removeModule 同步读改写，避免并发写竞态。"
     },
     {
       "path": "src/lib/module_definition.ts",
-      "description": "模块定义数据模型：.module_agent/<module>/module_definition.json 的读取/写入/增删改文件条目/按文件查模块/父目录提取"
+      "description": "模块定义数据模型：.module_agent/<module>/module_definition.json 的同步读取/写入（readDefinitionSync/writeDefinitionSync，缺文件或非法 JSON 容错返回空定义）、同步增删改文件条目（modifyDefinition/removeFilesFromModule）、按文件查模块、父目录提取。"
     },
     {
       "path": "src/lib/development_plan.ts",
@@ -79,7 +79,7 @@
     },
     {
       "path": "src/lib/file_backup.ts",
-      "description": "文件备份数据模型：.module_agent/<module>/backups 下的备份/列表/按行读取/最新备份，md5 目录映射与最多 10 份轮换"
+      "description": "文件备份数据模型：.module_agent/<module>/backups 下的备份/列表/按行读取/最新备份，md5 目录映射与最多 10 份轮换；mapping.json 读改写抽成同步 readMappingSync/writeMappingSync（容错：解析失败返回 {}，写回自愈），backupFile 内 mapping 读改写全程同步无 await 以规避并发竞态，其余文件 IO（读内容/写 .bak/轮换）保持异步。"
     },
     {
       "path": "src/lib/workspace.ts",

@@ -1,0 +1,20 @@
+[
+  {
+    "plan_id": "plan_c2dcb9f5-a1f3-418a-97ad-60b127fd7a82",
+    "plan": "将 workspace 模块各数据文件的读改写抽成同步函数",
+    "modified_files": [
+      "src/lib/workspace.ts",
+      "src/lib/session_workspace.ts",
+      "src/lib/workspace_config.ts",
+      "src/lib/corrections.ts",
+      "src/lib/knowledge_base.ts",
+      "src/lib/agent_model_config.ts",
+      "src/tools/workspace.ts",
+      "src/tools/knowledge_base.ts",
+      "src/tools/correction.ts",
+      "src/tools/agent_model_config.ts"
+    ],
+    "summary": "已改造 6 个 lib 数据层文件为同步 read-modify-write（workspace/session_workspace/workspace_config/corrections/knowledge_base/agent_model_config），并同步更新 workspace 模块 4 个工具文件去掉 await",
+    "errors": []
+  }
+]

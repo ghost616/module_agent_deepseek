@@ -2,5 +2,13 @@
   "src/tools/skeleton.ts": "7d70b1b57bfa4c45bf080a0bc6b41a27",
   "src/tools/index.ts": "c6660d72c55b9758f8102ae63457a84f",
   "src/tools/module_agent_plan.ts": "663a7ddcfd7958b2d49f40581b31df05",
-  "src/lib/testing.ts": "a96ea2a5e38c70ca91d5a9b1c1c535cd"
+  "src/lib/testing.ts": "a96ea2a5e38c70ca91d5a9b1c1c535cd",
+  "src/lib/development_plan.ts": "6f8d80d2369ed61ffe1920a898f50ff2",
+  "src/lib/execution_result.ts": "2e94bffcc2f48c196fc5eff6548e7961",
+  "src/lib/review_result.ts": "53b1c7ca545b76e345681c3ea917bf2c",
+  "src/lib/plan_files.ts": "416539d9dd6ecd9ba06606b9b4b185e4",
+  "src/lib/session_plan_map.ts": "a6b2b674561781dacdd4cb9952c654f1",
+  "src/tools/module_agent_updater_plan.ts": "dd569abe02b15969b8f693151fef71c4",
+  "src/tools/module_agent_updater_review.ts": "c3dc427d300a9fce97c343cb731a1508",
+  "src/tools/module_agent_testing.ts": "36b0c6ccef296ef59c05b9a1611b619a"
 }

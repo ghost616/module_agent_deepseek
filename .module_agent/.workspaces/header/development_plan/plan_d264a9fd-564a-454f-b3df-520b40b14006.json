@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_d264a9fd-564a-454f-b3df-520b40b14006",
-  "module_name": "framework",
-  "development_plan": "修复备份工具 mapping.json 损坏导致 backup 失败的 bug。\n\n根因：src/lib/file_backup.ts 中 readMapping 用 readJson（JSON.parse）直接解析 mapping.json，无容错；writeMapping 用 writeText（fs.promises.writeFile，truncate 后写入）非原子写。并发 backup（agent 并行工具调用）或写中断会导致 mapping.json 内容损坏（如 \"Unexpected non-whitespace character after JSON\"），readMapping 抛错使整个 backup 失败且无法自愈。\n\n修复（仅改 src/lib/file_backup.ts）：\n\n1. readMapping 容错：将\n   ```ts\n   if (await exists(path)) {\n     return readJson<Record<string, string>>(path)\n   }\n   return {}\n   ```\n   改为：JSON 解析失败时返回 {}（不中断 backup）。建议：\n   ```ts\n   if (await exists(path)) {\n     try {\n       return await readJson<Record<string, string>>(path)\n     } catch {\n       return {}\n     }\n   }\n   return {}\n   ```\n   （损坏的映射丢失，但 backup 能继续；下次 writeMapping 会重写为合法 JSON 自愈。）\n\n2. writeMapping 原子写：改为写临时文件后 rename 覆盖，避免写中断/并发交错产生损坏中间态。需从 node:fs/promises 导入 rename：\n   ```ts\n   async function writeMapping(directory, moduleName, mapping) {\n     const root = backupsRoot(directory, moduleName)\n     await mkdir(root, { recursive: true })\n     const path = mappingPath(directory, moduleName)\n     const tmpPath = `${path}.tmp`\n     await writeText(tmpPath, JSON.stringify(mapping, null, 2))\n     await rename(tmpPath, path)\n   }\n   ```\n   （rename 同目录内是原子操作；若 rename 后残留 .tmp 文件不影响，下次覆盖。）\n\n验证：typecheck 无错误（该项目独立目录下可用 .lizhu_env/typecheck-probe 或由离朱验证）；readMapping 容错后 backup 不再因 mapping.json 损坏而失败；writeMapping 原子写避免损坏中间态。注意：rename 需从 'node:fs/promises' 导入，现有 import 已含 mkdir/readdir/unlink，需补充 rename。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
-  "session_id": "ses_ffbd895c3ffeGfm0pA5kf39qcT",
-  "modified_files": [
-    "src/lib/file_backup.ts"
-  ]
-}
