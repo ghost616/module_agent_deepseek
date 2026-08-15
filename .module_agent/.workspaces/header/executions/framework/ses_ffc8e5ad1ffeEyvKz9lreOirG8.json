@@ -24,5 +24,14 @@
     ],
     "summary": "执行总结：已完成 bundle 回退。README.md 删除「#### 方式二：bundle 自动加载」整节（标题、说明、4 步列表及其前后空行），「方式一」后直接衔接「插件通过 inject 声明依赖…」段落，其余章节未动；删除 bundle/module-agent/ 目录及 4 个文件，bundle/ 父目录为空一并删除（已验证根目录无 bundle/）；module_definition.json 移除 4 条 bundle 文件登记；current_spec.md「bundle 自动加载」section 更新为「改由直接修改 dsh 仓库 base bundle 实现」；append_history 已记录。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_450dbe9e-538f-4ae2-9406-0c85cf2de9bb",
+    "plan": "精简 README「挂载插件」章节：只保留「写配置位置 + yaml 配置示例」，去掉机制说明与重复列项",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "已精简 README「挂载插件」章节：删除「方式一」标题、机制说明、「cordis.yml 是框架自动管理」句、inject 依赖说明段及 dataDir/subagentProvider 两个列表项；引导语改为「将以下配置写入 ~/.dsh/profiles/<profile名>/cordis.patch.yml（如 web、headless）」；保留 yaml 示例不变。已验证章节精简后 Markdown 结构完整，其余章节无改动。",
+    "errors": []
   }
 ]

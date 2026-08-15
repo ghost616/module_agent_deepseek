@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_6015dd77-9f6d-4493-8abd-93d778fb74f4",
-    "plan_summary": "删除 README 的 bundle 条目与 bundle/module-agent/ 目录",
+    "plan_id": "plan_450dbe9e-538f-4ae2-9406-0c85cf2de9bb",
+    "plan_summary": "精简 README 挂载插件章节为仅写配置位置 + yaml 示例",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
