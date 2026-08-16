@@ -626,14 +626,11 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
   const lizhuSid = getBoundLizhu(workspaceDir, session_id)
   const lizhuWorking = lizhuSid ? isWorking(lizhuSid) : false
 
+  const planId = getPlanIdBySession(workspaceDir, session_id)
+  const meta = planId ? readAllMetadata(workspaceDir).find(m => m.plan_id === planId) : undefined
+
   if (allRecords.length > 0) {
-    const planId = await getPlanIdBySession(workspaceDir, session_id)
-    let isActive = false
-    if (planId) {
-      const metadata = await readAllMetadata(workspaceDir)
-      const meta = metadata.find(m => m.plan_id === planId)
-      isActive = meta ? !meta.plan_completed : false
-    }
+    let isActive = meta ? !meta.plan_completed : false
     const limuActive = isActive
     if (!isActive && lizhuWorking) {
       isActive = true
@@ -652,6 +649,9 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
     return {
       type: 'limu',
       finished: !isActive,
+      plan_id: planId,
+      plan_summary: meta?.plan_summary ?? null,
+      plan_completed: meta?.plan_completed ?? false,
       records: allRecords as unknown as JsonValue,
       ...(isActive ? { current_work: lizhuWorking ? '等待离朱测试完成' : (lastRecord?.summary ?? null) } : {}),
       ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}),
@@ -662,24 +662,19 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
   }
 
   if (!(await isAlive(session_id))) {
-    return { type: 'limu', finished: true, error: `会话 ${session_id} 的力牧已关闭，请人工确认。`, last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
+    return { type: 'limu', finished: true, plan_id: planId, plan_summary: meta?.plan_summary ?? null, error: `会话 ${session_id} 的力牧已关闭，请人工确认。`, last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
   }
 
-  const lastPlanId = await getPlanIdBySession(workspaceDir, session_id)
-  const meta = lastPlanId
-    ? (await readAllMetadata(workspaceDir)).find(m => m.plan_id === lastPlanId)
-    : undefined
-
   if (!meta) {
-    return { type: 'limu', finished: true, plan_id: null, message: `模块 '${module_name}' 没有执行计划。`, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
+    return { type: 'limu', finished: true, plan_id: null, plan_summary: null, message: `模块 '${module_name}' 没有执行计划。`, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
   }
 
   if (meta.plan_completed) {
     clearSessionChecked(workspaceDir, session_id)
-    return { type: 'limu', finished: true, plan_id: lastPlanId, plan_completed: true, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
+    return { type: 'limu', finished: true, plan_id: planId, plan_summary: meta.plan_summary, plan_completed: true, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
   }
 
-  return { type: 'limu', finished: false, plan_id: lastPlanId, plan_completed: false, message: '力牧正在执行，暂无执行结果记录。', ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive }
+  return { type: 'limu', finished: false, plan_id: planId, plan_summary: meta.plan_summary, plan_completed: false, message: '力牧正在执行，暂无执行结果记录。', ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive }
 }
 
 async function handleGaotaoStatus(handler: HandlerContext): Promise<JsonValue> {
