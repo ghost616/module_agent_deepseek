@@ -7,5 +7,14 @@
     ],
     "summary": "修复 agent/pre-step 拦截：source.kind 判断扩展为 subagent-settled 与 subagent-report，离朱经 report 工具报告时力牧收到框架完成通知而非原始报告。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_ad5d5fa4-0dc5-450c-8211-a9b1d30e608f",
+    "plan": "修复离朱 idle 后力牧仍被误拦的问题：agent/status idle 时无条件 clearActivity，不再依赖 mode",
+    "modified_files": [
+      "src/index.ts"
+    ],
+    "summary": "agent/status idle 分支改为无条件 clearActivity(agentId)，去掉 isFrameworkSubagentMode(mode) 条件；running 分支保持框架子智能体才 recordActivity 不变。同步更新 registerCompletionNotification JSDoc。",
+    "errors": []
   }
 ]

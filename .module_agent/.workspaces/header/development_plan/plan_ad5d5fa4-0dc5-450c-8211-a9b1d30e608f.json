@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_ad5d5fa4-0dc5-450c-8211-a9b1d30e608f",
+  "module_name": "framework",
+  "development_plan": "修复离朱 idle 后力牧仍被误拦「离朱仍在运行」的问题：agent/status idle 时无条件 clearActivity，不再依赖 mode。\n\n背景：之前把 clearAgentMode 从 agent/disposed 延后到 agent/pre-step 拦截 subagent-settled/report 之后。但 subagent-report 是离朱主动报告（离朱仍 running）时发送，拦截后 clearAgentMode 清除了离朱的 mode；离朱随后才真正 idle，此时 getAgentMode 返回 undefined，而 clearActivity 的执行条件 `if (isFrameworkSubagentMode(mode)) clearActivity(agentId)` 因 mode 为 undefined 而不执行，导致 lastActivity 里离朱的记录残留，isWorking(离朱) 恒为 true，力牧被永久误拦「力牧绑定的离朱仍在运行，请等待离朱测试完成后再操作」。\n\n修复（仅改 src/index.ts 的 registerCompletionNotification 中 agent/status 监听）：\n1. idle 分支改为无条件 clearActivity(agentId)，去掉 isFrameworkSubagentMode(mode) 条件（活跃监控的清理不应依赖 mode，mode 只是身份标记）。\n2. running 分支保持 `if (isFrameworkSubagentMode(mode)) recordActivity(agentId)` 不变（只记录框架子智能体的活跃）。\n3. 其余逻辑不变。\n\n验证：typecheck（可用 .lizhu_env/typecheck-probe 或离朱）；离朱 idle 后 lastActivity 被清除，isWorking 返回 false，力牧不再被误拦。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_ff5a77355ffeQisTAdQlfUKEvy",
+  "modified_files": [
+    "src/index.ts"
+  ]
+}

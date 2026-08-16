@@ -1,7 +1,7 @@
 维护插件入口 index.ts（注册全部工具与事件钩子、权限拦截、会话模式守卫），公共类型 types.ts、常量 constants.ts、文件工具 fs.ts、会话状态 session_state.ts、智能体画像 agent_profile.ts、代码规范 code_conventions.ts、新手提示 beginner_tips.ts、文件备份 file_backup.ts、失效数据清理 stale_cleanup.ts，以及 verification_code、module_agent_backup、module_agent_cleanup 工具。
 ## 插件入口与事件钩子
 
-- 完成通知：`agent/pre-step` 拦截发往风后/夔/力牧等框架 owner 的 dsh 子代理消息（`subagent-settled` 自动通知与 `subagent-report` 主动报告两类）并替换为框架完成通知（力牧含 module_name，供 module_agent_executor(action="status") 使用），避免 owner 收到重复/原始消息（离朱 settle 或经 report 工具报告给力牧时，力牧收到「离朱测试完毕…」而非原始 subagent-settled/subagent-report）；替换完成后清除已 settle 子代理的 mode；`agent/status` 仅维护力牧活跃监控（running 记录活动、idle 清除活动，不再发送完成通知）；`tools/post-execute` 在框架子智能体每次工具执行后刷新活动时间。
+- 完成通知：`agent/pre-step` 拦截发往风后/夔/力牧等框架 owner 的 dsh 子代理消息（`subagent-settled` 自动通知与 `subagent-report` 主动报告两类）并替换为框架完成通知（力牧含 module_name，供 module_agent_executor(action="status") 使用），避免 owner 收到重复/原始消息（离朱 settle 或经 report 工具报告给力牧时，力牧收到「离朱测试完毕…」而非原始 subagent-settled/subagent-report）；替换完成后清除已 settle 子代理的 mode；`agent/status` 仅维护活跃监控（running 对框架子智能体记录活动、idle 无条件清除活动，不再发送完成通知；idle 不依赖 mode，防止 subagent-report 拦截提前清 mode 后 lastActivity 残留致 isWorking 恒 true、力牧被误拦「离朱仍在运行」）；`tools/post-execute` 在框架子智能体每次工具执行后刷新活动时间。
 ## 公共数据层
 
 framework 提供共享数据层，沿用 `.module_agent/*.json` 文件存储，逻辑与原 opencode 版保持一致，仅调整类型/导入：

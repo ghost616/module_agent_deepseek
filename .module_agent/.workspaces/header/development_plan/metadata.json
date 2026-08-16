@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_e94effa1-deb7-4417-a964-d3d372bd16f0",
-    "plan_summary": "修复离朱 subagent-report 未拦截：source.kind 判断扩展为 settled+report",
+    "plan_id": "plan_ad5d5fa4-0dc5-450c-8211-a9b1d30e608f",
+    "plan_summary": "修复离朱 idle 后仍被误拦：agent/status idle 无条件 clearActivity",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
