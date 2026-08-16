@@ -1,8 +1,24 @@
 [
   {
-    "plan_id": "plan_46056b00-66ed-43df-bdc9-afe5ac172cf5",
-    "plan_summary": "同步 opencode：handleStatus 全分支返回 plan_id + orchestrator_rules 补依赖分析规则",
-    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
+    "plan_id": "plan_6c692adb-d53f-4ae5-b90d-3cd7e1315950",
+    "plan_summary": "修复 subagent-settled 拦截时 mode 已被清除：延后 clearAgentMode，新增 cleanStaleModes",
+    "starter_session_id": "ses_ff762dca7ffeIh1oczkBsup5j0",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_ea98d05f-e32e-4fe9-8fc5-5c5285130851",
+    "plan_summary": "cleanExternalStale 接线 cleanStaleModes 兜底清理残留 mode",
+    "starter_session_id": "ses_ff762dca7ffeIh1oczkBsup5j0",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_b8065cd7-4efd-4a54-9cbd-9e76837574b5",
+    "plan_summary": "补记 orchestration 变更历史与模块定义文档",
+    "starter_session_id": "ses_ff762dca7ffeIh1oczkBsup5j0",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true

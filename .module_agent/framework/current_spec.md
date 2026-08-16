@@ -6,9 +6,9 @@
 入口组装以下 dsh 等价 hooks：
 - 权限与拦截：`tools/pre-execute` 自动放行自定义工具、deny 越出工程目录的 write/edit；`tools.guard` 执行各智能体模式守卫（风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单与 action 级限制；离朱可自由 write/edit 编写测试文件）。
 - 系统提示词注入：`systemPrompt.section` 为框架子智能体注入知识库清单、为风后新手模式注入需求引导规则。
-- 完成通知：`agent/pre-step` 拦截发往风后/夔的 dsh 原生 `subagent-settled` 通知并替换为框架完成通知（力牧含 module_name，供 module_agent_executor(action="status") 使用），避免风后收到重复通知；`agent/status` 仅维护力牧活跃监控（running 记录活动、idle 清除活动，不再发送完成通知）；`tools/post-execute` 在框架子智能体每次工具执行后刷新活动时间。
+- 完成通知：`agent/pre-step` 拦截发往风后/夔的 dsh 原生 `subagent-settled` 通知并替换为框架完成通知（力牧含 module_name，供 module_agent_executor(action="status") 使用），避免风后收到重复通知；替换完成后清除已 settle 子代理的 mode；`agent/status` 仅维护力牧活跃监控（running 记录活动、idle 清除活动，不再发送完成通知）；`tools/post-execute` 在框架子智能体每次工具执行后刷新活动时间。
 
-`src/lib/session_state.ts` 为会话身份注册表：dsh 以 subagent persona/descriptor（`module-agent:role=<mode>` marker 或 `module-agent:<mode>` provider 命名）标记力牧/皋陶/离朱/夔身份，替代 opencode 的 session_modes.json 映射；保留 getAgentMode/setAgentMode/clearAgentMode 接口语义，并绑定 subagent/start 与 agent/disposed 生命周期（冷恢复时经 foldSubagentDescriptor 从持久化 descriptor.persona 识别 marker 重建身份）。
+`src/lib/session_state.ts` 为会话身份注册表：dsh 以 subagent persona/descriptor（`module-agent:role=<mode>` marker 或 `module-agent:<mode>` provider 命名）标记力牧/皋陶/离朱/夔身份，替代 opencode 的 session_modes.json 映射；保留 getAgentMode/setAgentMode/clearAgentMode 接口语义并绑定 subagent/start 生命周期（冷恢复时经 foldSubagentDescriptor 从持久化 descriptor.persona 识别 marker 重建身份）；mode 清理不绑定 agent/disposed（dispose 先于 subagent-settled 触发会过早清除），改由 subagent-settled 处理后 clearAgentMode 及 cleanStaleModes 兜底清理。
 
 orchestration 模块尚未移植的能力（力牧计划守卫、bash 命令守卫、离朱启动者绑定校验、limu_monitor 活跃追踪）在代码中以 TODO(orchestration) 标注，由该模块后续以 tools.guard 挂载。
 ## 公共数据层

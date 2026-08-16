@@ -11,7 +11,7 @@
     },
     {
       "path": "src/index.ts",
-      "description": "插件入口：Cordis apply(ctx, config) + inject(['tools','systemPrompt','agents','subagents'])，组装 session_state 注册、25 工具注册、权限/拦截（tools/pre-execute + tools.guard：风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单；离朱可自由 write/edit 编写测试文件）、系统提示词注入（systemPrompt.section）、完成通知（agent/pre-step 拦截发往风后/夔的 dsh subagent-settled 通知并替换为框架完成通知，力牧含 module_name；agent/status 仅维护活跃监控；tools/post-execute 刷新活动时间）"
+      "description": "插件入口：Cordis apply(ctx, config) + inject(['tools','systemPrompt','agents','subagents'])，组装 session_state 注册、25 工具注册、权限/拦截（tools/pre-execute + tools.guard：风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单；离朱可自由 write/edit 编写测试文件）、系统提示词注入（systemPrompt.section）、完成通知（agent/pre-step 拦截发往风后/夔的 dsh subagent-settled 通知并替换为框架完成通知，力牧含 module_name，替换后清除已 settle 子代理的 mode；agent/status 仅维护活跃监控；tools/post-execute 刷新活动时间）"
     },
     {
       "path": "src/config.ts",
@@ -31,7 +31,7 @@
     },
     {
       "path": "src/lib/session_state.ts",
-      "description": "会话模式注册表（dsh 改写）：AgentMode 类型与分类（modeFromPersona/modeFromProvider/personaForMode），SessionState 类提供 getAgentMode/setAgentMode/clearAgentMode 会话身份注册与清理，registerSessionState 绑定 subagent/start 与 agent/disposed 生命周期（subagent/start 在 provider 名约定未命中时经 foldSubagentDescriptor 从持久化 descriptor.persona 识别 marker 重建冷恢复身份），directoryOfAgent 解析项目根目录"
+      "description": "会话模式注册表（dsh 改写）：AgentMode 类型与分类（modeFromPersona/modeFromProvider/personaForMode），SessionState 类提供 getAgentMode/setAgentMode/clearAgentMode/cleanStaleModes 会话身份注册、清理与失效兜底（cleanStaleModes 按 isAlive 判定清理残留 mode），registerSessionState 仅绑定 subagent/start 生命周期（provider 名约定未命中时经 foldSubagentDescriptor 从持久化 descriptor.persona 识别 marker 重建冷恢复身份；mode 清理改由 subagent-settled 处理后 clearAgentMode 及 cleanStaleModes 兜底，不再绑定 agent/disposed），directoryOfAgent 解析项目根目录"
     },
     {
       "path": "src/lib/module_tree.ts",

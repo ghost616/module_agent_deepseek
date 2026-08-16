@@ -1,0 +1,22 @@
+[
+  {
+    "plan_id": "plan_ea98d05f-e32e-4fe9-8fc5-5c5285130851",
+    "plan": "在 stale_cleanup 的 cleanExternalStale 中调用 cleanStaleModes 兜底清理残留 mode",
+    "modified_files": [
+      "src/lib/stale_cleanup.ts",
+      "src/tools/module_agent_cleanup.ts"
+    ],
+    "summary": "已修改 stale_cleanup.ts（ExternalCleanupStats 新增 agent_modes、cleanExternalStale 接收 SessionState 并调用 cleanStaleModes）与 module_agent_cleanup.ts（调用处传入 options.sessionState）",
+    "errors": []
+  },
+  {
+    "plan_id": "plan_b8065cd7-4efd-4a54-9cbd-9e76837574b5",
+    "plan": "补记 orchestration 模块变更记录与模块定义（皋陶审查指出的文档遗漏）",
+    "modified_files": [
+      "src/lib/stale_cleanup.ts",
+      "src/tools/module_agent_cleanup.ts"
+    ],
+    "summary": "文档补记完成：1) change_history.log 追加 cleanExternalStale 接线 cleanStaleModes 变更记录（含 plan_ea98d05f 审查通过）；2) module_definition.json 同步 stale_cleanup.ts 与 module_agent_cleanup.ts 的 description（补充 sessionState 参数、cleanStaleModes 兜底清理内存残留 agent mode、agent_modes 字段）；3) 再追加本次补记记录。仅文档同步，无代码修改。验证：change_history.log 出现追加记录，module_definition.json 两个文件描述已同步。",
+    "errors": []
+  }
+]

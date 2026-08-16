@@ -1,0 +1,10 @@
+{
+  "plan_id": "plan_b8065cd7-4efd-4a54-9cbd-9e76837574b5",
+  "module_name": "orchestration",
+  "development_plan": "补记 orchestration 模块变更记录与模块定义（皋陶审查指出的文档遗漏）。\n\n背景：orchestration 模块此前已完成的计划（cleanExternalStale 接线 cleanStaleModes 兜底清理残留 mode，plan_ea98d05f，代码已通过皋陶审查 approved）未完成文档同步。皋陶审查发现两处遗漏：\n1. .module_agent/orchestration/change_history.log 未追加本次变更记录。\n2. .module_agent/orchestration/module_definition.json 中 stale_cleanup.ts 与 module_agent_cleanup.ts 的 description 未同步（stale_cleanup.ts 描述未提及 cleanExternalStale 新增的 agent_modes 字段与 sessionState 参数；module_agent_cleanup.ts 描述未提及 clean_external 传入 sessionState）。\n\n任务（orchestration 模块）：\n1. 调用 module_agent_updater(action=\"append_history\", module_name=\"orchestration\") 追加变更记录，描述：cleanExternalStale 接线 cleanStaleModes 兜底清理残留 mode：ExternalCleanupStats 新增 agent_modes 字段；cleanExternalStale 新增 sessionState 参数并调用 sessionState.cleanStaleModes(isAlive)；module_agent_cleanup 的 clean_external 分支传入 options.sessionState。审查通过（plan_ea98d05f）。\n2. 调用 module_agent_updater(action=\"update_definition\", module_name=\"orchestration\") 更新两个文件条目描述：\n   - src/lib/stale_cleanup.ts：description 更新为包含「cleanExternalStale 新增 sessionState 参数并调用 sessionState.cleanStaleModes(isAlive) 兜底清理内存残留 mode，返回 ExternalCleanupStats 含 agent_modes 字段」的完整职责说明（保留原有内容）。\n   - src/tools/module_agent_cleanup.ts：description 更新为包含「clean_external 调用 cleanExternalStale(isAlive, directory, options.sessionState) 清理项目级失效数据及内存残留 agent mode」的完整职责说明（保留原有内容）。\n\n验证：change_history.log 出现本次追加记录；module_definition.json 两个文件描述已同步。\n\n注意：只做文档补记，不修改任何代码。完成后再次用 module_agent_updater(action=\"append_history\") 记录本次补记（可选）。",
+  "session_id": "ses_ff75711a2ffeZwbGEx9tm4DGJM",
+  "modified_files": [
+    "src/lib/stale_cleanup.ts",
+    "src/tools/module_agent_cleanup.ts"
+  ]
+}
