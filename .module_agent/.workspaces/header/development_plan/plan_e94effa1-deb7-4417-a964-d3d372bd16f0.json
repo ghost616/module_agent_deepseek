@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_e94effa1-deb7-4417-a964-d3d372bd16f0",
+  "module_name": "framework",
+  "development_plan": "修复离朱给力牧发 subagent-report 仍为原始信息的问题：agent/pre-step 拦截的 source.kind 判断扩展为 subagent-settled 与 subagent-report 两种框架子代理消息。\n\n背景：dsh 的 continuable 子代理向 parent 发送消息有两类 source.kind——subagent-settled（settle 时 notifySettlement 自动发，continuation.ts notifySettlement 里 kind='subagent-settled'）与 subagent-report（子代理通过 reportFrom 主动报告，continuation.ts deliverReport 里 kind='subagent-report'）。离朱完成测试后通过 report 工具主动报告给力牧，走的是 subagent-report，而当前 src/index.ts 的 agent/pre-step 拦截只判了 `message.source.kind !== 'subagent-settled'`，未拦截 subagent-report，导致力牧收到原始 subagent-report（\"Background subagent xxx reported: ...\" + 报告内容），而非框架完成通知。\n\n任务（仅改 src/index.ts）：\n1. 将 agent/pre-step 拦截里 source.kind 的判断，从 `if (message.source.kind !== 'subagent-settled') return message` 改为同时拦截两种消息：`if (message.source.kind !== 'subagent-settled' && message.source.kind !== 'subagent-report') return message`。\n2. 两者 source 均带 senderSessionId（子代理 id），后续 getAgentMode(childId) → isFrameworkSubagentMode 过滤 → frameworkCompletionMessage 替换 → clearAgentMode 的逻辑保持不变。\n3. 同步更新相关 JSDoc/注释说明拦截范围。\n\n验证：typecheck（可用 .lizhu_env/typecheck-probe 或离朱）；离朱通过 subagent-report 报告给力牧时，力牧收到的是框架完成通知（离朱测试完毕），而非原始报告内容。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_ff5a77355ffeQisTAdQlfUKEvy",
+  "modified_files": [
+    "src/index.ts"
+  ]
+}

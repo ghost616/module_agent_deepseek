@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_e94effa1-deb7-4417-a964-d3d372bd16f0",
+    "plan": "修复 agent/pre-step 拦截 subagent-report：source.kind 判断扩展为 subagent-settled 与 subagent-report 两种框架子代理消息",
+    "modified_files": [
+      "src/index.ts"
+    ],
+    "summary": "修复 agent/pre-step 拦截：source.kind 判断扩展为 subagent-settled 与 subagent-report，离朱经 report 工具报告时力牧收到框架完成通知而非原始报告。",
+    "errors": []
+  }
+]

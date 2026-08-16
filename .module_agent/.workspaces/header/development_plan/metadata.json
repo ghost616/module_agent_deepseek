@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_f5f2bfb4-9732-41ca-9d8e-1ac915065a6f",
-    "plan_summary": "修复离朱给力牧发 subagent-settled：拦截条件扩展为所有框架 owner",
+    "plan_id": "plan_e94effa1-deb7-4417-a964-d3d372bd16f0",
+    "plan_summary": "修复离朱 subagent-report 未拦截：source.kind 判断扩展为 settled+report",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,

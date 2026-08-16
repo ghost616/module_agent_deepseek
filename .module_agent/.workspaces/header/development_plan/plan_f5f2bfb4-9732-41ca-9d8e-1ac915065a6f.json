@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_f5f2bfb4-9732-41ca-9d8e-1ac915065a6f",
-  "module_name": "framework",
-  "development_plan": "修复离朱给力牧发 subagent-settled 仍为原始信息的问题：把 agent/pre-step 拦截条件扩展为所有框架 owner（风后/夔/力牧）。\n\n背景：当前 src/index.ts 的 agent/pre-step 拦截 subagent-settled 的逻辑中，条件为 `if (ownerMode !== 'fengzhou' && ownerMode !== 'kui') return decision`，只处理风后/夔作为 owner 的情况。而离朱的 owner 是力牧（limu），离朱 settle 时 subagent-settled 发给力牧，力牧的 ownerMode 是 'limu'，导致直接 return decision 原样放行，力牧收到原始 subagent-settled（stopReason+输出），而非框架完成通知「离朱测试完毕，请使用 module_agent_reader(action=\"read_test_results\") 读取测试结果」。\n\n任务（仅改 src/index.ts）：\n1. 将 agent/pre-step 拦截的条件从 `if (ownerMode !== 'fengzhou' && ownerMode !== 'kui') return decision` 改为 `if (ownerMode !== 'fengzhou' && !isFrameworkSubagentMode(ownerMode)) return decision`。这样力牧（limu）作为离朱的 owner 时，也会把 subagent-settled 替换成 frameworkCompletionMessage（离朱的完成通知为「离朱测试完毕…」）。\n2. 其余逻辑不变（message.source.kind === 'subagent-settled' 判断、getAgentMode(childId) 取 mode、frameworkCompletionMessage 替换、替换后 clearAgentMode）。\n\n验证：typecheck（可用 .lizhu_env/typecheck-probe 或离朱）；离朱 settle 给力牧发 subagent-settled 时，力牧收到的是框架完成通知（离朱测试完毕），而非原始信息。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
-  "session_id": "ses_ff64568efffeheujN0ffTjoF7y",
-  "modified_files": [
-    "src/index.ts"
-  ]
-}
