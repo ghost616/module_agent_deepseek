@@ -257,7 +257,8 @@ function frameworkCompletionMessage(
  * 挂载完成通知与子智能体 settle 拦截（dsh 等价物）：
  * - tools/post-execute 在框架子智能体每次工具执行后刷新 lastActivity，防止长任务
  *   被 getSessionIdle 误判 unresponsive；waterfall 语义，必须委托 next()。
- * - agent/status 维护力牧活跃监控：running 记录活动、idle 清除活动。
+ * - agent/status 维护活跃监控：running 对框架子智能体记录活动、idle 无条件清除
+ *   活动（不依赖 mode，防止 subagent-report 拦截提前清 mode 后 idle 无法清除残留）。
  * - agent/pre-step 拦截发往框架 owner（风后/夔/力牧等框架子智能体）的 dsh
  *   子代理消息（subagent-settled 自动通知与 subagent-report 主动报告）并替换为
  *   框架完成通知，使 owner 只收到一条含 module_name 的完成通知、不再重复（离朱
@@ -283,7 +284,11 @@ function registerCompletionNotification(ctx: Context, state: SessionState, confi
       return
     }
 
-    if (isFrameworkSubagentMode(mode)) clearActivity(agentId)
+    // idle 无条件清除活跃记录：mode 仅用于身份标记，且 agent/pre-step 拦截
+    // subagent-report 时已提前清除子代理 mode，此刻 getAgentMode 可能为 undefined；
+    // 若仍按 mode 条件清除，会导致 lastActivity 残留、isWorking 恒为 true，
+    // 力牧被误拦「离朱仍在运行」。
+    clearActivity(agentId)
   })
 
   // dsh 的 continuable 子代理向直接父 agent 投递两类消息：settle 时自动发的
