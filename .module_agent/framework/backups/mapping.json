@@ -15,5 +15,9 @@
   "src/tools/module_agent_reader.ts": "ee0c33c8cb57fdf75d5a5d8de8d144d7",
   "src/tools/module_agent_updater.ts": "a5d099b9a95bf5af14cd88016b118e25",
   "src/tools/module_classification.ts": "b329d9e5996ad595540d5fc815c07c34",
-  "src/tools/module_agent_plan.ts": "663a7ddcfd7958b2d49f40581b31df05"
+  "src/tools/module_agent_plan.ts": "663a7ddcfd7958b2d49f40581b31df05",
+  "src/lib/constants.ts": "be857b189b19153c1c4e823dff839eba",
+  "src/tools/module_agent_start.ts": "bd741016caac0111c2bc1384d7fadcd4",
+  "src/tools/module_agent_setup.ts": "1aba80f4df2687300a9ee876ce1c8ad8",
+  "src/tools/module_agent_classifier.ts": "5def8add7225384e02a8dfbbb48cfd6d"
 }

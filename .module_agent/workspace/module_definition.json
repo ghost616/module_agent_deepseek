@@ -31,7 +31,7 @@
     },
     {
       "path": "src/tools/module_agent_setup.ts",
-      "description": "岐伯项目设置向导工具（defineTool 风格）。createModuleAgentSetupTool 注册 module_agent_setup 工具：校验会话模式互斥（风后/力牧/皋陶/隶首/离朱已激活时拒绝），写入 qibo 模式并创建用户消息将 SETUP_GUIDE 注入当前 agent 会话（agent.inject）。"
+      "description": "岐伯项目设置向导工具（defineTool 风格）。createModuleAgentSetupTool 注册 module_agent_setup 工具：校验会话模式互斥（风后/力牧/皋陶/隶首/离朱已激活时拒绝），写入 qibo 模式（setAgentMode 设置内存 mode）并通过 persistMode 将 qibo 身份持久化到 .module_agent/session_modes.json（目录由 directoryOfAgent(agent, dataDir) 从 exec.agent 会话 cwd 解析，重启后由 agent/session-start 恢复），随后创建用户消息将 SETUP_GUIDE 注入当前 agent 会话（agent.inject）。"
     }
   ]
 }

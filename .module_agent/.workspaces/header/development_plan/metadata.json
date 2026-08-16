@@ -1,24 +1,40 @@
 [
   {
-    "plan_id": "plan_6c692adb-d53f-4ae5-b90d-3cd7e1315950",
-    "plan_summary": "修复 subagent-settled 拦截时 mode 已被清除：延后 clearAgentMode，新增 cleanStaleModes",
-    "starter_session_id": "ses_ff762dca7ffeIh1oczkBsup5j0",
+    "plan_id": "plan_ca00fa9d-d2f2-4765-9b85-1cf71e10b24f",
+    "plan_summary": "framework：宿主会话模式文件持久化（persistMode/restoreMode）",
+    "starter_session_id": "ses_ff65e8734ffeBUDksaoziw0hjn",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_ea98d05f-e32e-4fe9-8fc5-5c5285130851",
-    "plan_summary": "cleanExternalStale 接线 cleanStaleModes 兜底清理残留 mode",
-    "starter_session_id": "ses_ff762dca7ffeIh1oczkBsup5j0",
+    "plan_id": "plan_bde639c9-0415-4829-afa0-15e662eaf64c",
+    "plan_summary": "风后（fengzhou）mode 持久化接线核验与补记",
+    "starter_session_id": "ses_ff65e8734ffeBUDksaoziw0hjn",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_b8065cd7-4efd-4a54-9cbd-9e76837574b5",
-    "plan_summary": "补记 orchestration 变更历史与模块定义文档",
-    "starter_session_id": "ses_ff762dca7ffeIh1oczkBsup5j0",
+    "plan_id": "plan_47c137a6-8619-4f77-8430-bb31f3c854d0",
+    "plan_summary": "隶首（lishou）mode 持久化接线核验与补记",
+    "starter_session_id": "ses_ff65e8734ffeBUDksaoziw0hjn",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_5ef12fda-337b-4766-863f-f41e7c6d7597",
+    "plan_summary": "岐伯（qibo）mode 持久化接线核验与补记",
+    "starter_session_id": "ses_ff65e8734ffeBUDksaoziw0hjn",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_29ecf782-db20-40aa-b764-e6e70b5213ab",
+    "plan_summary": "cleanStalePersistedModes 接入 stale_cleanup（清理 session_modes.json 失效条目）",
+    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true

@@ -43,7 +43,7 @@
     },
     {
       "path": "src/lib/stale_cleanup.ts",
-      "description": "失效数据清理：cleanWorkspaceStale 清理工作空间内引用了已不存在会话的数据（计划/映射/会话/绑定/执行记录/审查结果/夔计划/测试说明与报告），cleanExternalStale 清理项目级数据（会话-工作空间映射、工作空间绑定、文件锁），新增 sessionState 参数并调用 sessionState.cleanStaleModes(isAlive) 兜底清理内存残留 agent mode，返回 ExternalCleanupStats 含 agent_modes 字段（对齐 opencode 版），基于注入的 isAlive 存活判定。"
+      "description": "失效数据清理：cleanWorkspaceStale 清理工作空间内引用了已不存在会话的数据（计划/映射/会话/绑定/执行记录/审查结果/夔计划/测试说明与报告），cleanExternalStale 清理项目级数据（会话-工作空间映射、工作空间绑定、文件锁），新增 sessionState 参数并调用 sessionState.cleanStaleModes(isAlive) 兜底清理内存残留 agent mode，并调用 cleanStalePersistedModes(directory, isAlive) 清理 `.module_agent/session_modes.json` 中失效 sessionId 的持久化残留，返回 ExternalCleanupStats 含 agent_modes 与 persisted_agent_modes 字段（对齐 opencode 版），基于注入的 isAlive 存活判定。"
     },
     {
       "path": "src/lib/subagent_host.ts",
@@ -59,7 +59,7 @@
     },
     {
       "path": "src/tools/module_agent_start.ts",
-      "description": "启动力牧编排模式：校验互斥身份（岐伯/力牧/皋陶/隶首/离朱）后，将当前会话标记为风后（setAgentMode）并通过 agent.inject 注入风后力牧规则（ORCHESTRATOR_RULES）。"
+      "description": "启动力牧编排模式：校验互斥身份（岐伯/力牧/皋陶/隶首/离朱）后，将当前会话标记为风后（setAgentMode）并将身份经 persistMode 持久化到 .module_agent/session_modes.json（重启后可恢复），再通过 agent.inject 注入风后力牧规则（ORCHESTRATOR_RULES）。"
     },
     {
       "path": "src/tools/module_agent_done.ts",

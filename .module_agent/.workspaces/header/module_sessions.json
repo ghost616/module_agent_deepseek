@@ -3,9 +3,16 @@
     "ses_ffbcc95f0ffeVXOUasGz8YcSji"
   ],
   "framework": [
-    "ses_ff7627112ffeVYFIV4ywdfAJDF"
+    "ses_ff65e3648ffepCI04lfdrUkx1J"
   ],
   "orchestration": [
-    "ses_ff75711a2ffeZwbGEx9tm4DGJM"
+    "ses_ff6563946ffe7RVjm70rfkc0gk",
+    "ses_ff64cfb43ffeM6DAOJsmoPeRYh"
+  ],
+  "module-management": [
+    "ses_ff65604c5ffe0IqMc92CWjKcCv"
+  ],
+  "workspace": [
+    "ses_ff655e940ffeWux7yW33ODOUm4"
   ]
 }

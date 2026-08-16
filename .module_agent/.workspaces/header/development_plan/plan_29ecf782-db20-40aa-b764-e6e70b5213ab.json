@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_29ecf782-db20-40aa-b764-e6e70b5213ab",
+  "module_name": "orchestration",
+  "development_plan": "将 cleanStalePersistedModes 接入 stale_cleanup，清理 .module_agent/session_modes.json 中已失效 sessionId 的宿主会话 mode。\n\n背景：framework 模块已在 src/lib/session_state.ts 实现 cleanStalePersistedModes(directory, isAlive)（文件版清理，清理 .module_agent/session_modes.json 中 isAlive 返回 false 的 sessionId 条目）。但 stale_cleanup.ts 的 cleanExternalStale 只调用了内存版 sessionState.cleanStaleModes，未接入文件版，导致 session_modes.json 中失效 sessionId 无法清理（遗留 warning）。\n\n任务（仅改 orchestration 模块 src/lib/stale_cleanup.ts）：\n1. 从 './session_state.ts' 导入 cleanStalePersistedModes（现有已导入 type SessionState，需补充值导入）。\n2. ExternalCleanupStats 接口新增字段 persisted_agent_modes: number（文件版清理数量）。\n3. cleanExternalStale 中，在 sessionState.cleanStaleModes(isAlive) 之后，调用 const persisted_agent_modes = await cleanStalePersistedModes(directory, isAlive)，并将该字段加入返回值。\n\n验证：typecheck（可用 .lizhu_env/typecheck-probe 或离朱）；cleanExternalStale 能清理 session_modes.json 中的失效 sessionId。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_ff64cfb43ffeM6DAOJsmoPeRYh",
+  "modified_files": [
+    "src/lib/stale_cleanup.ts"
+  ]
+}

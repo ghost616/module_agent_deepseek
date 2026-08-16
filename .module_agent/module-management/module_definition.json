@@ -35,7 +35,7 @@
     },
     {
       "path": "src/tools/module_agent_classifier.ts",
-      "description": "隶首激活工具：将当前会话标记为 lishou 模式，并通过 exec.deferContext 注入 CLASSIFIER_RULES 文件分析规则。与风后力牧/岐伯/力牧/皋陶/离朱模式互斥。"
+      "description": "隶首激活工具：将当前会话标记为 lishou 模式（setAgentMode 写内存 mode），并通过 persistMode(directoryOfAgent(exec.agent, options.dataDir), agentId, 'lishou') 将 lishou 身份持久化到文件，重启后由 agent/session-start 恢复；同时通过 exec.deferContext 注入 CLASSIFIER_RULES 文件分析规则。与风后力牧/岐伯/力牧/皋陶/离朱模式互斥。"
     },
     {
       "path": "src/lib/module_design.ts",
