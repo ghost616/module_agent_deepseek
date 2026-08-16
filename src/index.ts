@@ -222,7 +222,7 @@ function completionNotice(mode: AgentMode, agentId: string): string {
 }
 
 /**
- * 框架子智能体 settle 时替换 subagent-settled 通知的完成消息。
+ * 框架子智能体 settle 或报告时替换 subagent-settled/subagent-report 消息的完成通知。
  * 力牧通知补充 module_name（解析失败时用占位 '<模块名>'），其余模式复用
  * {@link completionNotice}。
  */
@@ -259,10 +259,11 @@ function frameworkCompletionMessage(
  *   被 getSessionIdle 误判 unresponsive；waterfall 语义，必须委托 next()。
  * - agent/status 维护力牧活跃监控：running 记录活动、idle 清除活动。
  * - agent/pre-step 拦截发往框架 owner（风后/夔/力牧等框架子智能体）的 dsh
- *   subagent-settled 通知并替换为框架完成通知，使 owner 只收到一条含 module_name
- *   的完成通知、不再重复（离朱 settle 给力牧发通知时，力牧收到「离朱测试完毕…」
- *   而非原始 subagent-settled）；替换完成后清除已 settle 子代理的 mode（残留
- *   mode 由 cleanStaleModes 兜底）。
+ *   子代理消息（subagent-settled 自动通知与 subagent-report 主动报告）并替换为
+ *   框架完成通知，使 owner 只收到一条含 module_name 的完成通知、不再重复（离朱
+ *   settle/报告给力牧时，力牧收到「离朱测试完毕…」而非原始 subagent-settled/
+ *   subagent-report）；替换完成后清除已 settle 子代理的 mode（残留 mode 由
+ *   cleanStaleModes 兜底）。
  */
 function registerCompletionNotification(ctx: Context, state: SessionState, config: ModuleAgentConfig): void {
   ctx.on('tools/post-execute', async (exec, _result, next): Promise<PostToolDecision> => {
@@ -285,8 +286,9 @@ function registerCompletionNotification(ctx: Context, state: SessionState, confi
     if (isFrameworkSubagentMode(mode)) clearActivity(agentId)
   })
 
-  // dsh 的 continuable 子代理 settle 时自动给直接父 agent 投递 subagent-settled
-  // 通知；此处把发往框架 owner（风后/夔/力牧等）的该通知替换为框架完成通知
+  // dsh 的 continuable 子代理向直接父 agent 投递两类消息：settle 时自动发的
+  // subagent-settled 通知，以及经 report 工具主动报告的 subagent-report。
+  // 此处把发往框架 owner（风后/夔/力牧等）的这两类消息替换为框架完成通知
   // （力牧含 module_name）。
   ctx.on('agent/pre-step', async ({ agent }, next): Promise<PreStepDecision> => {
     const decision = await next()
@@ -296,7 +298,8 @@ function registerCompletionNotification(ctx: Context, state: SessionState, confi
     if (ownerMode !== 'fengzhou' && !isFrameworkSubagentMode(ownerMode)) return decision
 
     const messages = decision.messages.map((message) => {
-      if (message.source.kind !== 'subagent-settled') return message
+      const kind = message.source.kind
+      if (kind !== 'subagent-settled' && kind !== 'subagent-report') return message
       const childId = message.source.senderSessionId
       const mode = state.getAgentMode(childId)
       if (!isFrameworkSubagentMode(mode)) return message
