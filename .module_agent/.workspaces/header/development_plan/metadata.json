@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "plan_id": "plan_a3a25264-1df8-4a66-b8e1-4258f067e2c3",
+    "plan_summary": "合并框架完成通知与 subagent-settled（agent/pre-step 拦截替换）",
+    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_48115842-9f4f-48d1-bb1c-d131e3f2e37f",
+    "plan_summary": "处理审查遗留：README 完成通知描述更新 + limu 模块名占位 + 死代码清理",
+    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  }
+]

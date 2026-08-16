@@ -1,0 +1,11 @@
+{
+  "plan_id": "plan_48115842-9f4f-48d1-bb1c-d131e3f2e37f",
+  "module_name": "framework",
+  "development_plan": "处理皋陶审查遗留的 1 个 warning + 2 个 info（均为 framework 模块）。\n\n任务：\n\n1. README.md：更新「与 opencode 版实现方案差异」表中「完成通知」一行（约 206 行附近）。当前写为「session.idle 事件 → agent/status(idle) 监听 + 父 agent owner.followup()（src/index.ts registerCompletionNotification）」，需改为反映实际实现：session.idle 事件 → agent/pre-step 拦截 dsh 的 subagent-settled 消息并替换为框架完成通知（src/index.ts）。表述保持与表内其他行一致（opencode 版列 / dsh 版列）。\n\n2. src/index.ts：limu 完成通知生成处（frameworkCompletionMessage 或对应函数，约 241 行附近），模块名解析失败时补占位——将 module_name 的取值改为 `moduleName ?? '<模块名>'`（对齐旧 notifyLimuAfterLizhu 的占位行为），避免风后按通知调用 module_agent_executor(action=\"status\") 时因缺 module_name 报参数缺失错误。\n\n3. src/lib/session_state.ts：清理死代码。本次修改后 wasIdleNotified/markIdleNotified 已无调用方（grep 确认），且 resetIdleNotified 仅剩 index.ts agent/status running 分支调用。处理：\n   - 删除 SessionState 的 wasIdleNotified/markIdleNotified 方法。\n   - 检查 resetIdleNotified 是否仍被需要：若 running 分支的 resetIdleNotified 仅服务于已删除的去重逻辑，则一并删除 resetIdleNotified 方法、idleNotified 私有字段、clearAgentMode 中的 idleNotified.delete。\n   - 同步删除 src/index.ts 中 agent/status running 分支的 state.resetIdleNotified(agentId) 调用（若 resetIdleNotified 被删除）。\n   - 确保无残留引用，typecheck 通过。\n\n验证：typecheck（可用 .lizhu_env/typecheck-probe 或离朱）；README 描述与代码实现一致；无死代码残留。\n\n完成后用 module_agent_updater(action=\"append_history\") 记录变更。",
+  "session_id": "ses_ff9a13136ffeUs71CQqBYTJOAy",
+  "modified_files": [
+    "README.md",
+    "src/index.ts",
+    "src/lib/session_state.ts"
+  ]
+}
