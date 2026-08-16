@@ -203,6 +203,6 @@
 | 身份标记 | `setAgentMode` 持久化到 session_modes.json | subagent persona/descriptor：`module-agent:role=<mode>` marker 或 `module-agent:<mode>` provider 命名（`src/lib/session_state.ts`） |
 | 权限拦截 | `permission.ask` / `tool.execute.before` | `tools/pre-execute` 事件 + `ctx.tools.guard()`（`src/index.ts` `registerGuards`） |
 | 系统提示词注入 | `chat.system.transform` | `ctx.systemPrompt.section()`（`src/index.ts` `registerPromptInjection`） |
-| 完成通知 | `session.idle` 事件 | `agent/status(idle)` 监听 + 父 agent `owner.followup()`（`src/index.ts` `registerCompletionNotification`） |
+| 完成通知 | `session.idle` 事件 | `agent/pre-step` 拦截 dsh 的 `subagent-settled` 消息并替换为框架完成通知（`src/index.ts` `registerCompletionNotification`） |
 | 模型能力 | opencode sdk `client` | `ctx.llm`（`ModelCatalog` 抽象：`listProviders` / `listModels`，`src/index.ts`） |
 | 数据存储 | `.module_agent/*.json` 文件存储 | 两版一致，沿用 `.module_agent/*.json` 文件存储 |

@@ -1,8 +1,7 @@
 import { isAbsolute, relative, resolve } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
+import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
+import { createUserMessage, type ContentBlock, type UserMessage } from '@deepseek-ai/dsh-llm'
 import type { PostToolDecision, PreToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'
 import type { AssembleContext } from '@deepseek-ai/dsh-system-prompt'
 import { Config, type Config as ModuleAgentConfig } from './config.ts'
@@ -23,8 +22,8 @@ import { getWorkspaceConfigSync } from './lib/workspace_config.ts'
 import { listKnowledgeBasesSync, buildKnowledgeBasePrompt } from './lib/knowledge_base.ts'
 import { BEGINNER_TIPS } from './lib/beginner_tips.ts'
 import { registerOrchestrationGuards } from './lib/orchestration_guards.ts'
-import { recordActivity, clearActivity, isWorking } from './lib/limu_monitor.ts'
-import { getBoundLizhu, getModuleNameBySession } from './lib/module_session_tracker.ts'
+import { recordActivity, clearActivity } from './lib/limu_monitor.ts'
+import { getModuleNameBySession } from './lib/module_session_tracker.ts'
 
 export const name = 'module-agent'
 export { Config }
@@ -206,19 +205,6 @@ function registerPromptInjection(ctx: Context, state: SessionState, config: Modu
   })
 }
 
-/** 查找创建了该子智能体的运行时父 agent（优先按持久化直接父会话，冷恢复的子智能体亦成立）。 */
-function findOwner(ctx: Context, child: Agent): Agent | undefined {
-  const parentSession = child.session.header.parentSession
-  if (parentSession !== undefined) {
-    const direct = ctx.agents.get(parentSession)
-    if (direct !== undefined) return direct
-  }
-  for (const candidate of ctx.agents.list()) {
-    if (ctx.agents.isOwnedBy(child.id, candidate)) return candidate
-  }
-  return undefined
-}
-
 /** 各模式完成时通知其启动者的消息文本。 */
 function completionNotice(mode: AgentMode, agentId: string): string {
   switch (mode) {
@@ -235,31 +221,47 @@ function completionNotice(mode: AgentMode, agentId: string): string {
   }
 }
 
-/** 子智能体完成时是否通知指定身份的启动者。 */
-function isNotifiableOwner(mode: AgentMode, ownerMode: AgentMode | undefined): boolean {
-  switch (mode) {
-    case 'lizhu':
-      return ownerMode === 'limu' || ownerMode === 'fengzhou'
-    case 'limu':
-    case 'gaotao':
-      return ownerMode === 'fengzhou' || ownerMode === 'kui'
-    case 'kui':
-      return ownerMode === 'fengzhou'
-    default:
-      return false
+/**
+ * 框架子智能体 settle 时替换 subagent-settled 通知的完成消息。
+ * 力牧通知补充 module_name（解析失败时用占位 '<模块名>'），其余模式复用
+ * {@link completionNotice}。
+ */
+function frameworkCompletionMessage(
+  agent: Agent,
+  childId: string,
+  mode: AgentMode,
+  config: ModuleAgentConfig,
+): UserMessage {
+  let text = completionNotice(mode, childId)
+  if (mode === 'limu') {
+    const directory = directoryOfAgent(agent, config.dataDir)
+    const wsName = resolveWorkspace(directory, childId)
+    let moduleName: string | null = null
+    if (wsName !== null) {
+      moduleName = getModuleNameBySession(getWorkspaceDir(directory, wsName), childId)
+    }
+    text = `力牧（会话 ${childId}）任务完成。请调用 module_agent_executor(action="status", module_name="${moduleName ?? '<模块名>'}", session_id="${childId}") 获取力牧完成情况。`
   }
+  return createUserMessage({
+    content: [{ type: 'text', text }] satisfies ContentBlock[],
+    source: {
+      kind: 'plugin',
+      plugin: 'module-agent',
+      form: 'notice',
+      summary: `${AGENT_MODE_LABELS[mode]}任务完成通知`,
+    },
+  })
 }
 
 /**
- * 挂载完成通知（opencode session.idle 的 dsh 等价物）：框架子智能体转为
- * idle 时，通过父 agent 的 followup 通知其启动者（风后/夔/力牧）。
- * 同时维护力牧活跃监控：running 记录活动、idle 清除活动；tools/post-execute
- * 在每次工具执行后刷新活动时间，供状态查询与会话复用判定使用。
+ * 挂载完成通知与子智能体 settle 拦截（dsh 等价物）：
+ * - tools/post-execute 在框架子智能体每次工具执行后刷新 lastActivity，防止长任务
+ *   被 getSessionIdle 误判 unresponsive；waterfall 语义，必须委托 next()。
+ * - agent/status 维护力牧活跃监控：running 记录活动、idle 清除活动。
+ * - agent/pre-step 拦截发往框架 owner（风后/夔）的 dsh subagent-settled 通知并
+ *   替换为框架完成通知，使风后只收到一条含 module_name 的完成通知、不再重复。
  */
 function registerCompletionNotification(ctx: Context, state: SessionState, config: ModuleAgentConfig): void {
-  // tools/post-execute（opencode tool.execute.after 的 dsh 等价物）：
-  // 框架子智能体每次工具执行后刷新 lastActivity，使长任务中持续工具调用
-  // 不会被 getSessionIdle 误判 unresponsive。waterfall 语义，必须委托 next()。
   ctx.on('tools/post-execute', async (exec, _result, next): Promise<PostToolDecision> => {
     const agent = exec.agent
     if (agent !== undefined && isFrameworkSubagentMode(state.getAgentMode(agent.id))) {
@@ -273,86 +275,31 @@ function registerCompletionNotification(ctx: Context, state: SessionState, confi
     const mode = state.getAgentMode(agentId)
 
     if (status === 'running') {
-      state.resetIdleNotified(agentId)
       if (isFrameworkSubagentMode(mode)) recordActivity(agentId)
       return
     }
 
     if (isFrameworkSubagentMode(mode)) clearActivity(agentId)
-    if (!isFrameworkSubagentMode(mode)) return
-    if (state.wasIdleNotified(agentId)) return
-
-    // 力牧空闲但绑定的离朱仍在运行：暂不通知（也不标记已通知），等待力牧下一轮结束。
-    if (mode === 'limu') {
-      const directory = directoryOfAgent(agent, config.dataDir)
-      void notifyLimuAfterLizhu(ctx, state, directory, agentId, agent)
-      return
-    }
-
-    state.markIdleNotified(agentId)
-
-    const owner = findOwner(ctx, agent)
-    if (!owner) return
-    const ownerMode = state.getAgentMode(owner.id)
-    if (!isNotifiableOwner(mode, ownerMode)) return
-
-    const text = completionNotice(mode, agentId)
-    const message = createUserMessage({
-      content: [{ type: 'text', text }] satisfies ContentBlock[],
-      source: {
-        kind: 'plugin',
-        plugin: 'module-agent',
-        form: 'notice',
-        summary: `${AGENT_MODE_LABELS[mode]}任务完成通知`,
-      },
-    })
-    try {
-      owner.followup(message)
-    } catch (error) {
-      ctx.logger.warn(`module-agent: 通知 ${AGENT_MODE_LABELS[ownerMode ?? 'fengzhou']} ${owner.id} 失败: ${String(error)}`)
-    }
   })
-}
 
-/** 力牧空闲时的延迟通知：绑定的离朱仍在运行则跳过，否则通知启动者（风后/夔）。 */
-async function notifyLimuAfterLizhu(
-  ctx: Context,
-  state: SessionState,
-  directory: string,
-  agentId: string,
-  agent: Agent,
-): Promise<void> {
-  try {
-    const wsName = await resolveWorkspace(directory, agentId)
-    if (!wsName) return
-    const workspaceDir = getWorkspaceDir(directory, wsName)
-    const boundLizhu = getBoundLizhu(workspaceDir, agentId)
-    if (boundLizhu && isWorking(boundLizhu)) {
-      ctx.logger.info(`module-agent: 力牧 ${agentId} 空闲但绑定的离朱 ${boundLizhu} 仍在运行，跳过完成通知`)
-      return
-    }
+  // dsh 的 continuable 子代理 settle 时自动给直接父 agent 投递 subagent-settled
+  // 通知；此处把发往风后/夔的该通知替换为框架完成通知（力牧含 module_name）。
+  ctx.on('agent/pre-step', async ({ agent }, next): Promise<PreStepDecision> => {
+    const decision = await next()
+    if (decision.kind === 'reject') return decision
 
-    const owner = findOwner(ctx, agent)
-    if (!owner) return
-    const ownerMode = state.getAgentMode(owner.id)
-    if (!isNotifiableOwner('limu', ownerMode)) return
+    const ownerMode = state.getAgentMode(agent.id)
+    if (ownerMode !== 'fengzhou' && ownerMode !== 'kui') return decision
 
-    state.markIdleNotified(agentId)
-    const moduleName = getModuleNameBySession(workspaceDir, agentId)
-    const text = `力牧（会话 ${agentId}）任务完成。请调用 module_agent_executor(action="status", module_name="${moduleName ?? '<模块名>'}", session_id="${agentId}") 获取力牧完成情况。`
-    const message = createUserMessage({
-      content: [{ type: 'text', text }] satisfies ContentBlock[],
-      source: {
-        kind: 'plugin',
-        plugin: 'module-agent',
-        form: 'notice',
-        summary: '力牧任务完成通知',
-      },
+    const messages = decision.messages.map((message) => {
+      if (message.source.kind !== 'subagent-settled') return message
+      const childId = message.source.senderSessionId
+      const mode = state.getAgentMode(childId)
+      if (!isFrameworkSubagentMode(mode)) return message
+      return frameworkCompletionMessage(agent, childId, mode, config)
     })
-    owner.followup(message)
-  } catch (error) {
-    ctx.logger.warn(`module-agent: 通知力牧完成给 ${agentId} 的启动者失败: ${String(error)}`)
-  }
+    return { kind: 'enter', messages }
+  })
 }
 
 export function apply(ctx: Context, config: ModuleAgentConfig = {}): void {

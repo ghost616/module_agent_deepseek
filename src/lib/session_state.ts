@@ -74,7 +74,6 @@ export function modeFromProvider(provider: string): AgentMode | undefined {
  */
 export class SessionState {
   private readonly modes = new Map<string, AgentMode>()
-  private readonly idleNotified = new Map<string, boolean>()
 
   getAgentMode(sessionId: string): AgentMode | undefined {
     return this.modes.get(sessionId)
@@ -86,7 +85,6 @@ export class SessionState {
 
   clearAgentMode(sessionId: string): void {
     this.modes.delete(sessionId)
-    this.idleNotified.delete(sessionId)
   }
 
   /** 根据 provider 名自动分类并注册，未命中返回 undefined。 */
@@ -94,19 +92,6 @@ export class SessionState {
     const mode = modeFromProvider(provider)
     if (mode !== undefined) this.modes.set(sessionId, mode)
     return mode
-  }
-
-  /** 完成通知去重：agent 转为 running 时复位。 */
-  resetIdleNotified(sessionId: string): void {
-    this.idleNotified.set(sessionId, false)
-  }
-
-  wasIdleNotified(sessionId: string): boolean {
-    return this.idleNotified.get(sessionId) ?? false
-  }
-
-  markIdleNotified(sessionId: string): void {
-    this.idleNotified.set(sessionId, true)
   }
 }
 
