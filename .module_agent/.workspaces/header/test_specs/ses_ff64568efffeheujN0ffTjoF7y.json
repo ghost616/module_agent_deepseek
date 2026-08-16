@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_ff64568efffeheujN0ffTjoF7y",
+  "content": "## 待测试功能说明\n\n模块：framework，变更文件：src/index.ts\n\n### 变更内容\n\n修复离朱给力牧发 subagent-settled 仍为原始信息的问题：将 `registerCompletionNotification` 中 `agent/pre-step` 拦截条件从 `if (ownerMode !== 'fengzhou' && ownerMode !== 'kui') return decision` 改为 `if (ownerMode !== 'fengzhou' && !isFrameworkSubagentMode(ownerMode)) return decision`。其余逻辑不变（subagent-settled 判断、getAgentMode(childId) 取 mode、frameworkCompletionMessage 替换、替换后 clearAgentMode）。同时同步更新了 registerCompletionNotification JSDoc 与两处注释。\n\n### 需测试的功能\n\n1. **agent/pre-step 拦截范围扩展**：owner 模式为 limu（力牧，离朱的 owner）时，发往力牧的 subagent-settled 通知应被替换为框架完成通知（离朱的完成通知为「离朱测试完毕，请使用 module_agent_reader(action=\"read_test_results\") 读取测试结果。」），而非原样放行。\n2. **owner 为 fengzhou/kui 时行为保持**：风后/夔作为 owner 时拦截替换行为与之前一致，无回归。\n3. **owner 为其他模式（如 undefined / 非框架模式）时原样放行**：不被替换，行为不变。\n4. **typecheck**：src/index.ts 类型检查 0 错误（排除 dsh vendor 环境噪音）。\n\n### 涉及代码文件\n\n- src/index.ts（registerCompletionNotification、agent/pre-step 监听）",
+  "timestamp": "2026-08-16T08:40:46.566Z"
+}

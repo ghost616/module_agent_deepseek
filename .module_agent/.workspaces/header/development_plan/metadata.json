@@ -1,39 +1,7 @@
 [
   {
-    "plan_id": "plan_ca00fa9d-d2f2-4765-9b85-1cf71e10b24f",
-    "plan_summary": "framework：宿主会话模式文件持久化（persistMode/restoreMode）",
-    "starter_session_id": "ses_ff65e8734ffeBUDksaoziw0hjn",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_bde639c9-0415-4829-afa0-15e662eaf64c",
-    "plan_summary": "风后（fengzhou）mode 持久化接线核验与补记",
-    "starter_session_id": "ses_ff65e8734ffeBUDksaoziw0hjn",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_47c137a6-8619-4f77-8430-bb31f3c854d0",
-    "plan_summary": "隶首（lishou）mode 持久化接线核验与补记",
-    "starter_session_id": "ses_ff65e8734ffeBUDksaoziw0hjn",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_5ef12fda-337b-4766-863f-f41e7c6d7597",
-    "plan_summary": "岐伯（qibo）mode 持久化接线核验与补记",
-    "starter_session_id": "ses_ff65e8734ffeBUDksaoziw0hjn",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_29ecf782-db20-40aa-b764-e6e70b5213ab",
-    "plan_summary": "cleanStalePersistedModes 接入 stale_cleanup（清理 session_modes.json 失效条目）",
+    "plan_id": "plan_f5f2bfb4-9732-41ca-9d8e-1ac915065a6f",
+    "plan_summary": "修复离朱给力牧发 subagent-settled：拦截条件扩展为所有框架 owner",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
