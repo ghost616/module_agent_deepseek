@@ -16,5 +16,14 @@
     ],
     "summary": "agent/status idle 分支改为无条件 clearActivity(agentId)，去掉 isFrameworkSubagentMode(mode) 条件；running 分支保持框架子智能体才 recordActivity 不变。同步更新 registerCompletionNotification JSDoc。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_d3aa83fa-ee5d-4a39-a722-4955eeabe813",
+    "plan": "禁止框架子代理的 dsh report 工具，回退 subagent-report 拦截（单一消息源）",
+    "modified_files": [
+      "src/index.ts"
+    ],
+    "summary": "tools.guard 新增框架子代理 report 拒绝；agent/pre-step 拦截回退为仅处理 subagent-settled；更新相关 JSDoc/注释。",
+    "errors": []
   }
 ]

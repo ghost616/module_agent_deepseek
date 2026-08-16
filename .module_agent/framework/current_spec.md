@@ -1,7 +1,9 @@
 维护插件入口 index.ts（注册全部工具与事件钩子、权限拦截、会话模式守卫），公共类型 types.ts、常量 constants.ts、文件工具 fs.ts、会话状态 session_state.ts、智能体画像 agent_profile.ts、代码规范 code_conventions.ts、新手提示 beginner_tips.ts、文件备份 file_backup.ts、失效数据清理 stale_cleanup.ts，以及 verification_code、module_agent_backup、module_agent_cleanup 工具。
 ## 插件入口与事件钩子
 
-- 完成通知：`agent/pre-step` 拦截发往风后/夔/力牧等框架 owner 的 dsh 子代理消息（`subagent-settled` 自动通知与 `subagent-report` 主动报告两类）并替换为框架完成通知（力牧含 module_name，供 module_agent_executor(action="status") 使用），避免 owner 收到重复/原始消息（离朱 settle 或经 report 工具报告给力牧时，力牧收到「离朱测试完毕…」而非原始 subagent-settled/subagent-report）；替换完成后清除已 settle 子代理的 mode；`agent/status` 仅维护活跃监控（running 对框架子智能体记录活动、idle 无条件清除活动，不再发送完成通知；idle 不依赖 mode，防止 subagent-report 拦截提前清 mode 后 lastActivity 残留致 isWorking 恒 true、力牧被误拦「离朱仍在运行」）；`tools/post-execute` 在框架子智能体每次工具执行后刷新活动时间。
+- 权限与拦截：`tools/pre-execute` 自动放行自定义工具、deny 越出工程目录的 write/edit；`tools.guard` 执行各智能体模式守卫（风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单与 action 级限制、框架子代理禁用 dsh report 工具——framework 子代理本有专用报告机制 module_agent_testing write_report / module_agent_updater_review write_review，不依赖 dsh report，禁用避免与 settle 的 subagent-settled 重复产生 subagent-report；离朱可自由 write/edit 编写测试文件）。
+- 系统提示词注入：`systemPrompt.section` 为框架子智能体注入知识库清单、为风后新手模式注入需求引导规则。
+- 完成通知：`agent/pre-step` 拦截发往风后/夔/力牧等框架 owner 的 dsh `subagent-settled` 通知（框架子代理 report 工具已被 tools.guard 禁用，故仅此单一消息源）并替换为框架完成通知（力牧含 module_name，供 module_agent_executor(action="status") 使用），避免 owner 收到重复/原始消息（离朱 settle 给力牧时，力牧收到「离朱测试完毕…」而非原始 subagent-settled）；替换完成后清除已 settle 子代理的 mode；`agent/status` 仅维护活跃监控（running 对框架子智能体记录活动、idle 无条件清除活动，不再发送完成通知；idle 不依赖 mode，防御性兜底避免任何提前清 mode 场景导致 lastActivity 残留致 isWorking 恒 true、力牧被误拦「离朱仍在运行」）；`tools/post-execute` 在框架子智能体每次工具执行后刷新活动时间。
 ## 公共数据层
 
 framework 提供共享数据层，沿用 `.module_agent/*.json` 文件存储，逻辑与原 opencode 版保持一致，仅调整类型/导入：

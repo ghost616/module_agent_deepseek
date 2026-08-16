@@ -1,7 +1,7 @@
 [
   {
-    "plan_id": "plan_ad5d5fa4-0dc5-450c-8211-a9b1d30e608f",
-    "plan_summary": "修复离朱 idle 后仍被误拦：agent/status idle 无条件 clearActivity",
+    "plan_id": "plan_d3aa83fa-ee5d-4a39-a722-4955eeabe813",
+    "plan_summary": "禁止框架子代理 report 工具并回退 subagent-report 拦截",
     "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
     "code_reviewed": true,
     "plan_completed": true,
