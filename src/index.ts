@@ -259,7 +259,8 @@ function frameworkCompletionMessage(
  *   被 getSessionIdle 误判 unresponsive；waterfall 语义，必须委托 next()。
  * - agent/status 维护力牧活跃监控：running 记录活动、idle 清除活动。
  * - agent/pre-step 拦截发往框架 owner（风后/夔）的 dsh subagent-settled 通知并
- *   替换为框架完成通知，使风后只收到一条含 module_name 的完成通知、不再重复。
+ *   替换为框架完成通知，使风后只收到一条含 module_name 的完成通知、不再重复；
+ *   替换完成后清除已 settle 子代理的 mode（残留 mode 由 cleanStaleModes 兜底）。
  */
 function registerCompletionNotification(ctx: Context, state: SessionState, config: ModuleAgentConfig): void {
   ctx.on('tools/post-execute', async (exec, _result, next): Promise<PostToolDecision> => {
@@ -296,6 +297,8 @@ function registerCompletionNotification(ctx: Context, state: SessionState, confi
       const childId = message.source.senderSessionId
       const mode = state.getAgentMode(childId)
       if (!isFrameworkSubagentMode(mode)) return message
+      // 替换完成通知后清除已 settle 子代理的 mode，避免残留（agent/disposed 不再清 mode）。
+      state.clearAgentMode(childId)
       return frameworkCompletionMessage(agent, childId, mode, config)
     })
     return { kind: 'enter', messages }

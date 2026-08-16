@@ -58,7 +58,7 @@ export function createModuleAgentCleanupTool(options: ModuleAgentCleanupToolOpti
       }
 
       if (action === 'clean_external') {
-        const removed = await cleanExternalStale(isAlive, directory)
+        const removed = await cleanExternalStale(isAlive, directory, options.sessionState)
         return { status: 'ok', scope: 'external', removed: removed as unknown as JsonValue }
       }
 

@@ -87,6 +87,23 @@ export class SessionState {
     this.modes.delete(sessionId)
   }
 
+  /**
+   * 清理已不存在会话的残留 mode（对齐 opencode cleanStaleAgentModes 语义，
+   * 用于 stale_cleanup 兜底清理）。modes 为内存 Map，先快照 key 再逐个存活判定。
+   * @param isAlive 会话存活判定（不可用视为 false）
+   * @returns 被清理的 mode 数量
+   */
+  async cleanStaleModes(isAlive: (sessionId: string) => Promise<boolean>): Promise<number> {
+    let removed = 0
+    for (const sessionId of [...this.modes.keys()]) {
+      if (!(await isAlive(sessionId))) {
+        this.modes.delete(sessionId)
+        removed++
+      }
+    }
+    return removed
+  }
+
   /** 根据 provider 名自动分类并注册，未命中返回 undefined。 */
   classifyProvider(sessionId: SessionId, provider: string): AgentMode | undefined {
     const mode = modeFromProvider(provider)
@@ -100,8 +117,12 @@ export function createSessionState(): SessionState {
 }
 
 /**
- * 将 SessionState 绑定到 dsh 生命周期：subagent/start 自动分类，
- * agent/disposed 清理注册。返回 effect disposer 交由调用方挂载。
+ * 将 SessionState 绑定到 dsh 生命周期：subagent/start 自动分类。返回 effect
+ * disposer 交由调用方挂载。
+ *
+ * mode 清理不再绑定 agent/disposed（dispose 先于 subagent-settled 触发，过早清除
+ * 会导致 agent/pre-step 拦截时 getAgentMode 返回 undefined），改由 subagent-settled
+ * 处理后 clearAgentMode 及 stale_cleanup 的 cleanStaleModes 兜底。
  *
  * 分类链保持同步：先按 provider 名约定（`module-agent:<mode>`）识别；未命中时
  * 从已持久化的 subagent/descriptor 事件恢复 —— 冷恢复的 continuable 子智能体
@@ -120,9 +141,6 @@ export function registerSessionState(ctx: Context, state: SessionState): () => P
       if (descriptor?.mode !== 'continuable') return
       const mode = modeFromPersona(descriptor.persona ?? '')
       if (mode !== undefined) state.setAgentMode(info.id, mode)
-    })
-    yield ctx.on('agent/disposed', ({ agent }) => {
-      state.clearAgentMode(agent.id)
     })
   }, 'module-agent.sessionState()')
 }
