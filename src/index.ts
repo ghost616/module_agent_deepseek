@@ -258,9 +258,11 @@ function frameworkCompletionMessage(
  * - tools/post-execute 在框架子智能体每次工具执行后刷新 lastActivity，防止长任务
  *   被 getSessionIdle 误判 unresponsive；waterfall 语义，必须委托 next()。
  * - agent/status 维护力牧活跃监控：running 记录活动、idle 清除活动。
- * - agent/pre-step 拦截发往框架 owner（风后/夔）的 dsh subagent-settled 通知并
- *   替换为框架完成通知，使风后只收到一条含 module_name 的完成通知、不再重复；
- *   替换完成后清除已 settle 子代理的 mode（残留 mode 由 cleanStaleModes 兜底）。
+ * - agent/pre-step 拦截发往框架 owner（风后/夔/力牧等框架子智能体）的 dsh
+ *   subagent-settled 通知并替换为框架完成通知，使 owner 只收到一条含 module_name
+ *   的完成通知、不再重复（离朱 settle 给力牧发通知时，力牧收到「离朱测试完毕…」
+ *   而非原始 subagent-settled）；替换完成后清除已 settle 子代理的 mode（残留
+ *   mode 由 cleanStaleModes 兜底）。
  */
 function registerCompletionNotification(ctx: Context, state: SessionState, config: ModuleAgentConfig): void {
   ctx.on('tools/post-execute', async (exec, _result, next): Promise<PostToolDecision> => {
@@ -284,13 +286,14 @@ function registerCompletionNotification(ctx: Context, state: SessionState, confi
   })
 
   // dsh 的 continuable 子代理 settle 时自动给直接父 agent 投递 subagent-settled
-  // 通知；此处把发往风后/夔的该通知替换为框架完成通知（力牧含 module_name）。
+  // 通知；此处把发往框架 owner（风后/夔/力牧等）的该通知替换为框架完成通知
+  // （力牧含 module_name）。
   ctx.on('agent/pre-step', async ({ agent }, next): Promise<PreStepDecision> => {
     const decision = await next()
     if (decision.kind === 'reject') return decision
 
     const ownerMode = state.getAgentMode(agent.id)
-    if (ownerMode !== 'fengzhou' && ownerMode !== 'kui') return decision
+    if (ownerMode !== 'fengzhou' && !isFrameworkSubagentMode(ownerMode)) return decision
 
     const messages = decision.messages.map((message) => {
       if (message.source.kind !== 'subagent-settled') return message
