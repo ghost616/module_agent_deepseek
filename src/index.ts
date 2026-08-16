@@ -121,6 +121,15 @@ function registerGuards(ctx: Context, state: SessionState, config: ModuleAgentCo
       return `${AGENT_MODE_LABELS[mode]}不直接修改代码文件。`
     }
 
+    // 框架子代理禁用 dsh 的 report 工具：框架本有专用报告机制（离朱
+    // module_agent_testing write_report、皋陶 module_agent_updater_review
+    // write_review、力牧 write_result、夔 update_kui_plan），不依赖 dsh report；
+    // report 注入不受 toolFilter 影响（dsh 已验证），只能在此显式拒绝，否则会与
+    // settle 的 subagent-settled 重复产生 subagent-report、owner 收到重复/原始消息。
+    if (isFrameworkSubagentMode(mode) && exec.name === 'report') {
+      return `${AGENT_MODE_LABELS[mode]}已禁用 dsh 的 report 工具，请使用 module_agent 的专用报告机制（module_agent_testing write_report / module_agent_updater_review write_review），完成后系统会自动通知启动者。`
+    }
+
     if (mode === 'limu' && !exec.name.startsWith('module_agent_')) {
       if (BLOCKED_WRITE_TOOLS.includes(exec.name)) {
         // dsh 内置 write/edit 工具的参数名为 file_path（snake_case）。
@@ -222,7 +231,7 @@ function completionNotice(mode: AgentMode, agentId: string): string {
 }
 
 /**
- * 框架子智能体 settle 或报告时替换 subagent-settled/subagent-report 消息的完成通知。
+ * 框架子智能体 settle 时替换 subagent-settled 通知的完成消息。
  * 力牧通知补充 module_name（解析失败时用占位 '<模块名>'），其余模式复用
  * {@link completionNotice}。
  */
@@ -258,13 +267,13 @@ function frameworkCompletionMessage(
  * - tools/post-execute 在框架子智能体每次工具执行后刷新 lastActivity，防止长任务
  *   被 getSessionIdle 误判 unresponsive；waterfall 语义，必须委托 next()。
  * - agent/status 维护活跃监控：running 对框架子智能体记录活动、idle 无条件清除
- *   活动（不依赖 mode，防止 subagent-report 拦截提前清 mode 后 idle 无法清除残留）。
+ *   活动（不依赖 mode，作为防御性兜底）。
  * - agent/pre-step 拦截发往框架 owner（风后/夔/力牧等框架子智能体）的 dsh
- *   子代理消息（subagent-settled 自动通知与 subagent-report 主动报告）并替换为
- *   框架完成通知，使 owner 只收到一条含 module_name 的完成通知、不再重复（离朱
- *   settle/报告给力牧时，力牧收到「离朱测试完毕…」而非原始 subagent-settled/
- *   subagent-report）；替换完成后清除已 settle 子代理的 mode（残留 mode 由
- *   cleanStaleModes 兜底）。
+ *   subagent-settled 通知并替换为框架完成通知，使 owner 只收到一条含 module_name
+ *   的完成通知、不再重复（离朱 settle 给力牧发通知时，力牧收到「离朱测试完毕…」
+ *   而非原始 subagent-settled）。框架子代理的 dsh report 工具已被 tools.guard
+ *   禁用，不再产生 subagent-report，故仅需拦截 subagent-settled 单一消息源；
+ *   替换完成后清除已 settle 子代理的 mode（残留 mode 由 cleanStaleModes 兜底）。
  */
 function registerCompletionNotification(ctx: Context, state: SessionState, config: ModuleAgentConfig): void {
   ctx.on('tools/post-execute', async (exec, _result, next): Promise<PostToolDecision> => {
@@ -284,17 +293,15 @@ function registerCompletionNotification(ctx: Context, state: SessionState, confi
       return
     }
 
-    // idle 无条件清除活跃记录：mode 仅用于身份标记，且 agent/pre-step 拦截
-    // subagent-report 时已提前清除子代理 mode，此刻 getAgentMode 可能为 undefined；
-    // 若仍按 mode 条件清除，会导致 lastActivity 残留、isWorking 恒为 true，
-    // 力牧被误拦「离朱仍在运行」。
+    // idle 无条件清除活跃记录：不依赖 mode（更稳健，避免任何提前清 mode 场景
+    // 导致 lastActivity 残留、isWorking 恒为 true、力牧被误拦「离朱仍在运行」）。
     clearActivity(agentId)
   })
 
-  // dsh 的 continuable 子代理向直接父 agent 投递两类消息：settle 时自动发的
-  // subagent-settled 通知，以及经 report 工具主动报告的 subagent-report。
-  // 此处把发往框架 owner（风后/夔/力牧等）的这两类消息替换为框架完成通知
-  // （力牧含 module_name）。
+  // dsh 的 continuable 子代理 settle 时自动给直接父 agent 投递 subagent-settled
+  // 通知（框架子代理的 dsh report 工具已被 tools.guard 禁用，不再产生
+  // subagent-report）；此处把发往框架 owner（风后/夔/力牧等）的该通知替换为
+  // 框架完成通知（力牧含 module_name）。
   ctx.on('agent/pre-step', async ({ agent }, next): Promise<PreStepDecision> => {
     const decision = await next()
     if (decision.kind === 'reject') return decision
@@ -303,8 +310,7 @@ function registerCompletionNotification(ctx: Context, state: SessionState, confi
     if (ownerMode !== 'fengzhou' && !isFrameworkSubagentMode(ownerMode)) return decision
 
     const messages = decision.messages.map((message) => {
-      const kind = message.source.kind
-      if (kind !== 'subagent-settled' && kind !== 'subagent-report') return message
+      if (message.source.kind !== 'subagent-settled') return message
       const childId = message.source.senderSessionId
       const mode = state.getAgentMode(childId)
       if (!isFrameworkSubagentMode(mode)) return message
