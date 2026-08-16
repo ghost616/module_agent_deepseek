@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_ff7fbf92dffebPGik7ySn9Q9l5",
+  "content": "## 待测试功能\n\n本次变更涉及 src/tools/module_agent_executor.ts 与 src/lib/orchestrator_rules.ts，需要验证：\n\n### 1. module_agent_executor.ts handleStatus 各分支返回值完整性（src/tools/module_agent_executor.ts 607-678 行）\n- allRecords.length > 0 分支：返回对象必须包含 plan_id、plan_summary、plan_completed 字段（plan_completed 取 meta?.plan_completed ?? false）\n- 会话已关闭分支（isAlive 为 false）：返回必须包含 plan_id、plan_summary（plan_summary 取 meta?.plan_summary ?? null）\n- 无计划分支（!meta）：返回必须包含 plan_id: null、plan_summary: null\n- 计划已完成分支（meta.plan_completed）：返回必须包含 plan_id、plan_summary、plan_completed: true\n- 执行中分支：返回必须包含 plan_id、plan_summary、plan_completed: false\n- planId/meta 查询已同步化（getPlanIdBySession、readAllMetadata 均同步函数，无 await）\n\n### 2. orchestrator_rules.ts 依赖分析规则排版（src/lib/orchestrator_rules.ts 106-109 行）\n- 步骤 3「评估模块变更」末尾包含「模块依赖分析与循环依赖拆分」规则，且位于步骤 4「夔批量编排模式询问」之前\n\n### 3. 编译检查（typecheck）\n- 全项目 TypeScript 编译通过，无类型错误\n",
+  "timestamp": "2026-08-16T00:42:43.412Z"
+}

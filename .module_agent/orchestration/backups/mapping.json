@@ -2,5 +2,6 @@
   "src/lib/orchestration_guards.ts": "e8e2ccc2b786409bccfb618b22afce7a",
   "src/lib/kui_plan.ts": "ecd239152fd449fe4abde85f3068f0a3",
   "src/lib/module_session_tracker.ts": "5db5f25e53e9f09521d5c7bcec3085fb",
-  "src/tools/module_agent_executor.ts": "922ce07048c07fd7c166fceaa2ffe7d2"
+  "src/tools/module_agent_executor.ts": "922ce07048c07fd7c166fceaa2ffe7d2",
+  "src/lib/orchestrator_rules.ts": "dece59ec7eec662e5b08fca28c8091ab"
 }
