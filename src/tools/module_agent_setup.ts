@@ -2,12 +2,14 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import { SETUP_GUIDE } from '../lib/setup_guide.ts'
-import { type SessionState } from '../lib/session_state.ts'
+import { directoryOfAgent, persistMode, type SessionState } from '../lib/session_state.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
 
 export interface ModuleAgentSetupToolOptions {
   /** 会话模式注册表（校验互斥并写入 qibo 模式）。 */
   readonly sessionState: SessionState
+  /** 项目根目录兜底（agent 会话 cwd 缺失时使用，允许显式 undefined）。 */
+  readonly dataDir?: string | undefined
 }
 
 /** 启动岐伯项目设置向导，注入设置规则。 */
@@ -40,6 +42,8 @@ export function createModuleAgentSetupTool(options: ModuleAgentSetupToolOptions)
       }
 
       options.sessionState.setAgentMode(sessionId, 'qibo')
+      // 宿主会话身份经文件持久化，重启后由 agent/session-start 恢复。
+      persistMode(directoryOfAgent(agent, options.dataDir), sessionId, 'qibo')
 
       if (agent) {
         const message = createUserMessage({

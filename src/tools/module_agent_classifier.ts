@@ -2,7 +2,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import { CLASSIFIER_RULES } from '../lib/classifier_rules.ts'
-import type { SessionState } from '../lib/session_state.ts'
+import { directoryOfAgent, persistMode, type SessionState } from '../lib/session_state.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
 
 export interface ModuleAgentClassifierToolOptions {
@@ -43,6 +43,8 @@ export function createModuleAgentClassifierTool(options: ModuleAgentClassifierTo
       }
 
       options.sessionState.setAgentMode(agentId, 'lishou')
+      // 宿主会话身份经文件持久化，重启后由 agent/session-start 恢复。
+      persistMode(directoryOfAgent(exec.agent, options.dataDir), agentId, 'lishou')
 
       if (CLASSIFIER_RULES.trim()) {
         exec.deferContext(createUserMessage({

@@ -17,6 +17,7 @@ export const CHANGE_HISTORY_FILE = 'change_history.log'
 export const MODULE_DEFINITION_FILE = 'module_definition.json'
 export const EXECUTION_RESULTS_DIR = 'execution_results'
 export const PLAN_FILES_FILE = 'plan_files.json'
+export const SESSION_MODES_FILE = '.module_agent/session_modes.json'
 
 // ============================================================
 // Workspace 路径

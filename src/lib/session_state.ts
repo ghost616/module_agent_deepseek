@@ -1,9 +1,13 @@
+import { mkdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { SessionId } from '@deepseek-ai/dsh-session'
 // Type-only: pulls the `subagent/start` event augmentation into the program.
 import type {} from '@deepseek-ai/dsh-subagent'
 import { foldSubagentDescriptor } from '@deepseek-ai/dsh-subagent'
+import { SESSION_MODES_FILE } from './constants.ts'
+import { readJsonSync, writeJsonSync } from './fs.ts'
 
 export type AgentMode = 'fengzhou' | 'qibo' | 'limu' | 'gaotao' | 'lishou' | 'lizhu' | 'kui'
 
@@ -28,6 +32,17 @@ export type FrameworkSubagentMode = Extract<AgentMode, 'limu' | 'gaotao' | 'lizh
 
 export function isFrameworkSubagentMode(mode: AgentMode | undefined): mode is FrameworkSubagentMode {
   return mode === 'limu' || mode === 'gaotao' || mode === 'lizhu' || mode === 'kui'
+}
+
+/**
+ * 宿主会话模式：风后/岐伯/隶首。其身份无 subagent persona marker，mode 经
+ * {@link persistMode} 持久化到 `.module_agent/session_modes.json`，重启后由
+ * `agent/session-start` 经 {@link restoreMode} 恢复。
+ */
+export const HOST_MODES: readonly AgentMode[] = ['fengzhou', 'qibo', 'lishou']
+
+export function isHostMode(mode: AgentMode): boolean {
+  return HOST_MODES.includes(mode)
 }
 
 /**
@@ -116,9 +131,69 @@ export function createSessionState(): SessionState {
   return new SessionState()
 }
 
+/** 宿主会话 mode 持久化文件路径：<directory>/.module_agent/session_modes.json。 */
+function sessionModesPath(directory: string): string {
+  return join(directory, SESSION_MODES_FILE)
+}
+
 /**
- * 将 SessionState 绑定到 dsh 生命周期：subagent/start 自动分类。返回 effect
- * disposer 交由调用方挂载。
+ * 读取宿主会话 mode 持久化文件，返回 sessionId→mode 映射。
+ * 读失败（文件不存在 / 坏 JSON）返回空对象，与 persistMode 的读-改-写配合。
+ */
+export function restoreMode(directory: string): Record<string, AgentMode> {
+  try {
+    return readJsonSync<Record<string, AgentMode>>(sessionModesPath(directory))
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * 将宿主会话 mode 持久化到 `.module_agent/session_modes.json`：读现有映射（失败
+ * 视为空）→ 更新 sessionId→mode → 写文件。同步 read-modify-write，无并发竞态。
+ * 仅宿主会话（风后/岐伯/隶首）应写入；子代理 mode 走 persona marker，由调用方
+ * 保证只对宿主会话调用。
+ */
+export function persistMode(directory: string, sessionId: string, mode: AgentMode): void {
+  const modes = restoreMode(directory)
+  modes[sessionId] = mode
+  const path = sessionModesPath(directory)
+  mkdirSync(dirname(path), { recursive: true })
+  writeJsonSync(path, modes)
+}
+
+/**
+ * 清理持久化文件中已不存在会话的宿主 mode（对齐 cleanStaleModes 语义，供
+ * stale_cleanup 兜底清理文件残留）。先快照 key 再逐个存活判定删除，有删除时
+ * 重写文件；读失败视为空映射返回 0。
+ * @param isAlive 会话存活判定（不可用视为 false）
+ * @returns 被清理的 mode 数量
+ */
+export async function cleanStalePersistedModes(
+  directory: string,
+  isAlive: (sessionId: string) => Promise<boolean>,
+): Promise<number> {
+  const modes = restoreMode(directory)
+  const ids = Object.keys(modes)
+  if (ids.length === 0) return 0
+  let removed = 0
+  for (const sessionId of ids) {
+    if (!(await isAlive(sessionId))) {
+      delete modes[sessionId]
+      removed++
+    }
+  }
+  if (removed > 0) {
+    const path = sessionModesPath(directory)
+    mkdirSync(dirname(path), { recursive: true })
+    writeJsonSync(path, modes)
+  }
+  return removed
+}
+
+/**
+ * 将 SessionState 绑定到 dsh 生命周期：subagent/start 自动分类 + agent/session-start
+ * 恢复宿主会话 mode。返回 effect disposer 交由调用方挂载。
  *
  * mode 清理不再绑定 agent/disposed（dispose 先于 subagent-settled 触发，过早清除
  * 会导致 agent/pre-step 拦截时 getAgentMode 返回 undefined），改由 subagent-settled
@@ -128,8 +203,14 @@ export function createSessionState(): SessionState {
  * 从已持久化的 subagent/descriptor 事件恢复 —— 冷恢复的 continuable 子智能体
  * 同样会触发 subagent/start，此时通过 ctx.agents 取回 agent，用
  * {@link foldSubagentDescriptor} 折叠出其 persona 并识别身份 marker。
+ *
+ * 宿主会话（风后/岐伯/隶首）无 subagent descriptor，经 agent/session-start 从
+ * {@link persistMode} 写入的 `.module_agent/session_modes.json` 恢复：内存已有 mode
+ * 时跳过（不覆盖 subagent/start 刚建立的子代理身份），restoreMode 命中且为宿主
+ * 模式才注册。
+ * @param fallback agent 会话 cwd 缺失时兜底的项目根目录（与 persistMode 写入端一致）
  */
-export function registerSessionState(ctx: Context, state: SessionState): () => Promise<void> {
+export function registerSessionState(ctx: Context, state: SessionState, fallback?: string): () => Promise<void> {
   return ctx.effect(function* () {
     yield ctx.on('subagent/start', (info) => {
       if (state.classifyProvider(info.id, info.provider) !== undefined) return
@@ -141,6 +222,12 @@ export function registerSessionState(ctx: Context, state: SessionState): () => P
       if (descriptor?.mode !== 'continuable') return
       const mode = modeFromPersona(descriptor.persona ?? '')
       if (mode !== undefined) state.setAgentMode(info.id, mode)
+    })
+
+    yield ctx.on('agent/session-start', ({ agent }) => {
+      if (state.getAgentMode(agent.id) !== undefined) return
+      const mode = restoreMode(directoryOfAgent(agent, fallback))[agent.id]
+      if (mode !== undefined && isHostMode(mode)) state.setAgentMode(agent.id, mode)
     })
   }, 'module-agent.sessionState()')
 }

@@ -17,6 +17,7 @@ import { cleanStaleTestSpecs, cleanStaleTestReports } from './testing.ts'
 import { cleanStaleKuiPlans } from './kui_plan.ts'
 import { readModuleTree } from './module_tree.ts'
 import type { IsAlive } from './module_session_tracker.ts'
+import { cleanStalePersistedModes } from './session_state.ts'
 import type { SessionState } from './session_state.ts'
 
 export interface WorkspaceCleanupStats {
@@ -79,9 +80,10 @@ export interface ExternalCleanupStats {
   workspace_bindings: number
   plan_files: number
   agent_modes: number
+  persisted_agent_modes: number
 }
 
-/** 清理工作空间外（项目级）引用了已不存在会话的数据，含 session_state 内存中的残留 agent mode。 */
+/** 清理工作空间外（项目级）引用了已不存在会话的数据，含 session_state 内存中的残留 agent mode 及 `.module_agent/session_modes.json` 中的持久化残留。 */
 export async function cleanExternalStale(
   isAlive: IsAlive,
   directory: string,
@@ -97,6 +99,7 @@ export async function cleanExternalStale(
   }
 
   const agent_modes = await sessionState.cleanStaleModes(isAlive)
+  const persisted_agent_modes = await cleanStalePersistedModes(directory, isAlive)
 
-  return { session_workspaces, workspace_bindings, plan_files, agent_modes }
+  return { session_workspaces, workspace_bindings, plan_files, agent_modes, persisted_agent_modes }
 }

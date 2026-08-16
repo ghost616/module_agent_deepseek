@@ -307,7 +307,7 @@ function registerCompletionNotification(ctx: Context, state: SessionState, confi
 
 export function apply(ctx: Context, config: ModuleAgentConfig = {}): void {
   const sessionState = createSessionState()
-  registerSessionState(ctx, sessionState)
+  registerSessionState(ctx, sessionState, config.dataDir)
 
   const catalog: ModelCatalog = {
     listProviders: async () => ctx.llm.listProviders(),

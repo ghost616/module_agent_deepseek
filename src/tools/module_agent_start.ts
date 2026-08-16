@@ -2,7 +2,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { ORCHESTRATOR_RULES } from '../lib/orchestrator_rules.ts'
-import { type SessionState } from '../lib/session_state.ts'
+import { directoryOfAgent, persistMode, type SessionState } from '../lib/session_state.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
 
 export interface ModuleAgentStartToolOptions {
@@ -46,6 +46,8 @@ export function createModuleAgentStartTool(options: ModuleAgentStartToolOptions)
       }
 
       options.sessionState.setAgentMode(agentId, 'fengzhou')
+      // 宿主会话身份经文件持久化，重启后由 agent/session-start 恢复。
+      persistMode(directoryOfAgent(agent, options.dataDir), agentId, 'fengzhou')
 
       if (agent) {
         agent.inject(createUserMessage({
