@@ -1,10 +1,18 @@
 [
   {
-    "plan_id": "plan_d3aa83fa-ee5d-4a39-a722-4955eeabe813",
-    "plan_summary": "禁止框架子代理 report 工具并回退 subagent-report 拦截",
-    "starter_session_id": "ses_0017c58b3ffe80KuoZGTbkT6oi",
+    "plan_id": "plan_8d18372a-90d5-46cc-a478-072e80cda132",
+    "plan_summary": "从 opencode 源码同步 module_agent_explorer/analyzer/line_reader 与 classifier_rules 的功能改动",
+    "starter_session_id": "ses_ff1f2918affeZ4oRRtIBbdjFvk",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
+  },
+  {
+    "plan_id": "plan_c6c37208-838b-4058-b702-338802b40c43",
+    "plan_summary": "同步4个文件的功能改动",
+    "starter_session_id": "ses_ff1f2918affeZ4oRRtIBbdjFvk",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": false
   }
 ]

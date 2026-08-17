@@ -15,14 +15,14 @@ type RangeResult = {
   line: number
   start: number
   end: number
-  content: string
+  lines: { line: number; content: string }[]
 }
 
-/** 根据行号范围和上下文读取文件指定行内容，返回聚合后的纯文本内容。 */
+/** 根据行号范围和上下文读取文件指定行内容。 */
 export function createModuleAgentLineReaderTool(options: ModuleAgentLineReaderToolOptions) {
   return defineTool({
     name: 'module_agent_line_reader',
-    description: '根据行号范围和上下文读取文件指定行内容，返回聚合后的纯文本内容。',
+    description: '根据行号范围和上下文读取文件指定行内容。',
     parameters: {
       file_path: {
         type: 'string',
@@ -74,12 +74,12 @@ export function createModuleAgentLineReaderTool(options: ModuleAgentLineReaderTo
         const start = Math.max(1, range.line - before)
         const end = Math.min(totalLines, range.line + after)
 
-        const rangeLines: string[] = []
+        const rangeLines: { line: number; content: string }[] = []
         for (let i = start; i <= end; i++) {
-          rangeLines.push(lines[i - 1] ?? '')
+          rangeLines.push({ line: i, content: lines[i - 1] ?? '' })
         }
 
-        results.push({ line: range.line, start, end, content: rangeLines.join('\n') })
+        results.push({ line: range.line, start, end, lines: rangeLines })
       }
 
       return { status: 'ok', path: filePath, ranges: results }

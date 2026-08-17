@@ -6,5 +6,9 @@
   "src/tools/module_classification.ts": "b329d9e5996ad595540d5fc815c07c34",
   "src/lib/module_design.ts": "ef9425045c8305c788fbd7b654ea2c9e",
   "src/tools/module_design_admin.ts": "aa679b58d2e804b000617c4927b25802",
-  "src/tools/module_agent_admin.ts": "b0583440128019ac92c99a32c86d2b42"
+  "src/tools/module_agent_admin.ts": "b0583440128019ac92c99a32c86d2b42",
+  "src/tools/module_agent_explorer.ts": "b4da928c61b52bfa0ec3763a0b362ee7",
+  "src/tools/module_agent_analyzer.ts": "4332eae4dff37ed7ad572ceebf0639ab",
+  "src/tools/module_agent_line_reader.ts": "7221af7a85dcb297c12c54d192c637a8",
+  "src/lib/classifier_rules.ts": "ed6080d0e9492e95f21bc9b59dece851"
 }

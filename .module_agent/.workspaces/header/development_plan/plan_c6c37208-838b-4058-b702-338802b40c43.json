@@ -1,0 +1,21 @@
+{
+  "plan_id": "plan_c6c37208-838b-4058-b702-338802b40c43",
+  "module_name": "",
+  "development_plan": "将 opencode 源码中 module_agent_explorer/analyzer/line_reader 与 classifier_rules 的功能改动同步移植到 dsh 工作目录，保留 dsh 框架特性",
+  "session_id": "",
+  "modified_files": [
+    "src/tools/module_agent_admin.ts",
+    "src/tools/module_design_admin.ts",
+    "src/tools/module_agent_reader.ts",
+    "src/tools/module_agent_updater.ts",
+    "src/tools/module_agent_explorer.ts",
+    "src/tools/module_agent_analyzer.ts",
+    "src/tools/module_agent_line_reader.ts",
+    "src/tools/module_classification.ts",
+    "src/tools/module_agent_classifier.ts",
+    "src/lib/module_design.ts",
+    "src/lib/module_spec.ts",
+    "src/lib/classifier_rules.ts",
+    "src/lib/agent_profile.ts"
+  ]
+}

@@ -17,11 +17,11 @@ type FileMatches = {
   error?: string
 }
 
-/** 根据关键字匹配文件中符合条件的行，返回匹配行号与内容。支持批量文件。只返回存在匹配的文件及其匹配行。 */
+/** 根据关键字匹配文件中符合条件的行，返回匹配行号与内容。支持批量文件。 */
 export function createModuleAgentAnalyzerTool(options: ModuleAgentAnalyzerToolOptions) {
   return defineTool({
     name: 'module_agent_analyzer',
-    description: '根据关键字匹配文件中符合条件的行，返回匹配行号与内容。支持批量文件。只返回存在匹配的文件及其匹配行。',
+    description: '根据关键字匹配文件中符合条件的行，返回匹配行号与内容。支持批量文件。',
     parameters: {
       file_paths: {
         type: 'array',
@@ -96,9 +96,7 @@ export function createModuleAgentAnalyzerTool(options: ModuleAgentAnalyzerToolOp
         totalMatches += matches.length
       }
 
-      const matchedResults = results.filter(r => r.matches.length > 0)
-
-      return { status: 'ok', results: matchedResults }
+      return { status: 'ok', results }
     },
   })
 }
