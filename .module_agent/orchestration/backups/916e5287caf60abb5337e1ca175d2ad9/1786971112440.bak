@@ -6,8 +6,8 @@ export const LIZHU_RULES = `## 离朱（测试智能体）
 
 - module_agent_testing — 检测 Playwright（check_playwright）、写入测试报告（write_report）
 - bash — 执行单元测试、编译检查、E2E 测试命令（如 npx jest、npx tsc --noEmit、npx playwright test 等）
-- 文件编辑工具 — 编写测试文件和 Playwright 测试脚本
-- 文件搜索与读取工具 — 读取源代码和测试说明
+- write / edit — 编写测试文件和 Playwright 测试脚本
+- read — 读取源代码和测试说明
 - module_agent_reader — 读取测试说明（read_test_specs）
 
 ### 禁止的工具
@@ -75,10 +75,10 @@ export const LIZHU_RULES = `## 离朱（测试智能体）
  3. **依次执行所有适用的测试类型**，按以下顺序逐一执行：
 
     a. **单元测试**（如适用）：
-    - 使用文件搜索与读取工具读取目标源代码，理解接口和方法签名
+    - 使用 read 读取目标源代码，理解接口和方法签名
     - 先检查是否已有测试用例（搜索 __tests__/、*.test.ts、test_*.py、*_test.go、*.spec.ts 等测试文件）
     - 若已有测试用例：使用 bash 直接执行测试命令（如 npx jest tests/foo.test.ts）
-    - 若无测试用例：使用文件编辑工具编写测试文件，再使用 bash 执行
+    - 若无测试用例：使用 write 编写测试文件，再使用 bash 执行
     - 根据 bash 返回的 exit code 判断通过/失败（0 = 通过）
 
     b. **接口测试**（如适用）：
@@ -95,7 +95,7 @@ export const LIZHU_RULES = `## 离朱（测试智能体）
     - 首先调用 module_agent_testing(action="check_playwright") 检测 Playwright 是否安装及安装方式（npm/Python）
     - 若未安装，提示需要先安装 Playwright，跳过 E2E 测试
     - 若已安装，根据检测到的安装方式确定执行命令（npm: npx playwright, Python: python -m pytest）
-    - 使用文件编辑工具编写 Playwright 测试脚本
+    - 使用 write 编写 Playwright 测试脚本
     - 使用 bash 执行 E2E 测试命令（如 npx playwright test tests/e2e/login.spec.ts --reporter=json）
     - 根据 bash 返回的 exit code 和 stdout 中的 stats 统计判断通过/失败
 

@@ -1,0 +1,20 @@
+[
+  {
+    "plan_id": "plan_aae725c3-0162-4d78-8881-8d08581d2e05",
+    "plan": "将 classifier_rules.ts 第 24 行提示词文本「禁止使用 write / edit 直接修改代码文件」替换为通用表述「禁止使用文件编辑工具直接修改代码文件」",
+    "modified_files": [
+      "src/lib/classifier_rules.ts"
+    ],
+    "summary": "已更新 classifier_rules.ts 第 24 行文本。",
+    "errors": []
+  },
+  {
+    "plan_id": "plan_b25a1598-4727-4674-87a9-92e1540cff97",
+    "plan": "将 src/lib/classifier_rules.ts 中的 read/glob/grep 工具引用替换为通用表述「文件搜索与读取工具」",
+    "modified_files": [
+      "src/lib/classifier_rules.ts"
+    ],
+    "summary": "执行总结：完成 src/lib/classifier_rules.ts 中两处 read/glob/grep 工具引用替换为「文件搜索与读取工具」：第 22 行「read / glob / grep」→「文件搜索与读取工具」；第 69 行「使用 grep 搜索文件间的相互引用」→「使用文件搜索与读取工具搜索文件间的相互引用」。因 dsh 极简模式（minimal preset）仅提供 bash 与 str_replace_editor 两个工具，无 read/glob/grep，提示词改用通用表述以适配。module_agent_reader、module_design_admin(action=\"read\") 等框架自定义工具/action 值保留原样，仅提示词文本变更，未改变任何代码逻辑。已备份（备份数 3）并追加变更历史。已验证替换结果。\n测试总结：纯文本/提示词变更，不涉及可测试的代码功能，跳过测试（skip_count=1, passed_count=0, failed_count=0）。",
+    "errors": []
+  }
+]

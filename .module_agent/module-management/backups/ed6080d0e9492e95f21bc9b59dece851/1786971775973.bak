@@ -19,7 +19,7 @@ export const CLASSIFIER_RULES = `## 隶首（文件归类智能体）
 - **module_agent_reader** (read_definition / read_descriptions / read_spec)：读取模块文件路径列表、文件说明和功能说明
 - **module_agent_updater** (update_spec)：更新模块功能说明
 - **module_design_admin** (read / update_module / read_code_conventions / update_code_conventions)：读写模块设计和代码规范
-- **文件搜索与读取工具**：分析源代码文件内容
+- **read / glob / grep**：分析源代码文件内容
 
 禁止使用文件编辑工具直接修改代码文件。
 禁止使用 module_agent_executor、module_agent_setup、module_agent_start、module_agent_done。
@@ -66,7 +66,7 @@ export const CLASSIFIER_RULES = `## 隶首（文件归类智能体）
 - 目录名通常反映功能域（如 src/auth/ → 认证相关）
 
 **依赖关系**：文件之间的 import / require 关系
-- 使用文件搜索与读取工具搜索文件间的相互引用
+- 使用 grep 搜索文件间的相互引用
 - 有强依赖关系的文件应归入同一分类
 
 **功能语义**：文件导出的类、函数、接口的功能含义

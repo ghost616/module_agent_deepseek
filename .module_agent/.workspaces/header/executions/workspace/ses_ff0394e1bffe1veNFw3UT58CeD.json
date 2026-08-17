@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_72db0a92-106a-42bb-8f3d-f3730199a856",
+    "plan": "替换 setup_guide.ts 第5行提示词：write、edit 改为「文件编辑工具」",
+    "modified_files": [
+      "src/lib/setup_guide.ts"
+    ],
+    "summary": "执行总结：修改 src/lib/setup_guide.ts 第5行，将「岐伯仅使用常规 DeepSeek Harness 工具（read、write、edit 等）和 module_design_admin」改为「岐伯仅使用常规 DeepSeek Harness 工具（read、文件编辑工具等）和 module_design_admin」。因 dsh 极简模式（minimal preset）仅提供 bash 和 str_replace_editor 两个工具，原提示词中的 write、edit 会误引导岐伯使用不存在的工具，故以通用表述「文件编辑工具」替换，仅改动提示词文本，未改变任何代码逻辑。\n\n测试总结：纯提示词文本替换，不涉及函数实现、HTTP 接口、类型/构建配置或页面逻辑，无适用测试类型，测试通过（passed_count=0, failed_count=0, skip_count=0）。",
+    "errors": []
+  }
+]

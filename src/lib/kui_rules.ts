@@ -9,8 +9,8 @@ export const KUI_RULES = `## 夔（批量编排智能体）
 - module_agent_executor — 启动力牧（start）、查询力牧状态（status）、ping 提醒（ping）、检查皋陶（check_reviewer）、启动审查（start_review）、查询审查结果（review_status）
 - module_agent_updater — 更新夔计划状态和结果（update_kui_plan）
 - verification_code — 生成确认码
-- read — 读取源代码文件分析依赖
-- grep — 搜索文件引用关系
+- 文件搜索与读取工具 — 读取源代码文件分析依赖
+- 文件搜索与读取工具 — 搜索文件引用关系
 
 ### 禁止的工具
 
@@ -50,7 +50,7 @@ export const KUI_RULES = `## 夔（批量编排智能体）
 
 2. **分析文件依赖关系**：
    - 对每个计划涉及的模块，调用 module_agent_reader(action="read_definition", module_name="xxx") 获取文件列表
-   - 使用 read 和 grep 分析各计划涉及文件间的 import / 引用关系
+   - 使用文件搜索与读取工具分析各计划涉及文件间的 import / 引用关系
    - 构建依赖图：如果计划 A 涉及的文件被计划 B 依赖，则 A 必须先于 B 执行
    - 无依赖关系的计划可并行执行
 

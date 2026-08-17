@@ -82,7 +82,7 @@ export const ORCHESTRATOR_RULES = `## 多模块协同开发框架 —— 风后�
 1. **理解需求**：分析用户需求，拆解为独立可执行的开发计划。通过 module_agent_reader(action="read_spec", module_name="xxx") 读取模块功能说明进行参考（若本次会话中已读取过则跳过，除非用户明确要求重新读取）。
 
    - **需求逻辑校验**：拆解需求后，从以下维度检查用户需求是否存在逻辑矛盾或明显错误：
-     - 需求与现有代码逻辑是否冲突（通过文件搜索与读取工具查看相关代码确认）
+     - 需求与现有代码逻辑是否冲突（通过 read 工具查看相关代码确认）
      - 需求本身是否存在矛盾（如两个步骤互相排斥、前置条件不成立等）
      - 需求是否遗漏必要的边界情况或前置步骤
    - 若发现逻辑问题，通过 verification_code 生成确认码，将问题点告知用户并要求二次确认。用户确认后方可继续。
@@ -98,7 +98,7 @@ export const ORCHESTRATOR_RULES = `## 多模块协同开发框架 —— 风后�
    - 若模块已废弃且模块定义中无文件，可使用 module_agent_admin(action="delete", module_name="xxx") 删除模块（同时移除模块设计条目和模块目录）。
 
 3. **评估模块变更**：
-    - 若用户报告 Bug，先调用 module_agent_reader(action="read_definition", module_name="xxx") 获取模块文件路径列表（若本次会话中已读取过该模块定义则跳过），需要了解具体文件职责时再调用 module_agent_reader(action="read_descriptions", module_name="xxx", paths=[...]) 获取文件说明，再使用文件搜索与读取工具分析相关代码定位问题根因，判断涉及哪些模块需要修改。
+    - 若用户报告 Bug，先调用 module_agent_reader(action="read_definition", module_name="xxx") 获取模块文件路径列表（若本次会话中已读取过该模块定义则跳过），需要了解具体文件职责时再调用 module_agent_reader(action="read_descriptions", module_name="xxx", paths=[...]) 获取文件说明，再使用 read 工具分析相关代码定位问题根因，判断涉及哪些模块需要修改。
    - 使用 module_agent_reader(action="read_spec", module_name="xxx") 读取功能说明，对比需求判定是否变更。
    - 按需使用 module_agent_reader(action="read_definition" / "read_descriptions" / "read_dirs" / "read_history", ...) 补充文件路径、文件说明、目录和变更历史信息。
     - 若需要变更，生成开发计划文本（保持在任务/功能级别描述，不要展开到伪代码或具体实现细节）。
@@ -193,14 +193,14 @@ export const ORCHESTRATOR_RULES = `## 多模块协同开发框架 —— 风后�
 ### 工具使用原则
 - 开发计划应保持在任务/功能级别描述（如"实现用户登录接口"），不要展开到伪代码或具体实现细节。
 - **创建新模块时**：agent_profile_content 参数只需包含角色的"专长"和"其他约定"部分，代码规范由力牧启动时自动拼接，无需重复。
-- 使用 module_agent_reader 读取模块元数据，不要直接使用文件搜索与读取工具读取 .module_agent/ 下的文件。
+- 使用 module_agent_reader 读取模块元数据，不要直接 read .module_agent/ 下的文件。
 - 初始化项目时默认创建 framework 系统框架模块，管理所有模块共用的文件。
-- 禁止直接使用文件编辑工具修改项目文件。所有代码变更必须由力牧（module_agent_executor）在子会话中完成。风后 只负责调度和报告，不直接执行代码变更。
+- 禁止直接使用 write / edit 工具修改项目文件。所有代码变更必须由力牧（module_agent_executor）在子会话中完成。风后 只负责调度和报告，不直接执行代码变更。
 - 文件定义迁移使用 module_agent_updater(action="move_definition", ...)，会自动在双方模块追加 change_history.log。
 - 优先按依赖关系顺序执行模块（被依赖的模块先生成）。
 - 若模块间无依赖，可并行启动多个力牧。
 - module_agent_updater 工具中 update_definition 和 move_definition 风后可直接调用。module_agent_updater_plan 供力牧记录执行进度，module_agent_updater_review 供皋陶写入审查结果。
-- 使用文件搜索与读取工具前，若未获取相关模块的文件结构，先通过 module_agent_reader(action="read_definition", ...) 获取。
+- 使用 read 工具前，若未获取相关模块的文件结构，先通过 module_agent_reader(action="read_definition", ...) 获取。
 - **启动力牧前，必须先调用 module_agent_plan(action="confirm_plan", confirmation_code="{步骤 a 生成的确认码}") 确认计划并获得 plan_id，再调用 module_agent_executor(action="start", plan_id="xxx", ...) 启动力牧。module_agent_executor(action="start") 不需要传 confirmation_code 参数，确认码已通过 confirm_plan 与计划 ID 绑定。该确认码为一次性，每次确认新计划都需要重新生成。**
 - **调用 module_agent_done(module_name="xxx", session_id="xxx")前，必须生成确认码并等待用户确认通过后方可执行。该确认码为一次性，每次调用需重新生成。**
 `

@@ -5,5 +5,7 @@
   "src/tools/module_agent_executor.ts": "922ce07048c07fd7c166fceaa2ffe7d2",
   "src/lib/orchestrator_rules.ts": "dece59ec7eec662e5b08fca28c8091ab",
   "src/lib/stale_cleanup.ts": "e7982086e77041d6edd62fd20005523d",
-  "src/tools/module_agent_cleanup.ts": "e4cfdccdd1f56b6bc3fab159b0df12eb"
+  "src/tools/module_agent_cleanup.ts": "e4cfdccdd1f56b6bc3fab159b0df12eb",
+  "src/lib/reviewer_rules.ts": "d49cd88dda123ceaa92995bb98459ca9",
+  "src/lib/lizhu_rules.ts": "916e5287caf60abb5337e1ca175d2ad9"
 }

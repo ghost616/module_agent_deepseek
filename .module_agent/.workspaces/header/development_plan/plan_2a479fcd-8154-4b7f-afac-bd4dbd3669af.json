@@ -1,0 +1,13 @@
+{
+  "plan_id": "plan_2a479fcd-8154-4b7f-afac-bd4dbd3669af",
+  "module_name": "orchestration",
+  "development_plan": "因 dsh 极简模式（minimal preset）仅提供 bash 和 str_replace_editor 两个工具，无 read/glob/grep 工具，需要将以下提示词文件中的 read/glob/grep 工具引用替换为通用表述「文件搜索与读取工具」（标准模式对应 read/glob/grep，极简模式经 bash + str_replace_editor 的 view 实现）：\n1. src/lib/orchestrator_rules.ts：\n   - 第85行\"通过 read 工具查看相关代码确认\" → \"通过文件搜索与读取工具查看相关代码确认\"；\n   - 第101行\"再使用 read 工具分析相关代码定位问题根因\" → \"再使用文件搜索与读取工具分析相关代码定位问题根因\"；\n   - 第196行\"使用 module_agent_reader 读取模块元数据，不要直接 read .module_agent/ 下的文件\" → \"使用 module_agent_reader 读取模块元数据，不要直接使用文件搜索与读取工具读取 .module_agent/ 下的文件\"；\n   - 第203行\"使用 read 工具前，若未获取相关模块的文件结构\" → \"使用文件搜索与读取工具前，若未获取相关模块的文件结构\"。\n2. src/lib/reviewer_rules.ts：\n   - 第8行\"- **read**：读取代码文件\" → \"- **文件搜索与读取工具**：读取代码文件\"；\n   - 第9行\"- **grep**：搜索项目中所有引用\" → \"- **文件搜索与读取工具**：搜索项目中所有引用\"；\n   - 第24行\"通过 **read** 工具读取当前文件内容\" → \"通过 **文件搜索与读取工具** 读取当前文件内容\"；\n   - 第28行\"使用 **grep** 工具搜索项目内所有引用\" → \"使用 **文件搜索与读取工具** 搜索项目内所有引用\"；\n   - 第67行\"使用 grep 工具搜索修改文件中导出的公共接口名\" → \"使用文件搜索与读取工具搜索修改文件中导出的公共接口名\"。\n3. src/lib/lizhu_rules.ts：\n   - 第10行\"- read — 读取源代码和测试说明\" → \"- 文件搜索与读取工具 — 读取源代码和测试说明\"；\n   - 第78行\"使用 read 读取目标源代码\" → \"使用文件搜索与读取工具读取目标源代码\"。\n4. src/lib/kui_rules.ts：\n   - 第12行\"- read — 读取源代码文件分析依赖\" → \"- 文件搜索与读取工具 — 读取源代码文件分析依赖\"；\n   - 第13行\"- grep — 搜索文件引用关系\" → \"- 文件搜索与读取工具 — 搜索文件引用关系\"；\n   - 第53行\"使用 read 和 grep 分析各计划涉及文件间的 import / 引用关系\" → \"使用文件搜索与读取工具分析各计划涉及文件间的 import / 引用关系\"。\n5. src/tools/module_agent_executor.ts 第142行：\"必须使用 grep 搜索项目中所有引用该方法的地方\" → \"必须使用文件搜索与读取工具搜索项目中所有引用该方法的地方\"。\n注意：代码逻辑（index.ts 的 KUI_ALLOWED_TOOLS、module_agent_executor.ts 的 toolFilter allow/deny 中的 read/grep）保留不动；module_agent_reader、module_design_admin(action=\"read\")、module_agent_correction(action=\"read\") 等框架自定义工具/action 值保留原样。仅替换提示词文本，不改变任何代码逻辑。",
+  "session_id": "ses_ff0392571ffe9NHBfvvxeDwo2L",
+  "modified_files": [
+    "src/lib/orchestrator_rules.ts",
+    "src/lib/reviewer_rules.ts",
+    "src/lib/lizhu_rules.ts",
+    "src/lib/kui_rules.ts",
+    "src/tools/module_agent_executor.ts"
+  ]
+}

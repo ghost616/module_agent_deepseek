@@ -1,0 +1,27 @@
+[
+  {
+    "plan_id": "plan_21cfd10e-c443-472e-a567-7d08b5e7a15c",
+    "plan": "将 4 个提示词文件中的 write/edit 工具引用替换为通用表述「文件编辑工具」",
+    "modified_files": [
+      "src/lib/orchestrator_rules.ts",
+      "src/lib/reviewer_rules.ts",
+      "src/lib/lizhu_rules.ts",
+      "src/tools/module_agent_executor.ts"
+    ],
+    "summary": "已完成 4 个文件全部提示词文本替换：orchestrator_rules.ts:198、reviewer_rules.ts:16、lizhu_rules.ts:9/81/98、module_agent_executor.ts:128/132/140/141/144/210，write/edit 引用统一替换为「文件编辑工具」；代码逻辑（index.ts BLOCKED_WRITE_TOOLS 与 module_agent_executor.ts toolFilter deny）保持不变",
+    "errors": []
+  },
+  {
+    "plan_id": "plan_2a479fcd-8154-4b7f-afac-bd4dbd3669af",
+    "plan": "将 5 个提示词文件中的 read/glob/grep 工具引用替换为通用表述「文件搜索与读取工具」",
+    "modified_files": [
+      "src/lib/orchestrator_rules.ts",
+      "src/lib/reviewer_rules.ts",
+      "src/lib/lizhu_rules.ts",
+      "src/lib/kui_rules.ts",
+      "src/tools/module_agent_executor.ts"
+    ],
+    "summary": "已完成 5 个文件全部提示词文本替换：orchestrator_rules.ts:85/101/196/203、reviewer_rules.ts:8/9/24/28/67、lizhu_rules.ts:10/78、kui_rules.ts:12/13/53、module_agent_executor.ts:142，read/glob/grep 引用统一替换为「文件搜索与读取工具」；代码逻辑（index.ts KUI_ALLOWED_TOOLS、module_agent_executor.ts toolFilter allow/deny 中 read/grep）保持不变，module_agent_reader 等框架工具/action 值保留原样",
+    "errors": []
+  }
+]

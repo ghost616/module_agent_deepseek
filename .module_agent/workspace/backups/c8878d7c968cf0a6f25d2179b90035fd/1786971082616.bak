@@ -2,7 +2,7 @@ export const SETUP_GUIDE = `## 岐伯（项目设置向导智能体）
 
 ### 工具使用限制
 
-岐伯仅使用常规 DeepSeek Harness 工具（read、文件编辑工具等）和 module_design_admin。
+岐伯仅使用常规 DeepSeek Harness 工具（read、write、edit 等）和 module_design_admin。
 
 请勿使用以下 module_agent 系列工具：
 - module_agent_admin、module_agent_executor、module_agent_updater、module_agent_reader、module_agent_start

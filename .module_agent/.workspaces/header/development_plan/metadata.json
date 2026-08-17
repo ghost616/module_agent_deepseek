@@ -14,5 +14,53 @@
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": false
+  },
+  {
+    "plan_id": "plan_72db0a92-106a-42bb-8f3d-f3730199a856",
+    "plan_summary": "将 setup_guide.ts 中的 write/edit 引用替换为「文件编辑工具」",
+    "starter_session_id": "ses_ff039a4a5ffeR4Hc24fzs3haD5",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_21cfd10e-c443-472e-a567-7d08b5e7a15c",
+    "plan_summary": "将提示词中的 write/edit 引用替换为「文件编辑工具」",
+    "starter_session_id": "ses_ff039a4a5ffeR4Hc24fzs3haD5",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_aae725c3-0162-4d78-8881-8d08581d2e05",
+    "plan_summary": "将 classifier_rules.ts 中的 write/edit 引用替换为「文件编辑工具」",
+    "starter_session_id": "ses_ff039a4a5ffeR4Hc24fzs3haD5",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_2a479fcd-8154-4b7f-afac-bd4dbd3669af",
+    "plan_summary": "将提示词中的 read/glob/grep 引用替换为「文件搜索与读取工具」",
+    "starter_session_id": "ses_ff039a4a5ffeR4Hc24fzs3haD5",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_e4de7dfd-4f38-4882-ab60-a9b5dc8bdfb6",
+    "plan_summary": "将 beginner_tips.ts 中的 read 引用替换为「文件搜索与读取工具」",
+    "starter_session_id": "ses_ff039a4a5ffeR4Hc24fzs3haD5",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_b25a1598-4727-4674-87a9-92e1540cff97",
+    "plan_summary": "将 classifier_rules.ts 中的 read/glob/grep 引用替换为「文件搜索与读取工具」",
+    "starter_session_id": "ses_ff039a4a5ffeR4Hc24fzs3haD5",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
   }
 ]

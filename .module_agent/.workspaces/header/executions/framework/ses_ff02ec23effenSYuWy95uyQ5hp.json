@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_e4de7dfd-4f38-4882-ab60-a9b5dc8bdfb6",
+    "plan": "替换 beginner_tips.ts 中 read 工具引用为通用表述",
+    "modified_files": [
+      "src/lib/beginner_tips.ts"
+    ],
+    "summary": "已替换 beginner_tips.ts 中全部 4 处 read 工具引用为「文件搜索与读取工具」",
+    "errors": []
+  }
+]
