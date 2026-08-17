@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_32e49891-1e7a-402c-a6de-f56eaecaed67",
-  "module_name": "module-management",
-  "development_plan": "修复力牧计划完成后调用 module_agent_reader 被拒的问题。根因：orchestration_guards pre-execute 对全部 module_agent_* 工具做计划守卫，plan_complete 删除映射后力牧再调用被拒。修正：在 src/tools/module_agent_reader.ts 的 execute 内，将原 TODO(orchestration) 注释处补上力牧计划守卫——当 mode === 'limu' 时调用 limuPlanGuard(directory, agentId)，若返回非 null（拒绝理由）则 return { status: 'error', error: 拒绝理由 }。与 opencode 源码 module_agent_reader.ts 对齐：if (mode === 'limu') { const guard = await limuPlanGuard(...); if (guard) return guard }。注意：守卫放在模式权限校验之后、具体 action 分发之前，仅对 mode === 'limu' 生效，不影响风后/皋陶/隶首/离朱/夔调用。",
-  "session_id": "ses_fef93b558ffeuXDBb40E60LTtN",
-  "modified_files": [
-    "src/tools/module_agent_reader.ts"
-  ]
-}

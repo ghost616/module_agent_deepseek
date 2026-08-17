@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_7a6b2c16-fcb0-4409-8fff-0632eae9b86e",
-  "module_name": "framework",
-  "development_plan": "修复力牧计划完成后调用 module_agent_backup 被拒的问题。修正：在 src/tools/module_agent_backup.ts 的 execute 内，将原 TODO(orchestration) 注释处补上力牧计划守卫——action === 'backup' 分支中，在备份文件前调用 limuPlanGuard(directory, agentId)，若返回非 null 则 return { status: 'error', error: 拒绝理由 }。与 opencode 源码 module_agent_backup.ts 对齐（action === 'backup' 时 if (mode === 'limu') 调 limuPlanGuard）。守卫仅对 backup 操作生效，list/read_backup_content 不受影响。",
-  "session_id": "ses_fef9348e3ffebeIrLVi4ynuG50",
-  "modified_files": [
-    "src/tools/module_agent_backup.ts"
-  ]
-}
