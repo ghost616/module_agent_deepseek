@@ -19,7 +19,6 @@ import { getPlanIdBySession, removeMappingByPlanId } from '../lib/session_plan_m
 import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
 import { releasePlanFilesSession } from '../lib/plan_files.ts'
 import { getBoundLizhu, getGaotaoStarter, hasGaotaoBound } from '../lib/module_session_tracker.ts'
-import { limuPlanGuard } from '../lib/limu_plan_guard.ts'
 import { exists, sanitizeIdSegment } from '../lib/fs.ts'
 import { checkConfirmationCode, storePlanConfirmation, generateId } from './verification_code.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
@@ -117,10 +116,8 @@ export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
       const permError = checkPermission(mode, action)
       if (permError) return permError
 
-      if (mode === 'limu') {
-        const guard = await limuPlanGuard(directory, agentId)
-        if (guard) return { status: 'error', error: guard }
-      }
+      // TODO(orchestration)：力牧计划有效性守卫（limuPlanGuard）由 orchestration
+      // 模块通过 tools.guard 挂载，本模块不重复实现。
 
       const wsName = await resolveWorkspace(directory, agentId)
       if (!wsName) {

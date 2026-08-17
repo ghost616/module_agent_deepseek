@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_99c632b0-d7f7-4505-a57f-7de449963f22",
+  "module_name": "workflow",
+  "development_plan": "修复力牧计划完成后调用 module_agent_plan 被拒的问题。修正：在 src/tools/module_agent_plan.ts 的 execute 内，将原 TODO(orchestration) 注释处补上力牧计划守卫——当 mode === 'limu' 时调用 limuPlanGuard(directory, agentId)，若返回非 null 则 return { status: 'error', error: 拒绝理由 }。与 opencode 源码 module_agent_plan.ts 对齐（if (mode === 'limu') { const guard = await limuPlanGuard(...); if (guard) return guard }）。守卫放在 checkPermission 权限校验之后、resolveWorkspace 之前，仅对 mode === 'limu' 生效。注意：plan_complete 本身也是力牧调用，此时映射仍存在能通过守卫，守卫只拦\"无关联计划或计划已完成\"的情况。",
+  "session_id": "ses_fef938529ffe30C8zHq4t6MPoK",
+  "modified_files": [
+    "src/tools/module_agent_plan.ts"
+  ]
+}

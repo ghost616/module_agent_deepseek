@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_5f17fe6d-bc01-4d8e-a9af-b8c78b014381",
+    "plan": "修复力牧计划完成后调用 module_agent_* 工具被拒问题",
+    "modified_files": [
+      "src/lib/orchestration_guards.ts"
+    ],
+    "summary": "已修改 src/lib/orchestration_guards.ts：力牧分支中仅对非 module_agent_* 工具执行 checkLimuPlanActive，module_agent_* 工具跳过 pre-execute 计划守卫（改由工具内部守卫），离朱运行守卫保持对全部工具生效",
+    "errors": []
+  }
+]

@@ -68,16 +68,10 @@ export function registerOrchestrationGuards(ctx: Context, options: Orchestration
     const directory = directoryOfAgent(agent, dataDir)
 
     if (mode === 'limu') {
-      // module_agent_* 工具内部自行调用 limuPlanGuard 校验（对齐 opencode 源码
-      // tool.execute.before 的 mode === 'limu' 分支），此处仅守卫普通工具；
-      // 否则计划完成（removeMappingByPlanId 删除映射）后力牧无法再调用任何
-      // module_agent_* 工具读取结果/写执行总结。
-      if (!exec.name.startsWith('module_agent_')) {
-        try {
-          await checkLimuPlanActive(directory, agentId)
-        } catch (error) {
-          return { kind: 'deny', reason: (error as Error).message }
-        }
+      try {
+        await checkLimuPlanActive(directory, agentId)
+      } catch (error) {
+        return { kind: 'deny', reason: (error as Error).message }
       }
       let wsName: string | null = null
       try {

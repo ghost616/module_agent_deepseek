@@ -11,7 +11,7 @@ module_agent_plan 工具管理开发计划全生命周期：
 
 数据层 development_plan.ts 存于 workspace 的 development_plan/ 目录（metadata.json + <plan_id>.json）；session_plan_map.ts 维护会话-计划映射（session_plan_map.json）。
 
-依赖 orchestration 预留：力牧计划有效性守卫（limuPlanGuard）以 tools.guard 挂载；皋陶启动者过滤（getGaotaoStarter）、夔绑定皋陶校验（hasGaotaoBound）、离朱绑定与测试报告已读取校验（getBoundLizhu）由 orchestration 提供。
+力牧计划有效性守卫：mode === 'limu' 时在 checkPermission 之后、resolveWorkspace 之前调用 limuPlanGuard(directory, agentId)，返回非 null（无关联计划或计划已完成）则拒绝；plan_complete 时映射仍存在可正常通过。皋陶启动者过滤（getGaotaoStarter）、夔绑定皋陶校验（hasGaotaoBound）、离朱绑定与测试报告已读取校验（getBoundLizhu）由 orchestration 提供。
 ## 力牧执行进度与结果记录
 
 module_agent_updater_plan 工具（仅供力牧）：
@@ -21,7 +21,7 @@ module_agent_updater_plan 工具（仅供力牧）：
 
 数据层：execution_result.ts（executions 目录）、plan_files.ts（plan_files.json）。
 
-依赖 orchestration 预留：力牧计划有效性守卫（limuPlanGuard）以 tools.guard 挂载。
+力牧计划有效性守卫（limuPlanGuard，lib/limu_plan_guard.ts）在工具 execute 内无条件调用：会话须已关联工作空间、存在未完成的开发计划，不合法时返回拒绝理由。limu_plan_guard.ts 同时供 orchestration 模块的 tools/pre-execute 守卫使用。
 ## 皋陶代码审查
 
 module_agent_updater_review 工具（仅供皋陶）：write_review 写入或更新指定计划的审查总结（review_summary）、问题列表（review_issues，含 file/line/severity/message）与通过结论（review_approved），数据存 review_results/<session>.json。

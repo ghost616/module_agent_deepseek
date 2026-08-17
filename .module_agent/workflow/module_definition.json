@@ -3,11 +3,11 @@
   "files": [
     {
       "path": "src/tools/module_agent_plan.ts",
-      "description": "开发计划管理工具（module_agent_plan）：确认计划、读取计划元数据/详情、标记计划完成、设置测试通过、获取待审查计划、标记审查完成、清理/删除计划、创建审查计划。校验调用者身份与参数，读写 development_plan / session_plan_map / plan_files 数据；离朱绑定与皋陶/夔会话绑定校验由 orchestration 提供。"
+      "description": "开发计划管理工具（module_agent_plan）：确认计划、读取计划元数据/详情、标记计划完成、设置测试通过、获取待审查计划、标记审查完成、清理/删除计划、创建审查计划。校验调用者身份与参数，读写 development_plan / session_plan_map / plan_files 数据；力牧计划有效性守卫（limuPlanGuard）在 execute 内对 mode === 'limu' 直接调用，离朱绑定与皋陶/夔会话绑定校验由 orchestration 提供。"
     },
     {
       "path": "src/tools/module_agent_updater_plan.ts",
-      "description": "力牧执行进度管理工具（module_agent_updater_plan）：write_result 写入执行记录、add_plan_files/remove_plan_files 维护计划修改文件列表、check_active_plan 检测计划有效性。仅供力牧调用；力牧计划有效性守卫由 orchestration 以 tools.guard 挂载。"
+      "description": "力牧执行进度管理工具（module_agent_updater_plan）：write_result 写入执行记录、add_plan_files/remove_plan_files 维护计划修改文件列表、check_active_plan 检测计划有效性。仅供力牧调用；execute 内无条件调用 limuPlanGuard（lib/limu_plan_guard.ts）校验力牧计划有效性，不合法时返回拒绝理由。"
     },
     {
       "path": "src/tools/module_agent_updater_review.ts",

@@ -9,7 +9,6 @@ import { exists, readText, writeText } from '../lib/fs.ts'
 import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
 import { getKuiStarter } from '../lib/module_session_tracker.ts'
 import { readKuiPlan, writeKuiPlan } from '../lib/kui_plan.ts'
-import { limuPlanGuard } from '../lib/limu_plan_guard.ts'
 import { readAllMetadata, readPlan } from '../lib/development_plan.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
 
@@ -156,10 +155,8 @@ export function createModuleAgentUpdaterTool(options: ModuleAgentUpdaterToolOpti
         return { status: 'error', error: `module_agent_updater action="${action}" 权限不足。` }
       }
 
-      if (mode === 'limu') {
-        const guard = await limuPlanGuard(directory, agentId)
-        if (guard) return { status: 'error', error: guard }
-      }
+      // TODO(orchestration)：力牧计划有效性守卫（limuPlanGuard）由 orchestration
+      // 模块通过 tools.guard 挂载，本模块不重复实现。
 
       try {
         if (action === 'update_spec') return handleUpdateSpec(directory, args)

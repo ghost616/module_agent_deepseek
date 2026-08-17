@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_7a6b2c16-fcb0-4409-8fff-0632eae9b86e",
+    "plan": "修复力牧计划完成后调用 module_agent_backup 被拒的问题：在 backup 分支补上 limuPlanGuard",
+    "modified_files": [
+      "src/tools/module_agent_backup.ts"
+    ],
+    "summary": "已修改 src/tools/module_agent_backup.ts：导入 limuPlanGuard，在 backup 分支模式校验后、backupFile 前调用 limuPlanGuard(directory, agentId)，返回非 null 时 return { status:'error', error: guard }，与原 TODO(orchestration) 注释替换，与 opencode 源码对齐",
+    "errors": []
+  }
+]

@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_fef93ce22ffeQh1u03fApMj1MW",
+  "content": "# 测试说明：修复力牧计划完成后调用 module_agent_* 工具被拒问题\n\n## 变更功能\n修改 src/lib/orchestration_guards.ts 的 tools/pre-execute 力牧分支：\n1. 计划有效性检查（checkLimuPlanActive）现在仅对非 module_agent_* 工具（bash/read/write/edit/grep 等）生效；module_agent_* 工具跳过 pre-execute 计划守卫（改由工具内部 limuPlanGuard 校验）。\n2. 力牧分支中既有的离朱运行守卫（resolveWorkspace + getBoundLizhu + isWorking 检查）保持对全部工具生效。\n\n## 涉及文件\n- src/lib/orchestration_guards.ts（本次修改）\n- src/lib/limu_plan_guard.ts（依赖，未修改）\n\n## 待测试功能\n1. 力牧会话未关联开发计划时：调用普通工具（如 bash/read）应被 pre-execute 拒绝；调用 module_agent_* 工具不应被 pre-execute 拒绝（跳过计划守卫）。\n2. 力牧会话计划完成后（removeMappingByPlanId 已删除映射）：力牧仍可调用 module_agent_reader/updater/updater_plan 等 module_agent_* 工具（不再报\"当前会话未关联任何开发计划\"）。\n3. 力牧绑定的离朱仍在运行时：无论调用普通工具还是 module_agent_* 工具，都应被拒绝（离朱运行守卫保持对全部工具生效）。\n4. 编译检查：TypeScript 类型与构建通过。",
+  "timestamp": "2026-08-17T15:52:53.714Z"
+}

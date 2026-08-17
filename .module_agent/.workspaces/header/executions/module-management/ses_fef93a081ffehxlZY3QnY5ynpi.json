@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_72fdbfa1-6d46-42c5-8889-a6ce1750ebf7",
+    "plan": "修复力牧计划完成后调用 module_agent_updater 被拒：在 execute 内补上 mode==='limu' 的 limuPlanGuard 守卫",
+    "modified_files": [
+      "src/tools/module_agent_updater.ts"
+    ],
+    "summary": "已在 src/tools/module_agent_updater.ts 补上力牧计划守卫（mode==='limu' 时调用 limuPlanGuard(directory, agentId)，返回非 null 则 return { status:'error', error: 拒绝理由 }），位置在权限校验之后、action 分发之前，与 opencode 源码对齐。离朱验证：src typecheck 0 错误；新增 12 条单元测试全部通过（守卫拒绝路径 4 条、活跃计划回归 3 条、行为对齐 5 条）；全量回归 382/383 通过（1 条为 data-layer 备份轮转环境偶发超时，单独执行通过，与本次变更无关）。",
+    "errors": []
+  }
+]

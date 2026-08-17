@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_5f17fe6d-bc01-4d8e-a9af-b8c78b014381",
+  "module_name": "orchestration",
+  "development_plan": "修复力牧计划完成后调用 module_agent_* 工具被拒的问题。根因：orchestration_guards.ts 的 tools/pre-execute 对力牧的【所有工具】（包括全部 module_agent_* 工具）执行 checkLimuPlanActive；当 plan_complete 调用 removeMappingByPlanId 删除会话-计划映射后，力牧再调用 module_agent_reader/updater 等任何 module_agent_* 工具都被 pre-execute 拒绝（报\"当前会话未关联任何开发计划\"）。opencode 源码（index.ts tool.execute.before）只在 !input.tool.startsWith('module_agent_') 时执行计划守卫，module_agent_* 工具内部自行调用 limuPlanGuard。\n\n修改 src/lib/orchestration_guards.ts：在 tools/pre-execute 的力牧分支（mode === 'limu'）中，增加 !exec.name.startsWith('module_agent_') 条件，仅对非 module_agent_* 工具（bash/read/write/edit/grep 等）执行 checkLimuPlanActive；module_agent_* 工具跳过 pre-execute 计划守卫（改由工具内部守卫）。同时保留力牧分支中既有的离朱运行守卫（resolveWorkspace + getBoundLizhu + isWorking 检查）。注意：离朱绑定检查应保持对全部工具生效或按原逻辑，对照 opencode 源码确认仅计划守卫加前缀条件。",
+  "session_id": "ses_fef93ce22ffeQh1u03fApMj1MW",
+  "modified_files": [
+    "src/lib/orchestration_guards.ts"
+  ]
+}

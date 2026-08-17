@@ -1,7 +1,6 @@
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import { findModule } from '../lib/module_tree.ts'
-import { limuPlanGuard } from '../lib/limu_plan_guard.ts'
 import { writeExecutionRecord } from '../lib/execution_result.ts'
 import { addPlanFiles, removePlanFiles } from '../lib/plan_files.ts'
 import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
@@ -108,7 +107,7 @@ async function handleCheckActivePlan(directory: string, sessionId: string) {
 
 /**
  * 力牧执行进度管理工具：写入执行记录、写入/移除计划修改文件列表、检测计划有效性。
- * 仅供力牧调用，execute 内无条件调用 limuPlanGuard 校验力牧计划有效性。
+ * 力牧计划有效性守卫（limuPlanGuard）由 orchestration 模块通过 tools.guard 挂载。
  */
 export function createModuleAgentUpdaterPlanTool(options: ModuleAgentUpdaterPlanToolOptions) {
   return defineTool({
@@ -171,8 +170,8 @@ export function createModuleAgentUpdaterPlanTool(options: ModuleAgentUpdaterPlan
         return { status: 'error', error: 'module_agent_updater_plan 仅供力牧调用。' }
       }
 
-      const guard = await limuPlanGuard(directory, agentId)
-      if (guard) return { status: 'error', error: guard }
+      // TODO(orchestration)：力牧计划有效性守卫（limuPlanGuard）由 orchestration
+      // 模块通过 tools.guard 挂载，本模块不重复实现。
 
       try {
         if (action === 'write_result') return handleWriteResult(directory, agentId, args)

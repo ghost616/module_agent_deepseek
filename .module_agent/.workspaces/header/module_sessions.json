@@ -1,5 +1,19 @@
 {
   "_checked": [
     "ses_ffbcc95f0ffeVXOUasGz8YcSji"
+  ],
+  "orchestration": [
+    "ses_fef93ce22ffeQh1u03fApMj1MW"
+  ],
+  "module-management": [
+    "ses_fef93b558ffeuXDBb40E60LTtN",
+    "ses_fef93a081ffehxlZY3QnY5ynpi"
+  ],
+  "workflow": [
+    "ses_fef938529ffe30C8zHq4t6MPoK",
+    "ses_fef936da8ffexlG8Md1y9jZpXV"
+  ],
+  "framework": [
+    "ses_fef9348e3ffebeIrLVi4ynuG50"
   ]
 }

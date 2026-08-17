@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_32e49891-1e7a-402c-a6de-f56eaecaed67",
+    "plan": "修复力牧计划完成后调用 module_agent_reader 被拒的问题：在 execute 内补上 limuPlanGuard 力牧计划守卫",
+    "modified_files": [
+      "src/tools/module_agent_reader.ts"
+    ],
+    "summary": "修复完成并通过测试：在 src/tools/module_agent_reader.ts 补上力牧计划守卫（mode === 'limu' 时调用 limuPlanGuard，返回非 null 则拒绝）。离朱测试 16 个新增用例 + 383 个回归用例全部通过，tsc 项目文件 0 错误。",
+    "errors": []
+  }
+]

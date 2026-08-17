@@ -2,7 +2,6 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import { findModule } from '../lib/module_tree.ts'
 import { backupFile, listBackups, readBackupContent } from '../lib/file_backup.ts'
-import { limuPlanGuard } from '../lib/limu_plan_guard.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
 
 export interface ModuleAgentBackupToolOptions {
@@ -63,9 +62,8 @@ export function createModuleAgentBackupTool(options: ModuleAgentBackupToolOption
           return { status: 'error', error: 'backup 操作仅供力牧调用。' }
         }
 
-        const guard = await limuPlanGuard(directory, agentId)
-        if (guard) return { status: 'error', error: guard }
-
+        // TODO(orchestration)：力牧计划有效性守卫（limuPlanGuard）由 orchestration
+        // 模块通过 tools.guard 挂载，本模块不重复实现。
         const result = await backupFile(directory, moduleName, filePath)
         return {
           status: result.success ? 'ok' : 'error',

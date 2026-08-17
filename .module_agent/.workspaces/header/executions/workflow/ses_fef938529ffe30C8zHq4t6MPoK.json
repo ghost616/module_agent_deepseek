@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_99c632b0-d7f7-4505-a57f-7de449963f22",
+    "plan": "修复力牧计划完成后调用 module_agent_plan 被拒的问题。在 module_agent_plan.ts 的 execute 内，将原 TODO(orchestration) 注释处补上力牧计划守卫——当 mode === 'limu' 时调用 limuPlanGuard(directory, agentId)，若返回非 null 则 return { status: 'error', error: 拒绝理由 }。",
+    "modified_files": [
+      "src/tools/module_agent_plan.ts"
+    ],
+    "summary": "已在 src/tools/module_agent_plan.ts 中补上力牧计划守卫：新增 limuPlanGuard 导入，并在 checkPermission 之后、resolveWorkspace 之前加入 if (mode === 'limu') 守卫，与 opencode 源码对齐。",
+    "errors": []
+  }
+]

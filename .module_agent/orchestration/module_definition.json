@@ -51,7 +51,7 @@
     },
     {
       "path": "src/lib/orchestration_guards.ts",
-      "description": "orchestration 守卫挂载：tools.guard 挂载力牧 bash 命令守卫与离朱环境构建目录守卫；tools/pre-execute 挂载力牧计划有效性检查（checkLimuPlanActive）与离朱启动者绑定校验，覆盖全部工具调用。"
+      "description": "orchestration 守卫挂载：tools.guard 挂载力牧 bash 命令守卫与离朱环境构建目录守卫；tools/pre-execute 挂载力牧计划有效性检查（checkLimuPlanActive，仅对非 module_agent_* 普通工具生效，module_agent_* 由工具内部 limuPlanGuard 校验）、力牧绑定离朱运行守卫与离朱启动者绑定校验（覆盖全部工具调用）。"
     },
     {
       "path": "src/tools/module_agent_executor.ts",
