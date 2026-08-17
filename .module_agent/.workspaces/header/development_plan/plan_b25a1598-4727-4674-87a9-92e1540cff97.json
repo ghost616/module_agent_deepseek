@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_b25a1598-4727-4674-87a9-92e1540cff97",
-  "module_name": "module-management",
-  "development_plan": "因 dsh 极简模式（minimal preset）仅提供 bash 和 str_replace_editor 两个工具，无 read/glob/grep 工具，需要将 src/lib/classifier_rules.ts 中的 read/glob/grep 工具引用替换为通用表述「文件搜索与读取工具」：\n- 第22行\"- **read / glob / grep**：分析源代码文件内容\" → \"- **文件搜索与读取工具**：分析源代码文件内容\"；\n- 第69行\"使用 grep 搜索文件间的相互引用\" → \"使用文件搜索与读取工具搜索文件间的相互引用\"。\n仅替换提示词文本，module_agent_reader、module_design_admin(action=\"read\") 等框架自定义工具/action 值保留原样，不改变任何代码逻辑。",
-  "session_id": "ses_ff03913cbffeQvQx4WUPXiQfml",
-  "modified_files": [
-    "src/lib/classifier_rules.ts"
-  ]
-}

@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_72db0a92-106a-42bb-8f3d-f3730199a856",
-  "module_name": "workspace",
-  "development_plan": "因 dsh 极简模式（minimal preset）仅提供 bash 和 str_replace_editor 两个工具，无 write/edit，需要将 src/lib/setup_guide.ts 第5行\"岐伯仅使用常规 DeepSeek Harness 工具（read、write、edit 等）和 module_design_admin\" 中的 write、edit 替换为通用表述「文件编辑工具」，改为\"岐伯仅使用常规 DeepSeek Harness 工具（read、文件编辑工具等）和 module_design_admin\"。仅替换提示词文本，不改变任何代码逻辑。",
-  "session_id": "ses_ff0394e1bffe1veNFw3UT58CeD",
-  "modified_files": [
-    "src/lib/setup_guide.ts"
-  ]
-}

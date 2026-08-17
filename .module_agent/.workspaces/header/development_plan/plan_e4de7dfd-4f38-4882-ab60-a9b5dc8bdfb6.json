@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_e4de7dfd-4f38-4882-ab60-a9b5dc8bdfb6",
-  "module_name": "framework",
-  "development_plan": "因 dsh 极简模式（minimal preset）仅提供 bash 和 str_replace_editor 两个工具，无 read/glob/grep 工具，需要将 src/lib/beginner_tips.ts 中的 read 工具引用替换为通用表述「文件搜索与读取工具」：\n- 第77行\"用 read 工具查看关键入口文件\" → \"用文件搜索与读取工具查看关键入口文件\"；\n- 第89行\"和 read 工具查看相关模块的服务层、API 层、数据模型文件\" → \"和文件搜索与读取工具查看相关模块的服务层、API 层、数据模型文件\"；\n- 第102行\"通过 read 工具查看错误处理、表单校验、空状态组件等相关代码\" → \"通过文件搜索与读取工具查看错误处理、表单校验、空状态组件等相关代码\"；\n- 第139行\"使用 module_agent_reader 和 read 工具查看相关模块文件\" → \"使用 module_agent_reader 和文件搜索与读取工具查看相关模块文件\"。\n仅替换提示词文本，module_agent_reader 保留原样，不改变任何代码逻辑。",
-  "session_id": "ses_ff02ec23effenSYuWy95uyQ5hp",
-  "modified_files": [
-    "src/lib/beginner_tips.ts"
-  ]
-}

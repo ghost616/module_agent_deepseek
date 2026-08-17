@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_aae725c3-0162-4d78-8881-8d08581d2e05",
-  "module_name": "module-management",
-  "development_plan": "因 dsh 极简模式（minimal preset）仅提供 bash 和 str_replace_editor 两个工具，无 write/edit，需要将 src/lib/classifier_rules.ts 第24行\"禁止使用 write / edit 直接修改代码文件\" 替换为 \"禁止使用文件编辑工具直接修改代码文件\"。仅替换提示词文本为通用表述「文件编辑工具」，不改变任何代码逻辑。",
-  "session_id": "ses_ff03913cbffeQvQx4WUPXiQfml",
-  "modified_files": [
-    "src/lib/classifier_rules.ts"
-  ]
-}
