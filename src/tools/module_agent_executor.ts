@@ -1,9 +1,9 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { ContinuableStart } from '@deepseek-ai/dsh-subagent'
-import type { JsonValue } from '@deepseek-ai/dsh-session'
+import { foldSubagentDescriptor, type ContinuableStart } from '@deepseek-ai/dsh-subagent'
+import { SessionId, type JsonValue } from '@deepseek-ai/dsh-session'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { directoryOfAgent, personaForMode, type SessionState } from '../lib/session_state.ts'
+import { directoryOfAgent, modeFromPersona, personaForMode, type AgentMode, type SessionState } from '../lib/session_state.ts'
 import { findModule } from '../lib/module_tree.ts'
 import { readAgentProfile } from '../lib/agent_profile.ts'
 import { readCodeConventions } from '../lib/code_conventions.ts'
@@ -792,8 +792,38 @@ async function handleKuiStatus(handler: HandlerContext): Promise<JsonValue> {
   return output as JsonValue
 }
 
+/**
+ * 从会话身份恢复子智能体角色：mode 被清除（子智能体 settle 后）或从未标记
+ * （普通会话）时，从 persona 中识别 module-agent:role=<mode> marker 重建身份。
+ * 内存活跃会话经 ctx.agents 取回 agent，按 header.seedLength 截断 events 后
+ * 折叠 subagent descriptor；内存无 agent（已持久化冷会话）经
+ * sessionPersistence.inspect 取回 events 后同样折叠识别。
+ * @returns 识别出的角色，无法识别返回 undefined
+ */
+async function recoverAgentMode(ctx: Context, sessionId: string): Promise<AgentMode | undefined> {
+  const agent = ctx.agents.get(SessionId(sessionId))
+  if (agent !== undefined) {
+    const seedLength = agent.session.header.seedLength ?? 0
+    const descriptor = foldSubagentDescriptor(agent.session.events.slice(seedLength))
+    if (descriptor?.mode !== 'continuable') return undefined
+    return modeFromPersona(descriptor.persona ?? '')
+  }
+  const persistence = ctx.get('sessionPersistence')
+  if (persistence === undefined) return undefined
+  try {
+    const inspected = await persistence.inspect(SessionId(sessionId))
+    const seedLength = inspected.meta.seedLength ?? 0
+    const descriptor = foldSubagentDescriptor(inspected.events.slice(seedLength))
+    if (descriptor?.mode !== 'continuable') return undefined
+    return modeFromPersona(descriptor.persona ?? '')
+  } catch {
+    // inspect 失败（会话不存在或损坏）视为无法识别身份。
+    return undefined
+  }
+}
+
 async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<JsonValue> {
-  const { host, sessionState, workspaceDir, caller, signal } = handler
+  const { ctx, host, sessionState, workspaceDir, caller, signal } = handler
   const sessionId = args.session_id
 
   if (!sessionId) {
@@ -804,7 +834,13 @@ async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<
     return { status: 'error', error: `会话 ${sessionId} 不存在。` }
   }
 
-  const targetMode = sessionState.getAgentMode(sessionId)
+  let targetMode = sessionState.getAgentMode(sessionId)
+  if (targetMode === undefined) {
+    targetMode = await recoverAgentMode(ctx, sessionId)
+    if (targetMode !== undefined) {
+      sessionState.setAgentMode(sessionId, targetMode)
+    }
+  }
   const callerMode = sessionState.getAgentMode(handler.callerId)
   const prefix = callerMode === 'kui' ? '夔提醒' : '风后提醒'
 
@@ -821,6 +857,10 @@ async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<
         return { status: 'ok', message: `力牧 ${sessionId} 绑定的离朱 ${lizhuSid} 仍在工作（空闲 ${lizhuIdle.idleSeconds} 秒），力牧可能在等待测试结果，无需 ping。`, lizhu_session_id: lizhuSid }
       }
     }
+    await host.followup(caller, sessionId, `${prefix}：请尽快完成当前任务并写入执行总结 module_agent_updater_plan(action="write_result", summary="执行总结")。如果没有测试，请先判断是否需要测试，再调用 module_agent_plan(action="plan_complete", files=["..."])。`, signal)
+    recordActivity(sessionId)
+    markSessionChecked(workspaceDir, sessionId)
+    return { status: 'ok', message: `已向力牧会话 ${sessionId} 发送提醒并标记二次检查。` }
   }
 
   if (targetMode === 'gaotao') {
@@ -842,12 +882,7 @@ async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<
     return { status: 'ok', message: `已向夔会话 ${sessionId} 发送提醒。` }
   }
 
-  await host.followup(caller, sessionId, `${prefix}：请尽快完成当前任务并写入执行总结 module_agent_updater_plan(action="write_result", summary="执行总结")。如果没有测试，请先判断是否需要测试，再调用 module_agent_plan(action="plan_complete", files=["..."])。`, signal)
-
-  recordActivity(sessionId)
-  markSessionChecked(workspaceDir, sessionId)
-
-  return { status: 'ok', message: `已向会话 ${sessionId} 发送提醒并标记二次检查。` }
+  return { status: 'error', error: `会话 ${sessionId} 的角色无法识别，请确认会话状态后再 ping。` }
 }
 
 async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
