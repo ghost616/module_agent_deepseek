@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "plan_id": "plan_9cd53b08-5b06-4610-af59-02cace6b2fd2",
+    "plan_summary": "修复 handlePing 提示语接收者身份不匹配：mode 缺失时从会话 descriptor/persona 恢复角色，按角色发送对应提示语，显式 limu 分支，恢复失败返回错误不发提示语",
+    "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  }
+]
