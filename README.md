@@ -8,7 +8,7 @@
 
 将本插件源码放入 dsh 的 profile 目录，并在 profile 的 `cordis.patch.yml` 中声明加载。
 
-1. 将本项目的 `src/` 复制到 profile 目录下的 `module-agent/` 子目录，例如 `~/.dsh/profiles/web/module-agent/`。
+1. 将本项目的 `src/` 复制到 profile 目录下的 `module-agent/` 子目录，例如 `~/.dsh/profiles/web/module-agent/`。除 `src/` 外，`module-agent/` 子目录内还必须放置一个包含非空 `name` 与 `version` 的 `package.json`，最小示例：`{ "name": "@deepseek-ai/dsh-module-agent", "version": "0.1.0" }`。若缺失，dsh 的 `dsh_plugin_packages` 请求扩展会沿目录上溯，把 profile 的 `package.json`（通常只含 `name` 无 `version`）当作该插件的 owning manifest，导致 DeepSeek 请求扩展准备失败。
 2. 在 profile 目录的 `cordis.patch.yml`（`~/.dsh/profiles/web/cordis.patch.yml`）中新增：
 
    ```yaml

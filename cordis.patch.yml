@@ -1,6 +1,14 @@
 # module-agent 插件的 dsh 加载配置（示例）。
 # 使用方法：复制到 profile 目录（如 ~/.dsh/profiles/web/cordis.patch.yml），
 # 并将本插件 src/ 放到 profile 目录下的 module-agent/ 子目录。
+# 同时 module-agent/ 子目录内必须放置一个 package.json，其中包含非空的 name 与 version，
+# 最小示例：{ "name": "@deepseek-ai/dsh-module-agent", "version": "0.1.0" }。
+# 原因：若 module-agent/ 缺 package.json，dsh 的 dsh_plugin_packages 请求扩展
+# （plugin-package-inventory-deepseek）会用 nearestManifest 沿模块路径上溯，
+# 将最近的 package.json（此处命中 profile 的 package.json，其通常只含 name 无 version）
+# 当作该插件的 owning manifest，触发 identityFromManifest 抛出
+# "must declare non-empty name and version"，导致每次 DeepSeek 请求在
+# extension preparation 阶段报 "DeepSeek request extension preparation failed"。
 - insert:
     - id: module-agent
       name: './module-agent/src/index.ts'
