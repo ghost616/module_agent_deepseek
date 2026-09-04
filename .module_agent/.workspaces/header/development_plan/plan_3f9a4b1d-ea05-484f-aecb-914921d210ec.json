@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_3f9a4b1d-ea05-484f-aecb-914921d210ec",
-  "module_name": "framework",
-  "development_plan": "同步更新 README.md 的「安装与加载」节，补充 module-agent 部署时的 package.json 要求与原因（与 cordis.patch.yml 文件头注释保持一致）。\n\n## 背景\nmodule-agent 目录缺 package.json 时，dsh 的 dsh_plugin_packages 请求扩展（plugin-package-inventory-deepseek）用 nearestManifest 上溯命中 profile 的 package.json（dsh-profile-web 仅含 name 无 version），触发 identityFromManifest 抛 \"must declare non-empty name and version\"，导致每次 DeepSeek 请求报 \"DeepSeek request extension preparation failed\"。cordis.patch.yml 头注释已补充该要求，README 部署说明需同步。\n\n## 修改目标（文件：README.md）\n在「安装与加载」节第 1 步（将本项目 src/ 复制到 profile 目录下的 module-agent/ 子目录）之后补充要求：\n1. 除 src/ 外，module-agent/ 子目录内必须放置一个含非空 name 与 version 的 package.json，给出最小示例（{ \"name\": \"@deepseek-ai/dsh-module-agent\", \"version\": \"0.1.0\" }）。\n2. 一句话原因说明：缺失时 dsh 的 dsh_plugin_packages 请求扩展会沿目录上溯把 profile 的 package.json（仅 name 无 version）当作插件 owning manifest，导致 DeepSeek 请求扩展准备失败。\n\n## 约束\n- 纯文档修改，保持 README 既有结构、编号与中文风格；不改变其它章节。\n- 后续步骤编号若受影响需顺延，保持文档连贯。",
-  "session_id": "ses_f93c48e3effeLCTLCSEBprkvDG",
-  "modified_files": [
-    "README.md"
-  ]
-}

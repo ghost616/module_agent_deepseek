@@ -11,6 +11,10 @@
     {
       "content": ".module_agent/ 目录是开发数据（框架的开发元数据：模块树、模块定义、计划、执行记录等），不是运行数据。文档中描述 .module_agent 时应使用「开发数据」而非「运行数据」。",
       "timestamp": "2026-08-14T14:12:36.989Z"
+    },
+    {
+      "content": "README 的「安装与加载」部署说明不应写技术细节（如 dsh_plugin_packages / nearestManifest 上溯等根因解释），只需给出操作步骤即可；技术原因保留在 cordis.patch.yml 头注释等维护者视角位置。",
+      "timestamp": "2026-09-04T11:50:52.984Z"
     }
   ]
 }

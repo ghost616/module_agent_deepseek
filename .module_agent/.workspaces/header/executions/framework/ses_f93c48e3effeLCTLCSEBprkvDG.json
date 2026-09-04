@@ -16,5 +16,15 @@
     ],
     "summary": "执行总结：README.md「安装与加载」节第 1 步补充 module-agent/ 部署 package.json 要求——除 src/ 外须放置含非空 name/version 的 package.json（最小示例 @deepseek-ai/dsh-module-agent 0.1.0），并一句话说明缺失时 dsh_plugin_packages 扩展上溯将 profile 的 package.json 当作 owning manifest 导致请求扩展准备失败。与 cordis.patch.yml 头注释保持一致，编号与其余章节未改动。\n测试总结：纯文档变更，无涉及代码实现或测试点，跳过离朱测试。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_f5a44d20-6b78-4e49-a44a-9f5ccd671824",
+    "plan": "统一 module-agent 部署操作表述",
+    "modified_files": [
+      "README.md",
+      "cordis.patch.yml"
+    ],
+    "summary": "执行总结：1) README.md「安装与加载」第 1 步改为「将本项目的 src/ 与 package.json 一并复制到 profile 目录下的 module-agent/ 子目录」，删除最小示例与技术原因说明（README 只写操作步骤），第 2、3 步与编号不变；2) cordis.patch.yml 文件头操作表述改为「将本仓库的 package.json 连同 src/ 一并复制到 module-agent/ 子目录（工程自带 package.json 已含非空的 name 与 version，缺一不可）」，移除最小示例行，技术原因注释保留供维护者查阅。与工程自带 package.json（@deepseek-ai/dsh-module-agent / 0.1.0）一致。\n测试总结：纯文档变更，无涉及代码实现或测试点，跳过离朱测试。",
+    "errors": []
   }
 ]
