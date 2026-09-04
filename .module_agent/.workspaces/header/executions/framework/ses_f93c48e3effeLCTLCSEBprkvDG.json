@@ -1,0 +1,20 @@
+[
+  {
+    "plan_id": "plan_1f1619a6-21fa-4933-91eb-c7c5cdcc3d73",
+    "plan": "更新 cordis.patch.yml 文件头注释",
+    "modified_files": [
+      "cordis.patch.yml"
+    ],
+    "summary": "执行总结：已扩展 cordis.patch.yml 文件头注释（纯注释/文档变更，未改变 YAML 结构、config 与既有 dataDir/subagentProvider 示例）。新增使用要求：module-agent/ 子目录必须放置含非空 name/version 的 package.json（最小示例 @deepseek-ai/dsh-module-agent 0.1.0），并说明缺失时 dsh 的 dsh_plugin_packages 请求扩展经 nearestManifest 上溯命中仅含 name 的 profile package.json，identityFromManifest 抛 \"must declare non-empty name and version\"，导致每次 DeepSeek 请求 extension preparation 失败。\n测试总结：纯注释/文档变更，无涉及代码实现或测试点，跳过离朱测试。",
+    "errors": []
+  },
+  {
+    "plan_id": "plan_3f9a4b1d-ea05-484f-aecb-914921d210ec",
+    "plan": "同步 README.md「安装与加载」节补充 package.json 要求",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "执行总结：README.md「安装与加载」节第 1 步补充 module-agent/ 部署 package.json 要求——除 src/ 外须放置含非空 name/version 的 package.json（最小示例 @deepseek-ai/dsh-module-agent 0.1.0），并一句话说明缺失时 dsh_plugin_packages 扩展上溯将 profile 的 package.json 当作 owning manifest 导致请求扩展准备失败。与 cordis.patch.yml 头注释保持一致，编号与其余章节未改动。\n测试总结：纯文档变更，无涉及代码实现或测试点，跳过离朱测试。",
+    "errors": []
+  }
+]

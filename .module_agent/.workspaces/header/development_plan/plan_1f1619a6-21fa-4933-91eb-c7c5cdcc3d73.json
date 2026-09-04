@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_1f1619a6-21fa-4933-91eb-c7c5cdcc3d73",
+  "module_name": "framework",
+  "development_plan": "更新 cordis.patch.yml 的文件头注释，明确 module-agent 部署时的 package.json 要求与原因，防止再次触发 dsh 请求扩展准备失败。\n\n## 背景\n用户将 module-agent 按 cordis.patch.yml 注释复制 src/ 到 profile 的 module-agent/ 子目录后，每次 DeepSeek 对话请求报 \"DeepSeek request extension preparation failed\"。根因：module-agent 目录缺 package.json 时，dsh 的 dsh_plugin_packages 请求扩展（plugin-package-inventory-deepseek）用 nearestManifest 从模块路径上溯查找最近 package.json 作为 owning manifest，命中 profile 的 package.json（dsh-profile-web 仅含 name、无 version），触发 identityFromManifest 抛 \"must declare non-empty name and version\"。\n\n## 修改目标（文件：cordis.patch.yml）\n仅修改文件头注释（第 1-4 行附近），扩展现有使用说明，新增要点：\n1. module-agent/ 子目录必须放置包含非空 name 与 version 的 package.json（给出最小示例：{ \"name\": \"@deepseek-ai/dsh-module-agent\", \"version\": \"0.1.0\" }）。\n2. 说明原因：若无该 package.json，dsh 的 dsh_plugin_packages 请求扩展会沿目录上溯把 profile 的 package.json（只有 name 无 version）当作插件的 owning manifest，导致每次 DeepSeek 请求在 extension preparation 阶段抛错失败。\n\n## 约束\n- 纯注释/文档修改，不改变 YAML 结构、不新增插件条目、不改 config。\n- 保留既有 dataDir/subagentProvider 示例不变。",
+  "session_id": "ses_f93c48e3effeLCTLCSEBprkvDG",
+  "modified_files": [
+    "cordis.patch.yml"
+  ]
+}

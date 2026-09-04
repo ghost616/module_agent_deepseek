@@ -1,7 +1,7 @@
 {
   "knowledge_bases": [
     {
-      "dir": "F:\\deepseek-harness",
+      "dir": "D:\\deepseek-harness",
       "description": "DeepSeek Harness（dsh）插件开发知识库：当开发、调试或修改 dsh 插件（plugin）、以及涉及 dsh 框架核心机制（Cordis 插件系统、agent 运行时、llm/mcp/sandbox/session/subagent/skill/storage 等模块）时，优先查询此知识库。包含源码、文档、示例与 SDK，用于了解插件 API、生命周期、注册机制与最佳实践。"
     },
     {

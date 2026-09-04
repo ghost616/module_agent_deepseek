@@ -1,7 +1,15 @@
 [
   {
-    "plan_id": "plan_9cd53b08-5b06-4610-af59-02cace6b2fd2",
-    "plan_summary": "修复 handlePing 提示语接收者身份不匹配：mode 缺失时从会话 descriptor/persona 恢复角色，按角色发送对应提示语，显式 limu 分支，恢复失败返回错误不发提示语",
+    "plan_id": "plan_1f1619a6-21fa-4933-91eb-c7c5cdcc3d73",
+    "plan_summary": "更新 cordis.patch.yml 部署注释：明确 module-agent/ 需放置带 name/version 的 package.json，防止 dsh 请求扩展上溯命中 profile manifest 抛错",
+    "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_3f9a4b1d-ea05-484f-aecb-914921d210ec",
+    "plan_summary": "同步 README.md 安装与加载节：补充 module-agent/ 需放置带 name/version 的 package.json 及原因",
     "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
     "code_reviewed": true,
     "plan_completed": true,

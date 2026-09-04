@@ -115,11 +115,11 @@
     },
     {
       "path": "README.md",
-      "description": "项目根目录 README 文档：@deepseek-ai/dsh-module-agent 插件的使用说明，含安装与加载（源码放入 profile 目录 module-agent/ 子目录 + profile cordis.patch.yml 用 insert 声明、name 指向 ./module-agent/src/index.ts 相对路径，dsh web 自动加载）、七级智能体角色表、架构总览、新手模式、工作流程、知识库，以及 opencode 版与 dsh 版实现方案差异对照表"
+      "description": "项目根目录 README 文档：@deepseek-ai/dsh-module-agent 插件的使用说明，含安装与加载（源码放入 profile 目录 module-agent/ 子目录，且该子目录须含非空 name/version 的 package.json 避免 dsh 请求扩展准备失败；profile cordis.patch.yml 用 insert 声明、name 指向 ./module-agent/src/index.ts 相对路径，dsh web 自动加载）、七级智能体角色表、架构总览、新手模式、工作流程、知识库，以及 opencode 版与 dsh 版实现方案差异对照表"
     },
     {
       "path": "cordis.patch.yml",
-      "description": "module-agent 插件的 dsh 加载配置示例：insert 声明插件行（id=module-agent，name='./module-agent/src/index.ts' 相对源码路径，config 含 dataDir/subagentProvider），供用户复制到 profile 目录（如 ~/.dsh/profiles/web/cordis.patch.yml）后随 dsh web 启动自动加载"
+      "description": "module-agent 插件的 dsh 加载配置示例：insert 声明插件行（id=module-agent，name='./module-agent/src/index.ts' 相对源码路径，config 含 dataDir/subagentProvider），供用户复制到 profile 目录（如 ~/.dsh/profiles/web/cordis.patch.yml）后随 dsh web 启动自动加载；文件头注释同时说明使用要求——module-agent/ 子目录必须放置含非空 name/version 的 package.json 及缺失时导致 dsh 请求扩展准备失败的机制原因"
     }
   ]
 }

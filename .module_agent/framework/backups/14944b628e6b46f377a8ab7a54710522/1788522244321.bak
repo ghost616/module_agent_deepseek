@@ -1,0 +1,11 @@
+# module-agent 插件的 dsh 加载配置（示例）。
+# 使用方法：复制到 profile 目录（如 ~/.dsh/profiles/web/cordis.patch.yml），
+# 并将本插件 src/ 放到 profile 目录下的 module-agent/ 子目录。
+- insert:
+    - id: module-agent
+      name: './module-agent/src/index.ts'
+      config:
+        # 项目根目录兜底（agent 会话无 cwd 时作为 .module_agent 数据目录的解析根）
+        dataDir: .
+        # 启动力牧/皋陶/离朱/夔子智能体使用的 subagent provider，默认 'spawn'
+        subagentProvider: spawn
