@@ -1,5 +1,5 @@
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import type { JsonValue } from '@deepseek-ai/dsh-session'
+import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 
 /**
  * 所有 module-agent 工具的公共输出声明：canonical 值是一个 lossless JSON 值，

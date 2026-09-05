@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type { JsonValue } from '@deepseek-ai/dsh-session'
+import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import { validateConfirmationCode, CODE_CONSUMED_NOTICE } from './verification_code.ts'

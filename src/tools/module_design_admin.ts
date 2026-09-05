@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { JsonValue } from '@deepseek-ai/dsh-session'
+import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import { readDesignSync, addOrUpdateModule } from '../lib/module_design.ts'
 import { MODULE_AGENT_DIR, REQUIREMENTS_DESIGN_FILE, CODE_CONVENTIONS_FILE } from '../lib/constants.ts'

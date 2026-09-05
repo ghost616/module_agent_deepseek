@@ -2,6 +2,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { Agent, AgentOptions } from '@deepseek-ai/dsh-agent'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type { ContinuableStart, SubagentListEntry } from '@deepseek-ai/dsh-subagent'
+import { queueHostSubagentPrompt } from '@deepseek-ai/dsh-subagent/internal'
 import type { ToolRestriction } from '@deepseek-ai/dsh-tools'
 // Type-only: pulls the subagent service augmentation into the program.
 import type {} from '@deepseek-ai/dsh-subagent'
@@ -16,8 +17,9 @@ export interface StartChildOptions {
 }
 
 /**
- * 子智能体运行时抽象：封装 dsh 的 ctx.subagents（startContinuable / followup /
- * listChildren）、ctx.sessions 存活判定与 ctx.agents 停止操作，
+ * 子智能体运行时抽象：封装 dsh 的 ctx.subagents（startContinuable / 宿主 queue
+ * 投递（queueHostSubagentPrompt，见 {@link SubagentHost.followup}）/ listChildren）、
+ * ctx.sessions 存活判定与 ctx.agents 停止操作，
  * 替代 opencode 的 client.session.create / promptAsync / get / delete。
  */
 export class SubagentHost {
@@ -51,16 +53,24 @@ export class SubagentHost {
     })
   }
 
-  /** 向子智能体注入一条后续消息（作为其下一轮 FIFO 任务）。 */
+  /**
+   * 向直接续用子会话投递一条 host 消息，作为其下一轮 FIFO 任务；
+   * 空闲（含已持久化冷却）子会话冷恢复后执行。
+   * 迁移依据：dsh 0.1.2-alpha.5 已移除 ctx.subagents.followup，宿主投递收归
+   * SubagentRuntime 私有 deliverSubagentPrompt symbol（底层 steerPrompt/queuePrompt）；
+   * 公开 ctx.subagents.sendMessage 仅限相邻 Agent 的 model-authored steer，且无自定义
+   * source（会按父 agent 转发包裹并注入当前 step），不满足 coordinator queue-to-idle
+   * 语义，故经 @deepseek-ai/dsh-subagent/internal 的 queueHostSubagentPrompt 以 queue
+   * 模式投递；source 沿用父 agent relay 形态（旧 kind:coordinator 的等价表达）。
+   */
   async followup(parent: Agent, childId: string, text: string, signal: AbortSignal): Promise<void> {
-    await this.ctx.subagents.followup(
+    await queueHostSubagentPrompt(
+      this.ctx.subagents,
       parent,
       SessionId(childId),
       [{ type: 'text', text }],
-      {
-        source: { kind: 'coordinator', form: 'relay', senderSessionId: parent.id },
-        signal,
-      },
+      { kind: 'agent-message', form: 'relay', senderSessionId: parent.id },
+      signal,
     )
   }
 
@@ -82,8 +92,8 @@ export class SubagentHost {
     const persistence = this.ctx.get('sessionPersistence')
     if (persistence === undefined) return false
     try {
-      await persistence.inspect(id)
-      return true
+      // stat 对不存在的会话返回 undefined，不抛错；异常视为判定失败。
+      return (await persistence.stat(id)) !== undefined
     } catch {
       return false
     }

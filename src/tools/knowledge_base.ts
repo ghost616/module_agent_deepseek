@@ -1,5 +1,5 @@
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { JsonValue } from '@deepseek-ai/dsh-session'
+import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import { getBoundWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
 import {

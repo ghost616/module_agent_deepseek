@@ -2,7 +2,7 @@ import { mkdir, rm } from 'node:fs/promises'
 import { readdir } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { JsonValue } from '@deepseek-ai/dsh-session'
+import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import { directoryOfAgent, type SessionState } from '../lib/session_state.ts'
 import {
   moduleAgentDir,

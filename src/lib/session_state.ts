@@ -216,9 +216,9 @@ export function registerSessionState(ctx: Context, state: SessionState, fallback
       if (state.classifyProvider(info.id, info.provider) !== undefined) return
       const agent = ctx.agents.get(info.id)
       if (agent === undefined) return
-      // 冷恢复时 events 含 seed 前缀，须按 header.seedLength 截断后折叠。
-      const seedLength = agent.session.header.seedLength ?? 0
-      const descriptor = foldSubagentDescriptor(agent.session.events.slice(seedLength))
+      // 冷恢复时 session 含 fork 继承前缀，child 自有事件为 ownEvents()
+      // （自 inheritedEventCount 起的截断结果），折叠其中 descriptor 再识别身份。
+      const descriptor = foldSubagentDescriptor(agent.session.ownEvents())
       if (descriptor?.mode !== 'continuable') return
       const mode = modeFromPersona(descriptor.persona ?? '')
       if (mode !== undefined) state.setAgentMode(info.id, mode)

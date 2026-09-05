@@ -1,7 +1,8 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import { foldSubagentDescriptor, type ContinuableStart } from '@deepseek-ai/dsh-subagent'
-import { SessionId, type JsonValue } from '@deepseek-ai/dsh-session'
+import { SessionId } from '@deepseek-ai/dsh-session'
+import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { directoryOfAgent, modeFromPersona, personaForMode, type AgentMode, type SessionState } from '../lib/session_state.ts'
 import { findModule } from '../lib/module_tree.ts'
@@ -795,29 +796,33 @@ async function handleKuiStatus(handler: HandlerContext): Promise<JsonValue> {
 /**
  * 从会话身份恢复子智能体角色：mode 被清除（子智能体 settle 后）或从未标记
  * （普通会话）时，从 persona 中识别 module-agent:role=<mode> marker 重建身份。
- * 内存活跃会话经 ctx.agents 取回 agent，按 header.seedLength 截断 events 后
- * 折叠 subagent descriptor；内存无 agent（已持久化冷会话）经
- * sessionPersistence.inspect 取回 events 后同样折叠识别。
+ * 内存活跃会话经 ctx.agents 取回 agent，用 session.ownEvents()（fork 继承
+ * 前缀之后的 child 自有事件）折叠 subagent descriptor；内存无 agent（已持久化
+ * 冷会话）经 sessionPersistence.open(id, 'read') 取得 handle，按
+ * handle.inheritedEventCount 截断 events 后同样折叠识别。
  * @returns 识别出的角色，无法识别返回 undefined
  */
 async function recoverAgentMode(ctx: Context, sessionId: string): Promise<AgentMode | undefined> {
   const agent = ctx.agents.get(SessionId(sessionId))
   if (agent !== undefined) {
-    const seedLength = agent.session.header.seedLength ?? 0
-    const descriptor = foldSubagentDescriptor(agent.session.events.slice(seedLength))
+    const descriptor = foldSubagentDescriptor(agent.session.ownEvents())
     if (descriptor?.mode !== 'continuable') return undefined
     return modeFromPersona(descriptor.persona ?? '')
   }
   const persistence = ctx.get('sessionPersistence')
   if (persistence === undefined) return undefined
   try {
-    const inspected = await persistence.inspect(SessionId(sessionId))
-    const seedLength = inspected.meta.seedLength ?? 0
-    const descriptor = foldSubagentDescriptor(inspected.events.slice(seedLength))
-    if (descriptor?.mode !== 'continuable') return undefined
-    return modeFromPersona(descriptor.persona ?? '')
+    const handle = await persistence.open(SessionId(sessionId), 'read')
+    try {
+      const events = await handle.read(0)
+      const descriptor = foldSubagentDescriptor(events.slice(handle.inheritedEventCount))
+      if (descriptor?.mode !== 'continuable') return undefined
+      return modeFromPersona(descriptor.persona ?? '')
+    } finally {
+      await handle.close()
+    }
   } catch {
-    // inspect 失败（会话不存在或损坏）视为无法识别身份。
+    // open/read/close 失败（会话不存在或损坏）视为无法识别身份。
     return undefined
   }
 }
