@@ -4,6 +4,7 @@
 - 权限与拦截：`tools/pre-execute` 自动放行自定义工具、deny 越出工程目录的 write/edit；`tools.guard` 执行各智能体模式守卫（风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单与 action 级限制、框架子代理禁用 dsh report 工具——framework 子代理本有专用报告机制 module_agent_testing write_report / module_agent_updater_review write_review，不依赖 dsh report，禁用避免与 settle 的 subagent-settled 重复产生 subagent-report；离朱可自由 write/edit 编写测试文件）。
 - 系统提示词注入：`systemPrompt.section` 为框架子智能体注入知识库清单、为风后新手模式注入需求引导规则。
 - 完成通知：`agent/pre-step` 拦截发往风后/夔/力牧等框架 owner 的 dsh `subagent-settled` 通知（框架子代理 report 工具已被 tools.guard 禁用，故仅此单一消息源）并替换为框架完成通知（力牧含 module_name，供 module_agent_executor(action="status") 使用），避免 owner 收到重复/原始消息（离朱 settle 给力牧时，力牧收到「离朱测试完毕…」而非原始 subagent-settled）；替换完成后清除已 settle 子代理的 mode；`agent/status` 仅维护活跃监控（running 对框架子智能体记录活动、idle 无条件清除活动，不再发送完成通知；idle 不依赖 mode，防御性兜底避免任何提前清 mode 场景导致 lastActivity 残留致 isWorking 恒 true、力牧被误拦「离朱仍在运行」）；`tools/post-execute` 在框架子智能体每次工具执行后刷新活动时间。
+- 会话模式冷恢复：`subagent/start` 分类链在 classifyProvider（`module-agent:<mode>` provider 命名）未命中时，经 ctx.agents 取回 agent，以 dsh 0.1.2-alpha.5 新会话形态 `foldSubagentDescriptor(agent.session.ownEvents())` 折叠 child 自有事件（fork 继承前缀截断 = ownEvents()，自 inheritedEventCount 起）中的 subagent/descriptor（version 3），continuable 且 persona 含 marker 才注册 mode（与 module_agent_executor.recoverAgentMode 同构；不再使用旧 header.seedLength / events.slice）。
 ## 公共数据层
 
 framework 提供共享数据层，沿用 `.module_agent/*.json` 文件存储，逻辑与原 opencode 版保持一致，仅调整类型/导入：

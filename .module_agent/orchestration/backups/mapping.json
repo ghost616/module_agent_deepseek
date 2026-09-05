@@ -7,5 +7,10 @@
   "src/lib/stale_cleanup.ts": "e7982086e77041d6edd62fd20005523d",
   "src/tools/module_agent_cleanup.ts": "e4cfdccdd1f56b6bc3fab159b0df12eb",
   "src/lib/reviewer_rules.ts": "d49cd88dda123ceaa92995bb98459ca9",
-  "src/lib/lizhu_rules.ts": "916e5287caf60abb5337e1ca175d2ad9"
+  "src/lib/lizhu_rules.ts": "916e5287caf60abb5337e1ca175d2ad9",
+  "src/lib/subagent_host.ts": "350a1537727bbde1aac47096d84b0fe4",
+  ".lizhu_env/tests/executor-ping.test.ts": "54ac5247881b38572f2436075bf2f282",
+  "src/tools/module_agent_done.ts": "111c038e3dba5066d0b48d230350b731",
+  ".lizhu_env/tests/executor-status.test.ts": "06f81690ed4102e37dba460d5c4e2864",
+  ".lizhu_env/env/vitest.config.ts": "14dc20cb8e77409cc35d94f606dc179e"
 }

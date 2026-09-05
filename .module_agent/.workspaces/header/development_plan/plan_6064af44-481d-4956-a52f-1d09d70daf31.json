@@ -1,0 +1,11 @@
+{
+  "plan_id": "plan_6064af44-481d-4956-a52f-1d09d70daf31",
+  "module_name": "workspace",
+  "development_plan": "type-only 清理：将 src/tools/workspace.ts、src/tools/knowledge_base.ts、src/tools/agent_model_config.ts 三处 `import type { JsonValue } from '@deepseek-ai/dsh-session'` 改为 `@deepseek-ai/dsh-util-values`（dsh 0.1.2-alpha.5 实际导出方以 typecheck 为准）。纯 type import，不改逻辑；确认 workspace src 在 0.1.2-alpha.5 类型下 0 错误。",
+  "session_id": "ses_f8f7cb6adffe0UdfGcUy1rkVyv",
+  "modified_files": [
+    "src/tools/workspace.ts",
+    "src/tools/knowledge_base.ts",
+    "src/tools/agent_model_config.ts"
+  ]
+}

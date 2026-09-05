@@ -26,5 +26,15 @@
     ],
     "summary": "执行总结：1) README.md「安装与加载」第 1 步改为「将本项目的 src/ 与 package.json 一并复制到 profile 目录下的 module-agent/ 子目录」，删除最小示例与技术原因说明（README 只写操作步骤），第 2、3 步与编号不变；2) cordis.patch.yml 文件头操作表述改为「将本仓库的 package.json 连同 src/ 一并复制到 module-agent/ 子目录（工程自带 package.json 已含非空的 name 与 version，缺一不可）」，移除最小示例行，技术原因注释保留供维护者查阅。与工程自带 package.json（@deepseek-ai/dsh-module-agent / 0.1.0）一致。\n测试总结：纯文档变更，无涉及代码实现或测试点，跳过离朱测试。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_74bdc994-aa1c-450e-8b19-f5ed2f0e3ccf",
+    "plan": "会话冷恢复身份识别适配 dsh 0.1.2-alpha.5",
+    "modified_files": [
+      "src/lib/session_state.ts",
+      ".lizhu_env/tests/session-state-cold-recovery.test.ts"
+    ],
+    "summary": "执行总结：dsh 0.1.2-alpha.5 handle-based session-persistence 迁移完成。1) src/lib/session_state.ts registerSessionState subagent/start 冷恢复分支（原 219-221 行）移除旧形态 header.seedLength + events.slice(seedLength)，改为 foldSubagentDescriptor(agent.session.ownEvents())，与 module_agent_executor.recoverAgentMode 内存分支同构；外部行为不变（classifyProvider 未命中、continuable、persona marker 命中才注册）。2) 同步更新 src/index.ts 引用处无需改动（registerSessionState JSDoc 已对应）。3) .lizhu_env/tests/session-state-cold-recovery.test.ts descriptor mock version 2→3，makeAgent 形态改为 { header:{}, inheritedEventCount, events, ownEvents:()=>events.slice(inheritedEventCount) }，用例措辞 seedLength→inheritedEventCount 且保留全部身份链/截断/默认0/one-shot/无marker用例。\n测试总结（離朱）：残留检查 0（src+tests 无 header.seedLength / .events.slice / descriptor version 2）；tsc typecheck session_state.ts 0 报错（旧两处 seedLength/events 错误消除）；全量回归 33 文件 418/418 通过（session-state-cold-recovery 12 例由上一轮 6 失败全转绿，executor-ping 18/18 保持通过）。src 剩余 11 行既有跨模块 dsh API 漂移（subagent_host followup ×1、JsonValue ×10）为独立迁移计划范畴，非本次引入。",
+    "errors": []
   }
 ]

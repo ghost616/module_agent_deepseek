@@ -1,0 +1,16 @@
+[
+  {
+    "plan_id": "plan_68ffe7c0-93a9-48a1-962b-cbfa5af0a849",
+    "plan": "适配 dsh 0.1.2-alpha.5：subagent_host followup 迁移 + 模块内 JsonValue import 修正",
+    "modified_files": [
+      "src/lib/subagent_host.ts",
+      "src/tools/module_agent_done.ts",
+      "src/tools/module_agent_cleanup.ts",
+      ".lizhu_env/tests/executor-ping.test.ts",
+      ".lizhu_env/tests/executor-status.test.ts",
+      ".lizhu_env/env/vitest.config.ts"
+    ],
+    "summary": "执行总结：本轮完成 dsh 0.1.2-alpha.5 适配。(1) src/lib/subagent_host.ts followup：dsh 0.1.2-alpha.5 移除 ctx.subagents.followup，宿主投递收归 SubagentRuntime 私有 deliverSubagentPrompt symbol；公开 sendMessage 仅限相邻 Agent 的 model-authored steer 且无自定义 source（按父 agent 转发包裹+注入当前 step），不满足 coordinator queue-to-idle 语义，故改经 '@deepseek-ai/dsh-subagent/internal' queueHostSubagentPrompt 以 queue 模式向直接子会话投递 host 消息（空闲/冷会话恢复后执行），source 用父 agent relay（agent-message/relay/senderSessionId=parent.id，为旧 kind:coordinator 等价表达），方法签名与全部调用方不变（module_agent_executor start 复用/start_review/handlePing/handleStartLizhu/handleStartKui），JSDoc 与实现注释同步（含迁移依据）。(2) module_agent_done.ts、module_agent_cleanup.ts 的 import type { JsonValue } 由 '@deepseek-ai/dsh-session' 改为 '@deepseek-ai/dsh-util-values'。(3) 夹具同步：executor-ping/executor-status mock ctx.subagents 改为 [Symbol.for('dsh.subagent.deliverPrompt')] 宿主投递方法；vitest.config.ts 在 dsh-subagent 别名前增加 internal 子路径别名。不改复用判定/投递语义/模式身份。\n测试总结：全部通过。typecheck（tsc -p .lizhu_env/env/tsconfig.typecheck.json，dsh 0.1.2-alpha.5）：orchestration 相关 src 0 错误，全仓 src 0 错误（仅剩 D:/ vendor 环境噪音，既有口径不计）；vitest 全量回归 418/418（33/33 文件）通过，executor-ping 18/18、executor-status 10/10、subagent-host-toolfilter 8/8 等无回归；失败 0、跳过 0。产物：.lizhu_env/tsc_followup_now.txt、.lizhu_env/vitest_full_followup.txt。至此本轮 dsh API 漂移清理完成，为后续提供干净基线。",
+    "errors": []
+  }
+]

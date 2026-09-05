@@ -1,0 +1,402 @@
+import { describe, it, expect, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+vi.mock('@deepseek-ai/dsh-tools', () => ({
+  defineTool: (def: unknown) => def,
+}))
+vi.mock('@deepseek-ai/dsh-session', () => ({
+  SessionId: (id: string) => id,
+}))
+vi.mock('@deepseek-ai/schemastery', () => ({
+  default: {
+    object: () => ({}),
+    string: () => ({ default: () => ({}), optional: () => ({}) }),
+  },
+}))
+vi.mock('@deepseek-ai/dsh-llm', () => ({
+  createUserMessage: (msg: unknown) => msg,
+}))
+
+import { createModuleAgentExecutorTool } from '../../src/tools/module_agent_executor.ts'
+import { SessionState } from '../../src/lib/session_state.ts'
+import { recordActivity } from '../../src/lib/limu_monitor.ts'
+
+const CALLER = 'caller-fz'
+
+async function tempDir(): Promise<string> {
+  return (await mkdtemp(join(tmpdir(), 'ma-ping-'))).replace(/\\/g, '/')
+}
+
+async function writeJson(path: string, data: unknown): Promise<void> {
+  await mkdir(join(path.split('/').slice(0, -1).join('/')), { recursive: true })
+  await writeFile(path, JSON.stringify(data), 'utf-8')
+}
+
+interface DescriptorResult {
+  events: unknown[]
+  meta: { seedLength: number }
+}
+
+/** 构造带 seed 前缀 + continuation descriptor 事件的会话事件流。 */
+function descriptorEvents(mode: string, seedLength = 0): DescriptorResult {
+  const events: unknown[] = []
+  for (let i = 0; i < seedLength; i++) {
+    events.push({
+      type: 'user/message',
+      seq: i + 1,
+      time: 0,
+      data: { content: [{ type: 'text', text: `seed-${i}` }] },
+    })
+  }
+  events.push({
+    type: 'subagent/descriptor',
+    seq: events.length + 1,
+    time: 0,
+    data: {
+      version: 2,
+      mode: 'continuable',
+      provider: 'module-agent:test',
+      label: '测试子智能体',
+      persona: `module-agent:role=${mode}\n\n## 执行流程指令`,
+    },
+  })
+  return { events, meta: { seedLength } }
+}
+
+/** one-shot descriptor：foldSubagentDescriptor 返回 mode='one-shot'，应判无法识别。 */
+function oneShotEvents(): DescriptorResult {
+  return {
+    events: [
+      {
+        type: 'subagent/descriptor',
+        seq: 1,
+        time: 0,
+        data: {
+          version: 2,
+          mode: 'one-shot',
+          provider: 'module-agent:test',
+          label: '一次性任务',
+        },
+      },
+    ],
+    meta: { seedLength: 0 },
+  }
+}
+
+/** continuation descriptor，但 persona 无 module-agent:role marker。 */
+function noMarkerEvents(): DescriptorResult {
+  return {
+    events: [
+      {
+        type: 'subagent/descriptor',
+        seq: 1,
+        time: 0,
+        data: {
+          version: 2,
+          mode: 'continuable',
+          provider: 'module-agent:test',
+          label: '无 marker',
+          persona: '普通 persona，无身份标记',
+        },
+      },
+    ],
+    meta: { seedLength: 0 },
+  }
+}
+
+interface Runtime {
+  dir: string
+  sessionId: string
+  workspaceDir: string
+  followupTexts: string[]
+  state: SessionState
+  run: (args: Record<string, unknown>) => Promise<Record<string, unknown>>
+}
+
+async function makeRuntime(opts: {
+  sessionId: string
+  alive?: boolean
+  agentMode?: 'limu' | 'gaotao' | 'lizhu' | 'kui'
+  inMemory?: { mode: string; seedLength?: number }
+  cold?: { events: unknown[]; meta: { seedLength: number } } | 'throw' | undefined
+  bindings?: Record<string, string>
+}): Promise<Runtime> {
+  const dir = await tempDir()
+  const sessionId = opts.sessionId
+  const followupTexts: string[] = []
+
+  await writeJson(`${dir}/.module_agent/session_workspaces.json`, { [CALLER]: 'ws1' })
+  const wsDir = `${dir}/.module_agent/.workspaces/ws1`
+  await writeJson(`${wsDir}/session_bindings.json`, {
+    gaotao: {},
+    limu: {},
+    lizhu: opts.bindings ?? {},
+    lizhu_fengzhou: {},
+    kui: {},
+  })
+  await writeJson(`${wsDir}/module_sessions.json`, {})
+
+  const state = new SessionState()
+  state.setAgentMode(CALLER, 'fengzhou')
+  if (opts.agentMode) {
+    state.setAgentMode(sessionId, opts.agentMode)
+  }
+
+  const alive = opts.alive ?? true
+  const ctx: any = {
+    sessions: {
+      get: () => (alive ? { id: sessionId } : undefined),
+    },
+    agents: {
+      get: () => {
+        if (!opts.inMemory) return undefined
+        const { events } = descriptorEvents(opts.inMemory.mode, opts.inMemory.seedLength ?? 0)
+        return { session: { header: { seedLength: opts.inMemory.seedLength ?? 0 }, events } }
+      },
+    },
+    get: (key: string) => {
+      if (key === 'sessionPersistence' && opts.cold) {
+        if (opts.cold === 'throw') {
+          return {
+            inspect: async () => { throw new Error('session missing') },
+          }
+        }
+        return { inspect: async () => opts.cold }
+      }
+      return undefined
+    },
+    subagents: {
+      startContinuable: async () => ({}),
+      followup: async (_parent: unknown, _child: unknown, messages: unknown[]) => {
+        const text = (messages as Array<{ type: string; text: string }>)[0]?.text ?? ''
+        followupTexts.push(text)
+      },
+      listChildren: async () => [],
+    },
+    logger: { info: () => {}, warn: () => {} },
+  }
+
+  const tool = createModuleAgentExecutorTool({
+    ctx,
+    sessionState: state,
+    catalog: { listProviders: async () => [], listModels: async () => [] },
+    dataDir: dir,
+    subagentProvider: 'spawn',
+  })
+
+  const caller = { id: CALLER, session: { header: { cwd: dir } } }
+
+  const run = async (args: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    const result = await tool.execute(
+      args as never,
+      { agent: caller as never, signal: new AbortController().signal } as never,
+    )
+    return result as Record<string, unknown>
+  }
+
+  return { dir, sessionId, workspaceDir: wsDir, followupTexts, state, run }
+}
+
+function readCheckedSessions(workspaceDir: string): string[] {
+  const data = JSON.parse(readFileSync(join(workspaceDir, 'module_sessions.json'), 'utf-8'))
+  return data._checked ?? []
+}
+
+describe('handlePing 显式 limu 分支', () => {
+  it('targetMode=limu 时发送力牧专用提示语并标记二次检查', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-limu-1', agentMode: 'limu' })
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('ok')
+    expect(res.message).toBe(`已向力牧会话 ${rt.sessionId} 发送提醒并标记二次检查。`)
+    expect(rt.followupTexts).toHaveLength(1)
+    expect(rt.followupTexts[0]).toContain('风后提醒')
+    expect(rt.followupTexts[0]).toContain('module_agent_updater_plan(action="write_result", summary="执行总结")')
+    expect(rt.followupTexts[0]).toContain('module_agent_plan(action="plan_complete", files=["..."])')
+    expect(readCheckedSessions(rt.workspaceDir)).toContain(rt.sessionId)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('力牧绑定离朱仍在工作时提前返回无需 ping', async () => {
+    const rt = await makeRuntime({
+      sessionId: 'ses-limu-2',
+      agentMode: 'limu',
+      bindings: { 'ses-limu-2': 'ses-lizhu-working' },
+    })
+    recordActivity('ses-lizhu-working')
+
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('ok')
+    expect(res.lizhu_session_id).toBe('ses-lizhu-working')
+    expect(res.message).toContain('力牧 ses-limu-2 绑定的离朱 ses-lizhu-working 仍在工作')
+    expect(res.message).toContain('无需 ping')
+    expect(rt.followupTexts).toHaveLength(0)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+})
+
+describe('handlePing 身份恢复（recoverAgentMode）', () => {
+  it('内存活跃会话经 ctx.agents 恢复 limu 身份并走力牧分支', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-rec-mem', inMemory: { mode: 'limu' } })
+    expect(rt.state.getAgentMode(rt.sessionId)).toBeUndefined()
+
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('ok')
+    expect(res.message).toBe(`已向力牧会话 ${rt.sessionId} 发送提醒并标记二次检查。`)
+    expect(rt.state.getAgentMode(rt.sessionId)).toBe('limu')
+    expect(rt.followupTexts).toHaveLength(1)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('内存活跃会话：按 header.seedLength 截断 seed 前缀 events 后识别身份', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-rec-seed', inMemory: { mode: 'kui', seedLength: 2 } })
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('ok')
+    expect(res.message).toBe(`已向夔会话 ${rt.sessionId} 发送提醒。`)
+    expect(rt.state.getAgentMode(rt.sessionId)).toBe('kui')
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('冷会话经 sessionPersistence.inspect 恢复 gaotao 身份并走皋陶分支', async () => {
+    const cold = descriptorEvents('gaotao')
+    const rt = await makeRuntime({
+      sessionId: 'ses-rec-cold',
+      cold,
+    })
+    expect(rt.state.getAgentMode(rt.sessionId)).toBeUndefined()
+
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('ok')
+    expect(res.message).toBe(`已向皋陶会话 ${rt.sessionId} 发送提醒。`)
+    expect(rt.state.getAgentMode(rt.sessionId)).toBe('gaotao')
+    expect(rt.followupTexts).toHaveLength(1)
+    expect(rt.followupTexts[0]).toContain('module_agent_plan(action="get_pending_review")')
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('冷会话：seedLength>0 时按 seedLength 截断后识别 lizhu 身份', async () => {
+    const cold = descriptorEvents('lizhu', 1)
+    const rt = await makeRuntime({ sessionId: 'ses-rec-lizhu', cold })
+
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('ok')
+    expect(res.message).toBe(`已向离朱会话 ${rt.sessionId} 发送提醒。`)
+    expect(rt.state.getAgentMode(rt.sessionId)).toBe('lizhu')
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+})
+
+describe('handlePing gaotao/lizhu/kui 分支提示语保持不变', () => {
+  it('gaotao：发送 get_pending_review 提示语', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-gt', agentMode: 'gaotao' })
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('ok')
+    expect(res.message).toBe(`已向皋陶会话 ${rt.sessionId} 发送提醒。`)
+    expect(rt.followupTexts[0]).toContain('module_agent_plan(action="get_pending_review")')
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('lizhu：发送 write_report 提示语', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-lz', agentMode: 'lizhu' })
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('ok')
+    expect(res.message).toBe(`已向离朱会话 ${rt.sessionId} 发送提醒。`)
+    expect(rt.followupTexts[0]).toContain('module_agent_testing(action="write_report"')
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('kui：发送 read_all_kui_plans 提示语并标记二次检查', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-ku', agentMode: 'kui' })
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('ok')
+    expect(res.message).toBe(`已向夔会话 ${rt.sessionId} 发送提醒。`)
+    expect(rt.followupTexts[0]).toContain('module_agent_reader(action="read_all_kui_plans")')
+    expect(readCheckedSessions(rt.workspaceDir)).toContain(rt.sessionId)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+})
+
+describe('handlePing 身份恢复失败兜底', () => {
+  it('mode 未标记且无 persistence：返回无法识别 error，不发提醒', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-un-id-1' })
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('error')
+    expect(res.error).toBe(`会话 ${rt.sessionId} 的角色无法识别，请确认会话状态后再 ping。`)
+    expect(rt.followupTexts).toHaveLength(0)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('descriptor 为 one-shot（非 continuable）：判无法识别，不发提醒', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-un-id-2', cold: oneShotEvents() })
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('error')
+    expect(res.error).toBe(`会话 ${rt.sessionId} 的角色无法识别，请确认会话状态后再 ping。`)
+    expect(rt.followupTexts).toHaveLength(0)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('descriptor persona 无 marker：判无法识别，不发提醒', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-un-id-3', cold: noMarkerEvents() })
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('error')
+    expect(res.error).toBe(`会话 ${rt.sessionId} 的角色无法识别，请确认会话状态后再 ping。`)
+    expect(rt.followupTexts).toHaveLength(0)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('冷会话 inspect 抛出：判无法识别，不发提醒', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-un-id-4', cold: 'throw' })
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('error')
+    expect(res.error).toBe(`会话 ${rt.sessionId} 的角色无法识别，请确认会话状态后再 ping。`)
+    expect(rt.followupTexts).toHaveLength(0)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+})
+
+describe('handlePing 基础校验', () => {
+  it('缺 session_id：返回 error', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-base' })
+    const res = await rt.run({ action: 'ping' })
+    expect(res.status).toBe('error')
+    expect(res.error).toBe('session_id 必填')
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('会话不存在（isAlive false）：返回 error', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-base-2', alive: false })
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+    expect(res.status).toBe('error')
+    expect(res.error).toBe(`会话 ${rt.sessionId} 不存在。`)
+    expect(rt.followupTexts).toHaveLength(0)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('会话未超时（有活动）：返回无需 ping', async () => {
+    const rt = await makeRuntime({ sessionId: 'ses-idle', agentMode: 'limu' })
+    recordActivity(rt.sessionId)
+
+    const res = await rt.run({ action: 'ping', session_id: rt.sessionId })
+
+    expect(res.status).toBe('ok')
+    expect(res.message).toContain('未超时')
+    expect(res.message).toContain('无需 ping')
+    expect(rt.followupTexts).toHaveLength(0)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+})

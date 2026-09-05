@@ -1,0 +1,16 @@
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  oxc: { tsconfig: false },
+  resolve: {
+    alias: {
+      '@deepseek-ai/dsh-subagent': 'D:/deepseek-harness/packages/subagent/subagent/src/descriptor.ts',
+      '@deepseek-ai/dsh-session': 'D:/deepseek-harness/packages/core/session/src/index.ts',
+    },
+  },
+  test: {
+    root: 'E:/module_agent_deepseek',
+    include: ['E:/module_agent_deepseek/.lizhu_env/tests/**/*.test.ts'],
+    environment: 'node',
+  },
+})

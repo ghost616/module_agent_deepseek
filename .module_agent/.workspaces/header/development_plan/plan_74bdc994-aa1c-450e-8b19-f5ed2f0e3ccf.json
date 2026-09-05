@@ -1,0 +1,10 @@
+{
+  "plan_id": "plan_74bdc994-aa1c-450e-8b19-f5ed2f0e3ccf",
+  "module_name": "framework",
+  "development_plan": "将 framework 模块的会话冷恢复身份识别适配到 dsh 0.1.2-alpha.5（handle-based session-persistence seam 之后的新会话形态），使升级后子代理冷恢复 mode 识别恢复、全量回归转绿。\n\n## 背景\ndsh 0.1.2-alpha.4/5 breaking 重构后：Session 已不再暴露 header.seedLength / session.events 旧形态；child 自有事件边界移为 handle.inheritedEventCount / session 的 ownEvents() 等新形态；subagent/descriptor 版本升至 3（foldSubagentDescriptor → parseSubagentDescriptor 要求 version===3）。framework 的 session_state.ts registerSessionState 冷恢复仍用旧形态（header.seedLength + events.slice），测试 session-state-cold-recovery.test.ts 的 descriptor mock 仍为 version 2，导致全量回归 6 失败（冷恢复身份链：期望 kui/lizhu/limu 却得 undefined）。\n\n## 修改目标\n1. src/lib/session_state.ts registerSessionState 的 subagent/start 冷恢复分支（约 215-225 行）：\n   - 参考 orchestration 模块已迁移的 recoverAgentMode 与 executor-ping 测试形态，将旧 `agent.session.header.seedLength` + `agent.session.events.slice(seedLength)` 折叠改为 dsh 0.1.2-alpha.5 新会话形态（如 agent.session 的 child 自有事件边界 inheritedEventCount / ownEvents()），再 foldSubagentDescriptor → modeFromPersona。\n   - 若该上下文仅拿到 Agent 引用，请核实 dsh 0.1.2-alpha.5 中 Agent.session 提供的事件读取 API（ownEvents() 或等价），按新 API 精确实现；严禁继续引用已删除的 header.seedLength / session.events。\n   - 保持外部行为：classifyProvider 未命中的 continuable 子代理在冷恢复(subagent/start)时按 descriptor persona 识别 mode 并注册；不命中返回 undefined。\n2. .lizhu_env/tests/session-state-cold-recovery.test.ts：\n   - descriptor mock version 升到 3；mock 的 session/agent 形态与迁移后的 session_state.ts 读取逻辑一致（含 child 自有事件边界）。\n   - 保留并断言冷恢复身份链用例（kui/lizhu/limu、seed 截断、默认 seed 等）。\n3. 消除受影响文件的类型错误，使 tsc typecheck 在目标 dsh(0.1.2-alpha.5，D:/deepseek-harness) 类型下 src 0 错误。\n4. 全量回归（.lizhu_env/tests）转绿；若存在同类旧形态引用（header.seedLength / .events.slice / descriptor version 2）在同一文件与测试内，一并迁移，不得残留。\n\n## 约束\n- 仅改动 framework 模块相关文件及其测试；不越界修改 orchestration 等其他模块（它们已有/另有迁移计划）。\n- ESM、严格类型、JSDoc 规范一致；不改变身份识别业务语义。",
+  "session_id": "ses_f93c48e3effeLCTLCSEBprkvDG",
+  "modified_files": [
+    "src/lib/session_state.ts",
+    ".lizhu_env/tests/session-state-cold-recovery.test.ts"
+  ]
+}

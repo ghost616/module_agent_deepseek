@@ -1,0 +1,249 @@
+import { describe, it, expect, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+const rulesSource = readFileSync(new URL('../../src/lib/orchestrator_rules.ts', import.meta.url), 'utf8')
+
+vi.mock('@deepseek-ai/dsh-tools', () => ({
+  defineTool: (def: unknown) => def,
+}))
+vi.mock('@deepseek-ai/dsh-session', () => ({
+  SessionId: (id: string) => id,
+}))
+vi.mock('@deepseek-ai/schemastery', () => ({
+  default: {
+    object: () => ({}),
+    string: () => ({ default: () => ({}), optional: () => ({}) }),
+  },
+}))
+vi.mock('@deepseek-ai/dsh-llm', () => ({
+  createUserMessage: (msg: unknown) => msg,
+}))
+
+import { createModuleAgentExecutorTool } from '../../src/tools/module_agent_executor.ts'
+import { SessionState } from '../../src/lib/session_state.ts'
+
+async function tempDir(): Promise<string> {
+  return (await mkdtemp(join(tmpdir(), 'ma-exst-'))).replace(/\\/g, '/')
+}
+
+async function writeJson(path: string, data: unknown): Promise<void> {
+  await mkdir(join(path.split('/').slice(0, -1).join('/')), { recursive: true })
+  await writeFile(path, JSON.stringify(data), 'utf-8')
+}
+
+interface Runtime {
+  dir: string
+  sessionId: string
+  run: (args: Record<string, unknown>, alive: boolean) => Promise<Record<string, unknown>>
+}
+
+async function makeRuntime(opts: {
+  records?: unknown[]
+  planMap?: Record<string, string>
+  metadata?: Array<{ plan_id: string; plan_summary: string; starter_session_id: string; code_reviewed: boolean; plan_completed: boolean; test_passed: boolean }>
+  moduleName?: string
+}): Promise<Runtime> {
+  const dir = await tempDir()
+  const moduleName = opts.moduleName ?? 'auth'
+  const sessionId = 'ses-test-status-123'
+
+  // module tree
+  await writeJson(`${dir}/.module_agent/module_tree.json`, {
+    modules: [{ name: moduleName, description: 'test module' }],
+  })
+  // session -> workspace mapping
+  await writeJson(`${dir}/.module_agent/session_workspaces.json`, { 'caller-fz': 'ws1' })
+  const wsDir = `${dir}/.module_agent/.workspaces/ws1`
+
+  if (opts.records && opts.records.length > 0) {
+    await writeJson(`${wsDir}/executions/${moduleName}/${sessionId}.json`, opts.records)
+  }
+  if (opts.planMap) {
+    await writeJson(`${wsDir}/session_plan_map.json`, opts.planMap)
+  }
+  if (opts.metadata) {
+    await writeJson(`${wsDir}/development_plan/metadata.json`, opts.metadata)
+  }
+  await writeJson(`${wsDir}/session_bindings.json`, {})
+
+  const state = new SessionState()
+  state.setAgentMode('caller-fz', 'fengzhou')
+
+  const ctx: any = {
+    sessions: {
+      get: () => undefined,
+    },
+    get: (key: string) => {
+      if (key === 'sessionPersistence') return undefined
+      return undefined
+    },
+    subagents: {
+      startContinuable: async () => ({}),
+      followup: async () => {},
+      listChildren: async () => [],
+    },
+    agents: { get: () => undefined },
+    logger: { info: () => {}, warn: () => {} },
+  }
+
+  const tool = createModuleAgentExecutorTool({
+    ctx,
+    sessionState: state,
+    catalog: { listProviders: async () => [], listModels: async () => [] },
+    dataDir: dir,
+    subagentProvider: 'spawn',
+  })
+
+  const caller = { id: 'caller-fz', session: { header: { cwd: dir } } }
+
+  const run = async (args: Record<string, unknown>, alive: boolean): Promise<Record<string, unknown>> => {
+    ctx.sessions.get = () => (alive ? { id: sessionId } : undefined)
+    ctx.get = (key: string) => (key === 'sessionPersistence' ? undefined : undefined)
+    const result = await tool.execute(
+      args as never,
+      { agent: caller as never, signal: new AbortController().signal } as never,
+    )
+    return result as Record<string, unknown>
+  }
+
+  return { dir, sessionId, run }
+}
+
+const record = {
+  plan_id: 'plan-1',
+  plan: '计划一',
+  modified_files: ['src/a.ts'],
+  summary: '完成了 A',
+  errors: [],
+}
+
+const metaFor = (overrides: Partial<{ plan_completed: boolean; plan_summary: string }> = {}) => [
+  {
+    plan_id: 'plan-1',
+    plan_summary: '实现登录功能',
+    starter_session_id: 'caller-fz',
+    code_reviewed: false,
+    plan_completed: false,
+    test_passed: false,
+    ...overrides,
+  },
+]
+
+describe('handleStatus 各分支返回值完整性', () => {
+  it('allRecords.length > 0 分支：包含 plan_id、plan_summary、plan_completed（meta?.plan_completed ?? false）', async () => {
+    const rt = await makeRuntime({
+      records: [record],
+      planMap: { [rt_session('plan-1')]: 'plan-1' },
+      metadata: metaFor({ plan_completed: true }),
+    })
+    const res = await rt.run({ action: 'status', module_name: 'auth', session_id: rt.sessionId }, true)
+    expect(res.plan_id).toBe('plan-1')
+    expect(res.plan_summary).toBe('实现登录功能')
+    expect(res.plan_completed).toBe(true)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('allRecords.length > 0 且 meta 缺失：plan_completed 回退 false、plan_summary 回退 null', async () => {
+    const rt = await makeRuntime({ records: [record] })
+    const res = await rt.run({ action: 'status', module_name: 'auth', session_id: rt.sessionId }, true)
+    expect(res.plan_id).toBeNull()
+    expect(res.plan_summary).toBeNull()
+    expect(res.plan_completed).toBe(false)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('会话已关闭分支（isAlive false）：包含 plan_id、plan_summary（meta?.plan_summary ?? null）', async () => {
+    const rt = await makeRuntime({
+      planMap: { 'ses-test-status-123': 'plan-1' },
+      metadata: metaFor({ plan_summary: '实现登录功能' }),
+    })
+    const res = await rt.run({ action: 'status', module_name: 'auth', session_id: rt.sessionId }, false)
+    expect(res.plan_id).toBe('plan-1')
+    expect(res.plan_summary).toBe('实现登录功能')
+    expect(res.error).toContain('力牧已关闭')
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('无计划分支（!meta）：返回 plan_id: null、plan_summary: null', async () => {
+    const rt = await makeRuntime({})
+    const res = await rt.run({ action: 'status', module_name: 'auth', session_id: rt.sessionId }, true)
+    expect(res.plan_id).toBeNull()
+    expect(res.plan_summary).toBeNull()
+    expect(res.message).toContain('没有执行计划')
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('计划已完成分支（meta.plan_completed）：包含 plan_id、plan_summary、plan_completed: true', async () => {
+    const rt = await makeRuntime({
+      planMap: { 'ses-test-status-123': 'plan-1' },
+      metadata: metaFor({ plan_completed: true, plan_summary: '实现登录功能' }),
+    })
+    const res = await rt.run({ action: 'status', module_name: 'auth', session_id: rt.sessionId }, true)
+    expect(res.plan_id).toBe('plan-1')
+    expect(res.plan_summary).toBe('实现登录功能')
+    expect(res.plan_completed).toBe(true)
+    expect(res.finished).toBe(true)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('执行中分支：包含 plan_id、plan_summary、plan_completed: false', async () => {
+    const rt = await makeRuntime({
+      planMap: { 'ses-test-status-123': 'plan-1' },
+      metadata: metaFor({ plan_completed: false, plan_summary: '实现登录功能' }),
+    })
+    const res = await rt.run({ action: 'status', module_name: 'auth', session_id: rt.sessionId }, true)
+    expect(res.plan_id).toBe('plan-1')
+    expect(res.plan_summary).toBe('实现登录功能')
+    expect(res.plan_completed).toBe(false)
+    expect(res.finished).toBe(false)
+    await rm(rt.dir, { recursive: true, force: true })
+  })
+
+  it('planId/meta 查询为同步调用（getPlanIdBySession、readAllMetadata 均无 await）', () => {
+    const source = readFileSync(new URL('../../src/tools/module_agent_executor.ts', import.meta.url), 'utf8')
+    const statusBlock = source.slice(source.indexOf('async function handleStatus'), source.indexOf('async function handleGaotaoStatus'))
+    expect(statusBlock).toContain('const planId = getPlanIdBySession(workspaceDir, session_id)')
+    expect(statusBlock).toContain('const meta = planId ? readAllMetadata(workspaceDir).find')
+    // 两处查询均不应带 await 前缀
+    expect(statusBlock).not.toMatch(/await getPlanIdBySession/)
+    expect(statusBlock).not.toMatch(/await readAllMetadata/)
+  })
+})
+
+describe('orchestrator_rules.ts 依赖分析规则排版', () => {
+  it('步骤 3「评估模块变更」包含「模块依赖分析与循环依赖拆分」规则', () => {
+    expect(rulesSource).toContain('模块依赖分析与循环依赖拆分')
+    expect(rulesSource).toContain('单向依赖（如 B 依赖 A，A 不依赖 B）')
+    expect(rulesSource).toContain('循环依赖')
+    expect(rulesSource).toContain('打破循环')
+  })
+
+  it('依赖分析规则位于步骤 4「夔批量编排模式询问」之前', () => {
+    const depIdx = rulesSource.indexOf('模块依赖分析与循环依赖拆分')
+    const kuiIdx = rulesSource.indexOf('夔批量编排模式询问')
+    expect(depIdx).toBeGreaterThan(-1)
+    expect(kuiIdx).toBeGreaterThan(depIdx)
+    // 依赖分析规则在「评估模块变更」小节内
+    const evalIdx = rulesSource.indexOf('评估模块变更')
+    expect(depIdx).toBeGreaterThan(evalIdx)
+  })
+
+  it('步骤 3 末尾依赖分析规则后直接进入步骤 4（无其他步骤插队）', () => {
+    const depIdx = rulesSource.indexOf('模块依赖分析与循环依赖拆分')
+    const kuiIdx = rulesSource.indexOf('夔批量编排模式询问')
+    const between = rulesSource.slice(depIdx, kuiIdx)
+    // 依赖分析规则与夔询问之间不应出现新的步骤编号
+    expect(between).not.toMatch(/^\d+\.\s*\n?$/m)
+    // 夔询问是紧随其后的下一个编号步骤标题
+    const nextStep = between.match(/\n\d+\.\s*\*\*[^*]+\*\*/g)
+    expect(nextStep).toBeNull()
+  })
+})
+
+function rt_session(_planId: string): string {
+  // helper kept for symmetry; real key is the runtime session id
+  return 'ses-test-status-123'
+}

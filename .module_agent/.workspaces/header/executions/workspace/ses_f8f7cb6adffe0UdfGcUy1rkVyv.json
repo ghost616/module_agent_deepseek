@@ -1,0 +1,13 @@
+[
+  {
+    "plan_id": "plan_6064af44-481d-4956-a52f-1d09d70daf31",
+    "plan": "type-only 清理：JsonValue type import 迁移",
+    "modified_files": [
+      "src/tools/workspace.ts",
+      "src/tools/knowledge_base.ts",
+      "src/tools/agent_model_config.ts"
+    ],
+    "summary": "type-only 清理完成：将 src/tools/workspace.ts、src/tools/knowledge_base.ts、src/tools/agent_model_config.ts 的 `import type { JsonValue }` 来源从 '@deepseek-ai/dsh-session' 改为 '@deepseek-ai/dsh-util-values'（dsh 0.1.2-alpha.5 实际导出方）。纯 type import，JsonValue 用法与逻辑零改动。离朱验证：typecheck 3 目标文件 0 错误（全仓 src 错误行 7→4，剩余为既有跨模块漂移）；vitest 全量 418/418 无回归。元数据已补记 change_history.log。",
+    "errors": []
+  }
+]

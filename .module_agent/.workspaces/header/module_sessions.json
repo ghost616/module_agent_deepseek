@@ -3,6 +3,20 @@
     "ses_ffbcc95f0ffeVXOUasGz8YcSji"
   ],
   "framework": [
-    "ses_f93c48e3effeLCTLCSEBprkvDG"
+    "ses_f93c48e3effeLCTLCSEBprkvDG",
+    "ses_f8f7ce28ffferLIeV45qvIgKCJ"
+  ],
+  "orchestration": [
+    "ses_f907ff4baffeHOOZZdAsCzHsr4",
+    "ses_f8f7cf42effeIBFWjUIgp8Bira"
+  ],
+  "workflow": [
+    "ses_f8f7d1914ffe4LbBVHqWF5PLt6"
+  ],
+  "module-management": [
+    "ses_f8f7ccdf8ffeGQrm2sWKzn5IX7"
+  ],
+  "workspace": [
+    "ses_f8f7cb6adffe0UdfGcUy1rkVyv"
   ]
 }

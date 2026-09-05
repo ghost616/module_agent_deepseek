@@ -1,0 +1,25 @@
+{
+  "plan_id": "plan_43a44d58-43d6-4b09-88b1-70e58df42ccd",
+  "module_name": "",
+  "development_plan": "复核 orchestration 模块持久化 API 迁移计划（plan_e97aad16）：subagent_host.isAlive inspect→stat、recoverAgentMode inspect→open('read')/read。上轮因 framework 冷恢复测试 6 失败被驳回；现 framework 模块已随 dsh 0.1.2-alpha.5 适配（session_state.ts 迁移 + 测试 descriptor v3），全量回归 33 文件 418/418 通过。请重新评估该计划是否可通过。",
+  "session_id": "",
+  "modified_files": [
+    "src/lib/module_session_tracker.ts",
+    "src/lib/limu_monitor.ts",
+    "src/lib/limu_bash_guard.ts",
+    "src/lib/lizhu_env_guard.ts",
+    "src/lib/limu_plan_guard.ts",
+    "src/lib/orchestrator_rules.ts",
+    "src/lib/kui_rules.ts",
+    "src/lib/reviewer_rules.ts",
+    "src/lib/lizhu_rules.ts",
+    "src/lib/code_conventions.ts",
+    "src/lib/stale_cleanup.ts",
+    "src/lib/subagent_host.ts",
+    "src/lib/orchestration_guards.ts",
+    "src/tools/module_agent_executor.ts",
+    "src/tools/module_agent_start.ts",
+    "src/tools/module_agent_done.ts",
+    "src/tools/module_agent_cleanup.ts"
+  ]
+}

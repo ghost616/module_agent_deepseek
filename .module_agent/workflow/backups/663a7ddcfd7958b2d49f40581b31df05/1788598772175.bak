@@ -1,0 +1,355 @@
+import { join } from 'node:path'
+import { readdir } from 'node:fs/promises'
+import { defineTool } from '@deepseek-ai/dsh-tools'
+import type { JsonValue } from '@deepseek-ai/dsh-session'
+import { directoryOfAgent, type AgentMode, type SessionState } from '../lib/session_state.ts'
+import {
+  readAllMetadata,
+  readPlan,
+  markPlanComplete,
+  markTestPassed,
+  getFirstPendingReview,
+  markReviewComplete,
+  deletePlan,
+  deleteCompletedPlans,
+  createReviewPlan,
+} from '../lib/development_plan.ts'
+import { readDefinitionSync } from '../lib/module_definition.ts'
+import { getPlanIdBySession, removeMappingByPlanId } from '../lib/session_plan_map.ts'
+import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
+import { releasePlanFilesSession } from '../lib/plan_files.ts'
+import { getBoundLizhu, getGaotaoStarter, hasGaotaoBound } from '../lib/module_session_tracker.ts'
+import { limuPlanGuard } from '../lib/limu_plan_guard.ts'
+import { exists, sanitizeIdSegment } from '../lib/fs.ts'
+import { checkConfirmationCode, storePlanConfirmation, generateId } from './verification_code.ts'
+import { jsonToolOutput } from '../lib/tool_output.ts'
+
+export interface ModuleAgentPlanToolOptions {
+  /** 会话模式注册表（用于校验调用者身份）。 */
+  readonly sessionState: SessionState
+  /** 项目根目录兜底（agent 会话 cwd 缺失时使用，允许显式 undefined）。 */
+  readonly dataDir?: string | undefined
+}
+
+/** 各 action 允许调用的智能体身份。 */
+const ALLOWED_ACTIONS: Record<string, readonly AgentMode[]> = {
+  read_metadata: ['fengzhou', 'gaotao'],
+  read_plan: ['fengzhou'],
+  plan_complete: ['limu'],
+  set_test_passed: ['limu'],
+  delete_plan: ['fengzhou'],
+  review_complete: ['gaotao', 'kui'],
+  get_pending_review: ['gaotao'],
+  clean_completed: ['fengzhou'],
+  create_review_plan: ['fengzhou', 'kui'],
+  confirm_plan: ['fengzhou', 'kui'],
+}
+
+function checkPermission(
+  mode: AgentMode | undefined,
+  action: string,
+): { status: 'error'; error: string } | null {
+  const modes = ALLOWED_ACTIONS[action]
+  if (!modes || mode === undefined || !modes.includes(mode)) {
+    return { status: 'error', error: `module_agent_plan (${action}) 仅供 ${modes?.join('/')} 调用。` }
+  }
+  return null
+}
+
+/**
+ * 开发计划管理：确认计划、读取计划元数据/详情、标记计划完成、获取待审查计划、
+ * 标记审查完成、清理已完成计划、删除计划、创建审查计划。
+ * 离朱绑定与皋陶/夔会话绑定校验依赖 orchestration 模块，以 TODO 预留。
+ */
+export function createModuleAgentPlanTool(options: ModuleAgentPlanToolOptions) {
+  return defineTool({
+    name: 'module_agent_plan',
+    description: '开发计划管理。确认计划、读取计划元数据、读取计划详情、标记计划完成、获取待审查计划、标记审查完成、清理已完成计划、删除计划、创建审查计划。',
+    parameters: {
+      action: {
+        type: 'string',
+        required: true,
+        enum: ['read_metadata', 'read_plan', 'plan_complete', 'delete_plan', 'review_complete', 'get_pending_review', 'clean_completed', 'create_review_plan', 'confirm_plan', 'set_test_passed'],
+        description: '操作类型',
+      },
+      confirmation_code: {
+        type: 'string',
+        description: '确认码（confirm_plan 时必填）',
+      },
+      plan_id: {
+        type: 'string',
+        description: '计划 ID（仅供风后/皋陶使用，力牧无需关注。confirm_plan/read_plan/delete_plan/review_complete 时必填）',
+      },
+      files: {
+        type: 'array',
+        items: { type: 'string' },
+        description: '修改的文件路径列表（plan_complete 时必填）',
+      },
+      review_description: {
+        type: 'string',
+        description: '审查范围/目的描述（create_review_plan 时必填）',
+      },
+      module_name: {
+        type: 'string',
+        description: '要审查的模块名称，传入后自动解析该模块下所有文件（create_review_plan 时使用）',
+      },
+      file_paths: {
+        type: 'array',
+        items: { type: 'string' },
+        description: '要审查的文件路径列表（create_review_plan 时使用）',
+      },
+      plan_summary: {
+        type: 'string',
+        description: '计划简要说明（create_review_plan 时使用）',
+      },
+      test_passed: {
+        type: 'boolean',
+        description: '测试是否通过（plan_complete / set_test_passed 时使用）',
+      },
+    },
+    output: jsonToolOutput(),
+    async execute(args, exec) {
+      const directory = directoryOfAgent(exec.agent, options.dataDir)
+      const agentId = exec.agent?.id ?? ''
+      const mode = options.sessionState.getAgentMode(agentId)
+      const action = args.action
+
+      const permError = checkPermission(mode, action)
+      if (permError) return permError
+
+      if (mode === 'limu') {
+        const guard = await limuPlanGuard(directory, agentId)
+        if (guard) return { status: 'error', error: guard }
+      }
+
+      const wsName = await resolveWorkspace(directory, agentId)
+      if (!wsName) {
+        return { status: 'error', error: '当前会话未关联工作空间' }
+      }
+      const wsDir = getWorkspaceDir(directory, wsName)
+
+      try {
+        if (action === 'read_metadata') {
+          const meta = readAllMetadata(wsDir)
+          return { status: 'ok', plans: meta as unknown as JsonValue[] }
+        }
+
+        if (action === 'plan_complete') {
+          const files = args.files
+          if (!files || files.length === 0) {
+            return { status: 'error', error: 'plan_complete 需提供非空的 files 列表' }
+          }
+          const planId = getPlanIdBySession(wsDir, agentId)
+          if (!planId) {
+            return { status: 'error', error: '当前会话未关联任何计划' }
+          }
+
+          const allMeta = readAllMetadata(wsDir)
+          const currentMeta = allMeta.find(m => m.plan_id === planId)
+          if (!currentMeta || !currentMeta.test_passed) {
+            return {
+              status: 'error',
+              error: `计划必须先通过测试才能标记完成。请先执行测试流程并调用 module_agent_plan(action="set_test_passed", plan_id="${planId}", test_passed=true)。`,
+            }
+          }
+
+          const plan = readPlan(wsDir, planId)
+          const ok = markPlanComplete(wsDir, planId, files)
+          if (!ok) {
+            return { status: 'error', error: `计划 ${planId} 不存在` }
+          }
+          if (plan) {
+            releasePlanFilesSession(directory, plan.module_name, agentId)
+          }
+          removeMappingByPlanId(wsDir, planId)
+          return { status: 'ok', plan_id: planId, modified_files: files }
+        }
+
+        if (action === 'set_test_passed') {
+          const passed = args.test_passed ?? false
+          const planId = getPlanIdBySession(wsDir, agentId)
+          if (!planId) {
+            return { status: 'error', error: '当前会话未关联任何计划' }
+          }
+
+          // 离朱绑定与测试报告已读取校验（orchestration：会话绑定跟踪）。
+          const lizhuSid = getBoundLizhu(wsDir, agentId)
+          if (lizhuSid) {
+            const reportPath = join(wsDir, 'test_reports', `${sanitizeIdSegment(lizhuSid)}.json`)
+            if (!(await exists(reportPath))) {
+              return {
+                status: 'error',
+                error: '离朱测试尚未完成。请等待离朱完成测试后，先调用 module_agent_reader(action="read_test_results") 读取测试报告。',
+                lizhu_session_id: lizhuSid,
+              }
+            }
+            return {
+              status: 'error',
+              error: '离朱测试已完成但未读取测试报告。请先调用 module_agent_reader(action="read_test_results") 读取测试报告后再设置测试结果。',
+              lizhu_session_id: lizhuSid,
+            }
+          }
+
+          if (passed && !lizhuSid) {
+            const testSpecPath = join(wsDir, 'test_specs', `${sanitizeIdSegment(agentId)}.json`)
+            if (await exists(testSpecPath)) {
+              const testReportsDir = join(wsDir, 'test_reports')
+              let hasReports = false
+              if (await exists(testReportsDir)) {
+                const files = await readdir(testReportsDir)
+                hasReports = files.length > 0
+              }
+              if (!hasReports) {
+                return {
+                  status: 'error',
+                  error: '已规划测试但尚未执行。请先调用 module_agent_executor(action="start_lizhu") 启动离朱测试，等待离朱完成后调用 module_agent_reader(action="read_test_results") 读取测试报告。',
+                }
+              }
+            }
+          }
+
+          const ok = markTestPassed(wsDir, planId, passed)
+          if (!ok) {
+            return { status: 'error', error: `计划 ${planId} 不存在` }
+          }
+          return { status: 'ok', plan_id: planId, test_passed: passed }
+        }
+
+        if (action === 'get_pending_review') {
+          // 皋陶启动者过滤（orchestration：会话绑定跟踪）。
+          const starterSid = getGaotaoStarter(wsDir, agentId)
+          const plan = getFirstPendingReview(wsDir, starterSid ?? undefined)
+          if (!plan) {
+            return { status: 'ok', message: '当前没有已完成且未审查的计划' }
+          }
+          return {
+            status: 'ok',
+            plan_id: plan.plan_id,
+            module_name: plan.module_name,
+            development_plan: plan.development_plan,
+            modified_files: plan.modified_files,
+            session_id: plan.session_id,
+          }
+        }
+
+        if (action === 'create_review_plan') {
+          if (mode === 'kui') {
+            return { status: 'error', error: '夔请先调用 module_agent_executor(action="check_reviewer") 检查皋陶绑定状态，再调用 module_agent_executor(action="start_review") 启动审查。' }
+          }
+
+          const review_description = args.review_description
+          if (!review_description) {
+            return { status: 'error', error: 'create_review_plan 需提供 review_description' }
+          }
+          const module_name = args.module_name
+          const file_paths = args.file_paths
+          if (!module_name && (!file_paths || file_paths.length === 0)) {
+            return { status: 'error', error: '至少传入 module_name 或 file_paths' }
+          }
+          const planId = generateId('plan')
+
+          const resolvedFiles: string[] = []
+          if (module_name) {
+            const def = readDefinitionSync(directory, module_name)
+            for (const f of def.files) {
+              resolvedFiles.push(f.path)
+            }
+          }
+          if (file_paths) {
+            for (const fp of file_paths) {
+              if (!resolvedFiles.includes(fp)) {
+                resolvedFiles.push(fp)
+              }
+            }
+          }
+          if (resolvedFiles.length === 0) {
+            return { status: 'error', error: '未解析到任何待审查文件，请检查 module_name 下的文件定义或 file_paths' }
+          }
+
+          createReviewPlan(
+            wsDir,
+            planId,
+            resolvedFiles,
+            review_description,
+            args.plan_summary || review_description,
+            agentId,
+          )
+          return {
+            status: 'ok',
+            plan_id: planId,
+            module_name: module_name ?? null,
+            file_count: resolvedFiles.length,
+            files: resolvedFiles,
+          }
+        }
+
+        if (action === 'confirm_plan') {
+          const confirmation_code = args.confirmation_code
+          if (!confirmation_code) {
+            return { status: 'error', error: 'confirm_plan 需提供 confirmation_code' }
+          }
+          if (!checkConfirmationCode(confirmation_code, agentId)) {
+            return { status: 'error', error: '确认码不匹配或已过期，请重新通过 verification_code 工具获取确认码并让用户确认后再试。' }
+          }
+          const planId = generateId('plan')
+          storePlanConfirmation(planId, confirmation_code)
+          return { status: 'ok', plan_id: planId }
+        }
+
+        if (action === 'clean_completed') {
+          const count = deleteCompletedPlans(wsDir)
+          return { status: 'ok', deleted: count }
+        }
+
+        const planId = args.plan_id
+        if (!planId) {
+          return { status: 'error', error: 'plan_id 必填' }
+        }
+
+        if (action === 'read_plan') {
+          const plan = readPlan(wsDir, planId)
+          if (!plan) {
+            return { status: 'error', error: `计划 ${planId} 不存在` }
+          }
+          return {
+            status: 'ok',
+            plan_id: plan.plan_id,
+            module_name: plan.module_name,
+            development_plan: plan.development_plan,
+            modified_files: plan.modified_files,
+            session_id: plan.session_id,
+          }
+        }
+
+        if (action === 'delete_plan') {
+          const ok = deletePlan(wsDir, planId)
+          if (!ok) {
+            return { status: 'error', error: `计划 ${planId} 不存在` }
+          }
+          removeMappingByPlanId(wsDir, planId)
+          return { status: 'ok', plan_id: planId }
+        }
+
+        if (action === 'review_complete') {
+          // 夔绑定皋陶校验（orchestration：会话绑定跟踪）。
+          if (mode === 'kui') {
+            const hasGaotao = hasGaotaoBound(wsDir, agentId)
+            if (!hasGaotao) {
+              return { status: 'error', error: '夔未绑定皋陶，请先调用 module_agent_executor(action="start_review") 启动皋陶审查。' }
+            }
+          }
+
+          const ok = markReviewComplete(wsDir, planId)
+          if (!ok) {
+            return { status: 'error', error: `计划 ${planId} 不存在` }
+          }
+          return { status: 'ok', plan_id: planId }
+        }
+
+        return { status: 'error', error: `未知 action: ${action}` }
+      } catch (err) {
+        return { status: 'error', error: (err as Error).message }
+      }
+    },
+  })
+}

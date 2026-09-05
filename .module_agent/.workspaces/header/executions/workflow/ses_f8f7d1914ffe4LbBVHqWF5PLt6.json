@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_0f6a55ff-d9aa-4162-b8e2-3ee744183591",
+    "plan": "type-only 清理：将 src/tools/module_agent_plan.ts 的 import type { JsonValue } 从 @deepseek-ai/dsh-session 改为 @deepseek-ai/dsh-util-values（dsh 0.1.2-alpha.5 实际导出方以 typecheck 为准）。纯 type import，不改逻辑；确认 workflow src 在 0.1.2-alpha.5 类型下 0 错误。",
+    "modified_files": [
+      "src/tools/module_agent_plan.ts"
+    ],
+    "summary": "已修改 src/tools/module_agent_plan.ts：JsonValue 类型导入源从 @deepseek-ai/dsh-session 改为 @deepseek-ai/dsh-util-values（与 module_agent_executor.ts 现有用法一致，dsh 0.1.2-alpha.5 中 JsonValue 由 dsh-util-values 导出）。纯 type import，逻辑未变。",
+    "errors": []
+  }
+]

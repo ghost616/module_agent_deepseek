@@ -1,0 +1,16 @@
+[
+  {
+    "plan_id": "plan_e97aad16-8251-4a7e-90fd-b4335b4660bf",
+    "plan": "修复 dsh 0.1.2-alpha.5（handle-based session-persistence seam）会话存活判定失败",
+    "modified_files": [
+      "src/lib/subagent_host.ts",
+      "src/tools/module_agent_executor.ts",
+      ".lizhu_env/tests/executor-ping.test.ts",
+      ".lizhu_env/env/vitest.config.ts",
+      ".lizhu_env/env/tsconfig.typecheck.json",
+      ".lizhu_env/typecheck-probe/tsconfig.probe.json"
+    ],
+    "summary": "执行总结：完成 dsh 0.1.2-alpha.5 迁移中 inspect→stat/open/read 的会话存活判定修复。(1) src/lib/subagent_host.ts isAlive：persistence.inspect(id) → persistence.stat(id)，stat 对不存在会话返回 undefined 不抛错，保留异常 catch→false；(2) src/tools/module_agent_executor.ts recoverAgentMode：内存路径 agent.session.header.seedLength+events.slice 改为 agent.session.ownEvents()（Session 已移除 events/header 已移除 seedLength，改由 inheritedEventCount 界定 child 自有事件），冷会话路径改为 persistence.open(id,'read')→handle.read(0)→events.slice(handle.inheritedEventCount)→foldSubagentDescriptor，finally 关闭 handle，open/read/close 异常 catch 返回 undefined，JSDoc 同步；(3) 消除 module_agent_executor.ts 中 JsonValue 自 dsh-session 导入的类型漂移（改从 dsh-util-values 导入，type-only）。未改动复用判定/身份识别/提示语等业务逻辑。测试夹具同步：executor-ping.test.ts mock sessionPersistence 改为 stat+open('read') handle（read/inheritedEventCount/close）、内存 agent session 改为 inheritedEventCount+ownEvents，descriptor 版本升至 3（对齐 0.1.2-alpha.5 SUBAGENT_DESCRIPTOR_VERSION），补充 isAlive stat 命中/未命中断言；测试环境 F:/deepseek-harness 引用已由离朱修正到 D:/deepseek-harness(0.1.2-alpha.5)。\n测试总结：executor-ping 行为测试 18/18 通过；module_agent_executor.ts 在目标 dsh 类型下类型错误归零（tsc 仅存既有 vendor 噪音 + 非本次范围的跨模块项）；全量回归 412/418，6 失败全部位于 .lizhu_env/tests/session-state-cold-recovery.test.ts（framework 模块 session_state.ts 冷恢复待迁移，规范口径不计入本次失败）。遗留说明：src/lib/session_state.ts（framework）同款 seedLength/events 折叠逻辑、其余 10 文件 JsonValue 漂移、src/lib/subagent_host.ts ctx.subagents.followup 的 0.1.2-alpha.5 新宿主投递 API 漂移均属各自模块/跨模块 API 同步计划，未在本计划越界修改。",
+    "errors": []
+  }
+]

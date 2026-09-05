@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_f907ff4baffeHOOZZdAsCzHsr4",
+  "content": "# 复验：JsonValue 导入漂移修复（orchestration 模块，type-only）\n\n## 说明\n上一轮离朱测试已通过 executor-ping 18/18、全量回归 412/418（6 失败均属 framework 模块 session-state-cold-recovery，非本次范围）。随后在 `src/tools/module_agent_executor.ts` 做了一处 type-only 修改以消除该文件在 0.1.2-alpha.5 下的类型错误：`type JsonValue` 导入源由 `@deepseek-ai/dsh-session`（0.1.2-alpha.5 不再导出）改为 `@deepseek-ai/dsh-util-values`；`SessionId` 仍从 `@deepseek-ai/dsh-session` 导入。\n\n## 涉及文件\n- `src/tools/module_agent_executor.ts`（orchestration，仅 import 行变更）\n\n## 需要验证\n1. **编译/类型检查**：目标 dsh 0.1.2-alpha.5 下 `module_agent_executor.ts` 不再有 JsonValue 相关类型错误（该文件其余 seam 相关代码上轮已验证为 0 报错）。\n2. **行为回归**：`executor-ping.test.ts` 全用例通过（18/18），确认 type-only import 修改无运行时影响。\n3. 全量回归结果与上轮一致即可（framework 6 失败为已知其他模块项）。\n\n沿用 .lizhu_env/env（D:/deepseek-harness 0.1.2-alpha.5）环境即可。",
+  "timestamp": "2026-09-05T03:38:59.528Z"
+}
