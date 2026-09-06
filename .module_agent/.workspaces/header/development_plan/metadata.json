@@ -1,23 +1,7 @@
 [
   {
-    "plan_id": "plan_8e60d524-7952-4d84-b084-11adbeda14fe",
-    "plan_summary": "P1c：按钮接入 fork(atSeq)+切新分支+回填草稿，撤销最近一轮；产 client.js 并部署复测",
-    "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_15ab51a1-cdbb-4963-9f5f-d01d56b2c954",
-    "plan_summary": "P1c 修正：rewind 事件窗口判别 kind→type（宿主契约），单测对齐宿主，重 build client.js 复测",
-    "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_7dd45555-8643-4c0e-a8e3-19e7ffa407c0",
-    "plan_summary": "fork 继承：fork child 启动时继承父会话 host mode（fengzhou/qibo/lishou）+ workspace 绑定，恢复 module_agent 工具可用性",
+    "plan_id": "plan_4e0ab6f4-5820-43ea-a050-87962c278764",
+    "plan_summary": "README 部署文本补充 client.js 复制说明 + 新增「回退并重发」功能小节（无技术细节）",
     "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
     "code_reviewed": true,
     "plan_completed": true,

@@ -30,5 +30,14 @@
     ],
     "summary": "修复完成。src/lib/workspace.ts 新增幂等 helper inheritWorkspaceBinding（父绑定非空且 child 未绑定写 bindings[child]=父绑定、child 已有绑定跳过、父无绑定返回 null 不写文件；不做 bindFengzhou 抛错校验、不写 session_workspaces）；src/lib/session_state.ts registerSessionState 的 agent/session-start 分支在「内存已有跳过/自身持久化宿主 mode 恢复」后新增 dsh 普通顶层 fork 继承（child 判定 parentSession 存在且 origin!=='subagent'）：父 host mode（内存 ?? restoreMode(directory)）为宿主模式时 setAgentMode+persistMode，随后恒调 inheritWorkspaceBinding；父无 mode/绑定或非宿主 mode 静默跳过，子代理 fork/续用走 descriptor 通道不触发。离朱验证：fork 继承单测 8 + helper 单测 7 共 15 项通过；全量回归 36 文件 468/468 通过；tsc --noEmit src 自身 0 类型错误（98 行 vendor 环境噪音与基线一致）。host 其它逻辑零改动；元数据（module_definition/current_spec/change_history）已同步。E2E 待 dsh web 实机风后会话 fork 分支人工核验。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_4e0ab6f4-5820-43ea-a050-87962c278764",
+    "plan": "README.md 部署文本更新 + 新增「回退并重发」功能说明",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "纯文档变更完成（无代码/配置改动，无需测试）。README.md「安装与加载」第 1 步更新：将 src/、package.json 与仓库根目录的 web 界面构建产物 client.js 一并复制到 profile 目录 module-agent/ 子目录，说明 client.js 用于在 dsh web 对话输入框提供「回退并重发」按钮、未复制仅缺少该界面按钮、插件核心能力不受影响（编号结构保持连贯）。「安装与加载」之后、「快速开始」之前新增「回退并重发」小节（功能/使用导向，不含技术细节）：入口（dsh web 输入框工具栏图标按钮）、作用（撤销最近一轮、作废最后一条用户消息及其后回复、回到此前内容）、表现（新建干净分支会话继续、原会话保留可回看、自动切换新分支、回填最后用户消息便于修改后重发、无可回退已完成回合等场景给提示）、注意（仅启用插件的 dsh 会话输入框出现；分支新会话沿用同一会话上下文可继续使用）。不提及 __ModuleLoader__/fork atSeq/事件窗口/会话继承等实现细节。元数据（module_definition README 描述、change_history）已同步。",
+    "errors": []
   }
 ]

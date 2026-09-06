@@ -115,7 +115,7 @@
     },
     {
       "path": "README.md",
-      "description": "项目根目录 README 文档：@deepseek-ai/dsh-module-agent 插件的使用说明，含安装与加载（源码放入 profile 目录 module-agent/ 子目录，且该子目录须含非空 name/version 的 package.json 避免 dsh 请求扩展准备失败；profile cordis.patch.yml 用 insert 声明、name 指向 ./module-agent/src/index.ts 相对路径，dsh web 自动加载）、七级智能体角色表、架构总览、新手模式、工作流程、知识库，以及 opencode 版与 dsh 版实现方案差异对照表"
+      "description": "项目根目录 README 文档：@deepseek-ai/dsh-module-agent 插件的使用说明，含安装与加载（将 src/、package.json 与仓库根目录 web 界面构建产物 client.js 一并复制到 profile 目录 module-agent/ 子目录；client.js 提供 dsh web 输入框「回退并重发」按钮、未复制仅缺少该界面按钮不影响插件核心能力；profile cordis.patch.yml 用 insert 声明、name 指向 ./module-agent/src/index.ts 相对路径，dsh web 自动加载）、「回退并重发」功能说明（入口/作用/表现/注意，功能导向不含技术细节）、七级智能体角色表、架构总览、新手模式、工作流程、知识库，以及 opencode 版与 dsh 版实现方案差异对照表"
     },
     {
       "path": "cordis.patch.yml",
