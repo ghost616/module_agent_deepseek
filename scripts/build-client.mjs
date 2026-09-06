@@ -37,11 +37,10 @@ function loadBanner(id) {
   )
 }
 
-/** 产物 footer：返回 factory 的模块导出并闭合 load({...}) 调用。 */
+/** 产物 footer：返回 factory 的模块导出并闭合 load({...}) 调用（不含结尾换行，由写入时补单个换行）。 */
 const LOAD_FOOTER = `
 return module.exports;
-}});
-`
+}});`
 
 try {
   const result = await build({
@@ -49,6 +48,7 @@ try {
     bundle: true,
     format: 'cjs',
     platform: 'browser',
+    charset: 'utf8',
     external: ['react', 'react-dom', '@deepseek-ai/*'],
     write: false,
     logLevel: 'silent',
