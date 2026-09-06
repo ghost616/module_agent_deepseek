@@ -1,0 +1,12 @@
+{
+  "plan_id": "plan_8d26908c-4b5d-4bb2-9983-8413d85023c5",
+  "module_name": "framework",
+  "development_plan": "framework 模块 P1b：在 module-agent 的 dsh client 面上注册一个 composer 按钮（conversation.input.right），实现按钮出现并可点。\n\n## 背景\nP1a 已打通 client 装载（console 出 [module-agent-client] client loaded）。本计划在 client apply 中经注入的 slots 面注册 composer 工具栏项。\n\n## 实现前必读（D:/deepseek-harness，只读参考以确认精确 API）\n1. packages/client/ui-chat/src/index.ts（client apply 装配）与 src/client/chat/register-node-renderers.ts：`ctx.slots.inject('conversation.chat.node', () => ctx.slots.register({name,key,locale,children?}, Comp))` 的注册范式、apply(ctx) 中 ctx 的可用服务面。\n2. packages/client/ui-conversation/src/client/apply.ts registerComposerBar 与 contract/slots.ts：确认 'conversation.input.right' 为 session-scope list 槽；InputBar.tsx 用 renderSlot('conversation.input.right', {}) 渲染；项注册形态与项组件可获得的 props/hook。\n3. packages/client/ui-chat/package.json 与 ui-skill/package.json 的 dsh.client.inject 清单：确认需要注入哪些 client 模块才能拿到 ctx.slots / locale / 渲染所需（参照 ui-chat 的注入列表；若仅用 slots，按需收敛）。\n4. 若 slots 需 '@deepseek-ai/dsh-client-ui-slots' 等，评估其在 web 模块表是否存在（shipped 存在即可 require/external）。\n\n## 修改目标（framework 模块）\n1. client-src/index.ts：扩展 client 面——\n   - 依据调研结果定义模块（name='module-agent-client'，inject 按需列出所需 client 模块 id，与 package.json dsh.client.inject 一致）；\n   - apply(ctx) 内注册一个 'conversation.input.right' list 项：最小按钮（文案如「回退并重发」或占位图标），onClick 先 console.info 标记（P1c 再接 fork/回填）；项组件以 React.createElement 或轻量结构实现，外部 import（react、@deepseek-ai/* 共享模块）经 factory require/external 由 dsh 提供。\n   - 类型缺失处用局部最小声明/合理断言，保证 client-src 不被 host tsconfig 纳入（tsconfig include 仅 src，client-src 保持独立）。\n2. package.json：若确认需要，更新顶层 dsh.client（inject 等）；不改 host 字段与业务逻辑。\n3. 重跑 npm run client:build 产出 client.js（含新按钮代码）。\n4. 模块元数据：module_definition/current_spec 对新 client 文件与注入同步说明。\n5. host 侧 typecheck 与回归不受影响（client-src/scripts 不在 tsconfig 覆盖内）。\n\n## 交付与验证\n- client.js 产物含按钮注册代码。\n- 部署复测（风后/用户）：同步 client.js（必要时 package.json）到 ~/.dsh/profiles/web/module-agent 重启 dsh web，composer 右侧出现按钮，点击 console 有标记。\n- 若调研确认某注入模块在 web 模块表缺失或 slots 注册方式与假设不符，loud 记录并回退调整（不臆造 API）。\n\n## 约束\n- 不改 host 逻辑；不新增 host 侧测试（client 运行验证靠部署）。\n- 产物协议保持 __ModuleLoader__.load 合规；不破坏 P1a 装载结果。\n- 不确定的 client API 一律先读 D:/deepseek-harness 源码确认，禁止猜测。",
+  "session_id": "ses_f8aa29dd1ffeRFBmB35TTv5N0r",
+  "modified_files": [
+    "client-src/index.ts",
+    "package.json",
+    "scripts/build-client.mjs",
+    "client.js"
+  ]
+}

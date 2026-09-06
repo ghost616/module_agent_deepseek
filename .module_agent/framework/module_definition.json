@@ -123,11 +123,11 @@
     },
     {
       "path": "client-src/index.ts",
-      "description": "dsh client 面源码（P1a）：导出 name='module-agent-client' 与 apply(_ctx)（仅 console.info '[module-agent-client] client loaded' 装载标记，P1b/c 将在此扩展），零 import；由 scripts/build-client.mjs 用 esbuild 打包并包裹 __ModuleLoader__.load 合规单文件 client.js，供 dsh client-modules 装载。"
+      "description": "dsh client 面源码（P1b，含样式对齐）：导出 name='module-agent-client'、inject=['slots'] 与 apply(ctx)；apply 经 ctx.slots.inject('conversation.input.right', ...) 注册 composer 右侧图标工具按钮项（id='module-agent-retry'），按钮以 React.createElement 组合 @deepseek-ai/dsh-client-ui-primitives 的 IconBranchOutline16（PLATFORM_MODULE，运行时 external require）+ Tooltip，带 data-module-agent-retry/aria-label/title，onClick 仅 console.info 标记（P1c 接入「回退并重发」fork/回填）；apply 首经 ensureRetryStyle 注入 data-plugin-css 去重的自有 <style>（--dsw token：hover interactive-bg-hover-solid、active interactive-bg-active、focus-visible border-l3、glyph 15px、28px 透明圆角图标按钮）。react 与 primitives 均以 external 由 dsh web 模块表提供，无需 dsh.client.inject/external。由 scripts/build-client.mjs 打包为 __ModuleLoader__.load 合规单文件 client.js。"
     },
     {
       "path": "scripts/build-client.mjs",
-      "description": "client 构建脚本（P1a，ESM，node scripts/build-client.mjs）：用 esbuild 将 client-src/index.ts 打包为 cjs（bundle + platform browser + external react/react-dom/@deepseek-ai/*，write:false 内存产物），包裹 window.__ModuleLoader__.load({ id:'@deepseek-ai/dsh-module-agent', factory:(require)=>{...} }) banner/footer 写入仓库根 client.js；出错 loud 退出，产物单文件且以单个换行结尾。产物格式对齐 dsh packages/client/*/lib/client.js 装载协议。"
+      "description": "client 构建脚本（P1a，ESM，node scripts/build-client.mjs；P1b 修正产物尾部换行与编码）：用 esbuild 将 client-src/index.ts 打包为 cjs（bundle + platform browser + charset:'utf8' 保持中文以字面输出 + external react/react-dom/@deepseek-ai/*，write:false 内存产物），包裹 window.__ModuleLoader__.load({ id:'@deepseek-ai/dsh-module-agent', factory:(require)=>{...} }) banner/footer 写入仓库根 client.js（LOAD_FOOTER 不含结尾换行，写入时统一补单个 \\n，保证产物以单个换行结尾、无多余空行）；出错 loud 退出。产物格式对齐 dsh packages/client/*/lib/client.js 装载协议。"
     }
   ]
 }

@@ -1,23 +1,15 @@
 [
   {
-    "plan_id": "plan_b7cb1e32-b553-4ec3-a027-5fa84e57a138",
-    "plan_summary": "module-agent 最小 client 插件探针：package.json 声明 dsh.client + exports ./client，新增零依赖 src/client.ts，验证 dsh web client-modules 装载",
+    "plan_id": "plan_8d26908c-4b5d-4bb2-9983-8413d85023c5",
+    "plan_summary": "P1b：module-agent client 面注册 conversation.input.right composer 按钮，重 build client.js 并部署复测按钮出现",
     "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_0193e526-9b98-4efd-85f2-2d65b1dc67a6",
-    "plan_summary": "P1a：esbuild 构建合规 client 单文件（__ModuleLoader__.load 协议），修正 exports[\"./client\"]，验证 dsh web 装载 module-agent client 面",
-    "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_75bc43a9-a30e-43c3-a8c4-e18435476983",
-    "plan_summary": "P1a 修正：build-client.mjs 注释 */ 语法修复 + package.json workspace:^ 改 *（可 npm install），随后产出 client.js",
+    "plan_id": "plan_fb596d37-1938-4b2a-b8f8-076d6614d7ec",
+    "plan_summary": "P1b 样式对齐：client 按钮改为与 composer 工具项一致的图标工具按钮（primitives 图标 + --dsw tokens 内联样式），重 build client.js",
     "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
     "code_reviewed": true,
     "plan_completed": true,

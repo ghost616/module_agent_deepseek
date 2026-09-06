@@ -30,5 +30,27 @@
     ],
     "summary": "执行总结：1) 修复 build-client.mjs 第 9 行 JSDoc 块注释中的 glob 文本 'packages/client/*/lib/client.js'——'*' 紧跟 '/' 构成 '*/' 提前闭合块注释致 node SyntaxError，改为「各 client 包的 lib/client.js 产物（参照 ui-skill）」，已 grep 确认全文仅剩合法注释定界符，脚本逻辑/banner/footer/产物格式零改动；2) package.json 全部 workspace:^ 改 '*'（peerDependencies 8 项 @deepseek-ai/dsh-* 含 cordis + dependencies 的 @deepseek-ai/schemastery），JSON 合法、结构不变、devDependencies 保持。current_spec「包骨架与类型检查」与 module_definition package.json 说明已同步为版本 '*' 表述；change_history 已记录。未改 host 业务逻辑。\n测试总结：语法修正与 manifest 范围调整无业务规则可测；node --check / npm install / client:build 均需 bash 非文件操作，本环境（力牧 bash 仅文件删改）无法执行，按计划由风后侧执行验证：npm i -D esbuild 应成功，npm run client:build 产出根 client.js 且含 window.__ModuleLoader__.load({ id: '@deepseek-ai/dsh-module-agent'、尾部 return module.exports; 与 }});、单换行结尾。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_8d26908c-4b5d-4bb2-9983-8413d85023c5",
+    "plan": "framework 模块 P1b composer 按钮 client 注册",
+    "modified_files": [
+      "client-src/index.ts",
+      "package.json",
+      "scripts/build-client.mjs",
+      "client.js"
+    ],
+    "summary": "执行总结：完成 framework P1b（client 面 composer 按钮）。1) 调研确认 dsh client 精确 API（只读 D:/deepseek-harness）：slots 服务由 ui-renderer 的 SlotRegistry 提供（ctx.slots.inject/register，inject 等待目标槽声明后执行）；'conversation.input.right' 为 ui-conversation 在 registerComposerBar children 中声明的 session 作用域 list 槽，InputBar 用 renderSlot 渲染；项注册需 name+id（list），参照 ui-chat 项范式；产物协议对齐 ui-skill/lib/client.js 与 client-modules 源码。2) client-src/index.ts 扩展：导出 name='module-agent-client'、inject=['slots']、apply(ctx)；apply 经 ctx.slots.inject('conversation.input.right', ()=>slots.register({name, id:'module-agent-retry', order:0}, Button)) 注册，按钮组件 React.createElement('button')（文案「回退并重发」，onClick console.info 标记，P1c 接入）；唯一外部 import react（模块表 external），不 require 其它 client 包，故 package.json dsh.client.inject 不增。3) 经离朱第 1 轮编译验证发现并修正 build-client.mjs：LOAD_FOOTER 自带结尾换行叠加写入 '\\n' 致产物 }}); 后双换行 → footer 去掉结尾换行、写入统一补单个 \\n；加 esbuild charset:'utf8' 使中文以字面输出。4) 重跑 npm run client:build 产出根 client.js（含按钮注册、load id、return module.exports、}});、单换行结尾），离朱第 2 轮复验 6/6 通过。host 侧零改动（tsconfig include 仅 src）；module_definition/current_spec「包骨架与类型检查」/change_history 已同步。package.json 仅 devDependencies esbuild 由用户 npm install 自然升至 ^0.25.12，业务字段零改动。\n测试总结：编译测试（client:build 产物验证）第 2 轮 6/6 通过（load id/按钮文案字面/onClick 标记/footer/单换行结尾全部命中）。运行期「按钮出现并可点」依赖部署 dsh web，由风后/用户复测：同步 client.js（必要时 package.json）到 profile 的 module-agent 目录后重启 dsh web。",
+    "errors": []
+  },
+  {
+    "plan_id": "plan_fb596d37-1938-4b2a-b8f8-076d6614d7ec",
+    "plan": "framework 模块 P1b 按钮样式对齐",
+    "modified_files": [
+      "client-src/index.ts",
+      "client.js"
+    ],
+    "summary": "执行总结：完成 framework P1b 按钮样式对齐。调研确认（只读 D:/deepseek-harness）：primitives 为 PLATFORM_MODULE（client/web/src/platform.ts），IconBranchOutline16+Tooltip 可运行时 external require（ui-skill 同款），无需 dsh.client.inject/external、无需改 package.json/build-client.mjs；InputBar .trailing 经 renderSlot('conversation.input.right', {}) 渲染项；视觉基线取自 chat .action（28px 透明圆角、glyph15px）与 PermissionSelect trigger focus-visible（0 0 0 2px border-l3）、InputBar hover-solid。client-src/index.ts 改为：apply 首 ensureRetryStyle 注入 data-plugin-css 去重 <style>（--dsw-alias-interactive-bg-hover-solid/active(--dsw-alias-interactive-bg-active)/border-l3/label-tertiary、15px 图标），再 slots.inject 注册 id=module-agent-retry 项；组件 React.createElement(Tooltip(label'回退并重发',side top,delayMs500), button[data-module-agent-retry,aria-label,title,type=button,onClick console.info](IconBranchOutline16))。重跑 npm run client:build 产出 client.js，离朱编译验证 14/14 通过（primitives 外部 require 未内联、样式/token/onClick/aria-label/data-module-agent-retry/尾部 return module.exports+}});+单换行均命中）。host 侧零改动；module_definition/current_spec「包骨架与类型检查」/change_history 已同步。\n测试总结：编译测试 14/14 通过。运行期观感（hover/active/focus、图标对齐、点击标记）依赖部署 dsh web，由风后/用户复测：同步 client.js 到 profile 的 module-agent 目录后重启 dsh web。",
+    "errors": []
   }
 ]
