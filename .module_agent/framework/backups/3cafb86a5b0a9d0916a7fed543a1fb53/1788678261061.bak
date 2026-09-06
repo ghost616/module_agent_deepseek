@@ -1,0 +1,6 @@
+// 临时 client 探针（P0）：验证 dsh client-modules 能否装载 profile 相对路径插件（./module-agent/src/index.ts）
+// 声明 dsh.client + exports["./client"] 的 client 面。P0 验证通过后由正式 client 实现替换。
+export const name = 'module-agent-client-probe'
+export function apply(_ctx: unknown): void {
+  console.info('[module-agent-client-probe] client loaded')
+}

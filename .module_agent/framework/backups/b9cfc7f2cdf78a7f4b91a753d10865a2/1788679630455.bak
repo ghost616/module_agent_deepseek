@@ -1,0 +1,54 @@
+{
+  "name": "@deepseek-ai/dsh-module-agent",
+  "description": "多智能体协同开发框架：内置岐伯、隶首、风后、夔、力牧、皋陶、离朱七级智能体，覆盖项目初始化、代码归类、计划编排、批量执行、代码审查与测试验证的完整开发闭环。",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "dsh": {
+    "client": {
+      "platform": "web"
+    }
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./client.js",
+      "default": "./client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "client:build": "node scripts/build-client.mjs"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:^",
+    "@deepseek-ai/dsh-agent": "workspace:^",
+    "@deepseek-ai/dsh-llm": "workspace:^",
+    "@deepseek-ai/dsh-scope": "workspace:^",
+    "@deepseek-ai/dsh-session": "workspace:^",
+    "@deepseek-ai/dsh-subagent": "workspace:^",
+    "@deepseek-ai/dsh-system-prompt": "workspace:^",
+    "@deepseek-ai/dsh-tools": "workspace:^"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8",
+    "esbuild": "^0.25.0"
+  }
+}

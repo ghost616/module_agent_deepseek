@@ -24,9 +24,11 @@ framework 提供共享数据层，沿用 `.module_agent/*.json` 文件存储，�
 其余 23 个工具（module_agent_admin/executor/updater/updater_plan/updater_review/reader/start/setup/done、module_design_admin、module_agent_plan、workspace、module_agent_explorer/analyzer/line_reader、module_classification、module_agent_classifier/cleanup、agent_model_list、agent_model_config、module_agent_testing/correction、knowledge_base）在 `src/tools/skeleton.ts` 中为骨架占位（调用返回"尚未实现"），由各后续模块移植为真实实现后从骨架清单移除。
 ## 包骨架与类型检查
 
-`package.json` 为 `@deepseek-ai/dsh-module-agent`（type=module，依赖 `@deepseek-ai/cordis`/`@deepseek-ai/schemastery` 与 dsh peer 包，workspace:^ 协议）。`tsconfig.json` extends `E:/deepseek-harness/tsconfig.base.json`（strict + noImplicitAny 等），通过其 paths 将 `@deepseek-ai/*` 映射到 dsh 源码做类型检查（noEmit，不设 rootDir）。
+`package.json` 为 `@deepseek-ai/dsh-module-agent`（type=module，依赖 `@deepseek-ai/cordis`/`@deepseek-ai/schemastery` 与 dsh peer 包，版本均使用 `*`——这些 dsh 依赖实际由 dsh 宿主提供、工程内无需解析，脱离 monorepo 亦可 `npm install`）。`tsconfig.json` extends `E:/deepseek-harness/tsconfig.base.json`（strict + noImplicitAny 等），通过其 paths 将 `@deepseek-ai/*` 映射到 dsh 源码做类型检查（noEmit，不设 rootDir）。
 
 注意：paths 指向 dsh 未构建源码时，编译器会把 dsh/vendor 源码纳入程序并按其依赖做类型检查，因此**在 deepseek-harness 未 `pnpm install`（缺少 @standard-schema/spec、js-yaml、zod 等）时，`tsc --noEmit` 会产生指向 dsh 源码的环境噪音报错**；本项目 `src/**/*.ts` 自身类型已通过离朱回归验证归零。后续模块修改 src 后如遇此类噪音，应先确认 deepseek-harness node_modules 已安装。
+
+- client 面构建（P1a）：package.json 顶层声明 `"dsh": { "client": { "platform": "web" } }`（无 inject，P1a 零依赖）；`exports` 中 `"./client"` 子路径 types/default 均指向构建产物 `./client.js`（供 dsh client-modules 扫描装载，不再指向 src 源文件）。`client-src/index.ts` 为 client 面源码（导出 name='module-agent-client' 与 apply(_ctx) 打印装载标记，零 import），由 `scripts/build-client.mjs` 用 esbuild 打包（bundle + cjs + platform browser + external react/react-dom/@deepseek-ai/*，write:false 内存产物）并包裹 `window.__ModuleLoader__.load({ id: '@deepseek-ai/dsh-module-agent', factory: (require) => { ... } })` 合规单文件写入仓库根 `client.js`（产物单文件、单个换行结尾，load id 须与包名一致，格式对齐 dsh 各 client 包的 lib/client.js 产物）。`scripts` 新增 `client:build`（node scripts/build-client.mjs），`devDependencies` 新增 esbuild。host 侧 tsconfig include 仅 `"src"`，client-src/ 与 scripts/ 不被 host 类型检查覆盖。
 ## bundle 自动加载
 
 零配置自动加载改由直接修改 dsh 仓库 base bundle 实现：在 packages/bundle/base/cordis.patch.yml 的 insert 列表中新增 module-agent 插件行（name=@deepseek-ai/dsh-module-agent，config 含 dataDir/subagentProvider=spawn），并在其 package.json 的 dependencies 中加 @deepseek-ai/dsh-module-agent（workspace:^）。不再维护独立 bundle 包（本项目曾新增的 bundle/module-agent/ 目录及 README「方式二：bundle 自动加载」章节已删除）。

@@ -3,7 +3,7 @@
   "files": [
     {
       "path": "package.json",
-      "description": "dsh 插件包骨架：@deepseek-ai/dsh-module-agent，type=module，依赖 @deepseek-ai/cordis/schemastery 与 dsh 各 peer 包（workspace:^），声明 typecheck/test 脚本"
+      "description": "dsh 插件包骨架：@deepseek-ai/dsh-module-agent，type=module，依赖 @deepseek-ai/cordis/schemastery 与 dsh 各 peer 包（版本均使用 '*'——dsh 依赖实际由 dsh 宿主提供、工程内无需解析，脱离 monorepo 亦可 npm install），声明 typecheck/test 脚本，并新增 client:build 脚本（node scripts/build-client.mjs）与 devDependencies esbuild。顶层 dsh.client{ platform:'web' } 声明 client 面，exports 中 \"./client\" 子路径 types/default 均指向构建产物 ./client.js（供 dsh client-modules 装载），保留 \".\" 与 \"./package.json\" 不变。"
     },
     {
       "path": "tsconfig.json",
@@ -120,6 +120,14 @@
     {
       "path": "cordis.patch.yml",
       "description": "module-agent 插件的 dsh 加载配置示例：insert 声明插件行（id=module-agent，name='./module-agent/src/index.ts' 相对源码路径，config 含 dataDir/subagentProvider），供用户复制到 profile 目录（如 ~/.dsh/profiles/web/cordis.patch.yml）后随 dsh web 启动自动加载；文件头注释同时说明使用要求——module-agent/ 子目录必须放置含非空 name/version 的 package.json 及缺失时导致 dsh 请求扩展准备失败的机制原因"
+    },
+    {
+      "path": "client-src/index.ts",
+      "description": "dsh client 面源码（P1a）：导出 name='module-agent-client' 与 apply(_ctx)（仅 console.info '[module-agent-client] client loaded' 装载标记，P1b/c 将在此扩展），零 import；由 scripts/build-client.mjs 用 esbuild 打包并包裹 __ModuleLoader__.load 合规单文件 client.js，供 dsh client-modules 装载。"
+    },
+    {
+      "path": "scripts/build-client.mjs",
+      "description": "client 构建脚本（P1a，ESM，node scripts/build-client.mjs）：用 esbuild 将 client-src/index.ts 打包为 cjs（bundle + platform browser + external react/react-dom/@deepseek-ai/*，write:false 内存产物），包裹 window.__ModuleLoader__.load({ id:'@deepseek-ai/dsh-module-agent', factory:(require)=>{...} }) banner/footer 写入仓库根 client.js；出错 loud 退出，产物单文件且以单个换行结尾。产物格式对齐 dsh packages/client/*/lib/client.js 装载协议。"
     }
   ]
 }

@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_0f6a55ff-d9aa-4162-b8e2-3ee744183591",
-  "module_name": "workflow",
-  "development_plan": "type-only 清理：将 src/tools/module_agent_plan.ts 的 `import type { JsonValue } from '@deepseek-ai/dsh-session'` 改为 `@deepseek-ai/dsh-util-values`（dsh 0.1.2-alpha.5 实际导出方以 typecheck 为准）。纯 type import，不改逻辑；确认 workflow src 在 0.1.2-alpha.5 类型下 0 错误。",
-  "session_id": "ses_f8f7d1914ffe4LbBVHqWF5PLt6",
-  "modified_files": [
-    "src/tools/module_agent_plan.ts"
-  ]
-}

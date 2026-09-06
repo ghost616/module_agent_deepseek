@@ -1,0 +1,10 @@
+{
+  "plan_id": "plan_75bc43a9-a30e-43c3-a8c4-e18435476983",
+  "module_name": "framework",
+  "development_plan": "framework 模块 P1a 修正 + manifest 范围调整：修复 build-client.mjs 注释语法错误，并将 package.json 的 workspace:^ 协议改为 \"*\"，使工程可 npm install（安装 esbuild）并产出 client.js。\n\n## 背景\n皋陶驳回 P1a（plan_0193e526）：scripts/build-client.mjs 第 9 行 JSDoc 块注释内含 glob 文本 'packages/client/*/lib/client.js'，其中 '*' 后紧跟 '/' 构成 '*/' 提前闭合块注释，导致脚本 SyntaxError 无法被 node 解析，client.js 未产出。另用户选 1：工程 package.json 的 peerDependencies/dependencies 使用 'workspace:^' 协议，脱离 dsh monorepo 后 npm install 报 EUNSUPPORTEDPROTOCOL 无法安装任何新依赖（含 esbuild）；这些 dsh 依赖实际由 dsh 宿主提供，工程内无需解析。\n\n## 修改目标（framework 模块）\n1. scripts/build-client.mjs：\n   - 修正第 9 行附近注释，消除 '*/' 提前闭合。将 'packages/client/*/lib/client.js' 改为不含 '*/' 相邻的表述（如 'packages/client/<pkg>/lib/client.js（如 ui-skill）' 或 'dsh 各 client 包的 lib/client.js 产物'）。\n   - 保持其余逻辑、banner/footer、产物格式不变。\n2. package.json：\n   - peerDependencies 中全部 '@deepseek-ai/dsh-*'（cordis 亦属 @deepseek-ai）的版本范围由 'workspace:^' 改为 '*'；\n   - dependencies 中 '@deepseek-ai/schemastery' 的 'workspace:^' 改为 '*'；\n   - 不改动字段结构、不删字段、不改其它版本号；devDependencies（含 esbuild ^0.25.0）保持。\n3. 产物验证（在修改后由风后侧执行命令）：工程内运行 `npm i -D esbuild`（此时应成功）与 `npm run client:build`，确认根 client.js 产出且：含 `window.__ModuleLoader__.load({ id: '@deepseek-ai/dsh-module-agent'`、尾部含 `return module.exports;` 与 `}});`、单换行结尾。\n4. 元数据登记：module_definition/current_spec 对 build-client.mjs 与 package.json 的说明若需随修正同步，一并更新。\n\n## 约束\n- 不改动任何 host 业务逻辑。\n- build-client.mjs 语法错误修复后 node 可解析（可 `node --check scripts/build-client.mjs` 佐证）。\n- package.json 保持合法 JSON。\n- 不引入其它 workspace 协议残留导致 npm install 再次失败（若仍有 workspace:^ 需一并改为 * 或说明原因）。",
+  "session_id": "ses_f8aa29dd1ffeRFBmB35TTv5N0r",
+  "modified_files": [
+    "scripts/build-client.mjs",
+    "package.json"
+  ]
+}

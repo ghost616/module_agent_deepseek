@@ -1,0 +1,34 @@
+[
+  {
+    "plan_id": "plan_b7cb1e32-b553-4ec3-a027-5fa84e57a138",
+    "plan": "framework 模块 client 插件探针（P0）",
+    "modified_files": [
+      "package.json",
+      "src/client.ts"
+    ],
+    "summary": "执行总结：完成 module-agent 最小 client 插件探针（P0）。1) package.json 保留 \".\" 与 \"./package.json\" 不变，在 exports 追加 \"./client\"（types/default 均指 ./src/client.ts），顶层新增 dsh.client（platform: web，不填 inject），JSON 合法，name/version/main/types/scripts/dependencies 等未改动；2) 新增 src/client.ts 零 import 最小探针，导出 name='module-agent-client-probe' 与 apply(_ctx)（console.info 标记装载，_ctx 前缀规避 base noUnusedParameters），注释说明 P0 验证后替换，文件单换行结尾；3) src/client.ts 已登记入 framework 模块 module_definition；current_spec「包骨架与类型检查」同步补充 dsh.client/./client 声明与探针说明。未改动任何既有 host 逻辑。\n测试总结：无（探针运行验证依赖部署 dsh web，plan 明确不添加测试；变更无业务规则/算法可做单元测试，standalone 目录 tsconfig 亦无法独立 typecheck，属预期行为）。",
+    "errors": []
+  },
+  {
+    "plan_id": "plan_0193e526-9b98-4efd-85f2-2d65b1dc67a6",
+    "plan": "framework 模块 P1a esbuild 客户端构建",
+    "modified_files": [
+      "package.json",
+      "client-src/index.ts",
+      "scripts/build-client.mjs",
+      "src/client.ts"
+    ],
+    "summary": "执行总结：完成 framework P1a（esbuild client 构建）。1) 新增 client-src/index.ts：client 面源码（name='module-agent-client' + apply(_ctx) console.info 装载标记，零 import）；2) 新增 scripts/build-client.mjs（ESM）：esbuild bundle→cjs（platform browser、external react/react-dom/@deepseek-ai/*、write:false 内存产物），包裹 __ModuleLoader__.load({ id:'@deepseek-ai/dsh-module-agent', factory:(require)=>{ var module={exports:{}}; var exports=module.exports; <cjs>; return module.exports; }} ) banner/footer，写入仓库根 client.js，出错 loud 退出，产物单换行结尾，格式已对照 ui-skill/lib/client.js 与 client-modules 源码校正；3) package.json：exports[\"./client\"] types/default 改指 ./client.js，scripts 新增 client:build，devDependencies 新增 esbuild ^0.25.0，dsh.client 保留；4) 删除临时探针 src/client.ts。host 侧零改动（tsconfig include 仅 src，client-src/、scripts/ 不被 host 类型检查覆盖）。元数据（module_definition、current_spec「包骨架与类型检查」、change_history）已同步。\n测试总结：本计划不跑验证（验证依赖部署 dsh web）；esbuild 未安装且本环境（力牧 bash 仅允许文件删改）无法执行 npm install 与 node，client.js 尚未产出。交付待办：用户需在本工程执行 npm i -D esbuild 后运行 npm run client:build 产出 client.js（产物含 window.__ModuleLoader__.load({ id: '@deepseek-ai/dsh-module-agent'），并确认部署时随 package.json 一同拷贝 client.js（exports[\"./client\"] 解析它）。",
+    "errors": []
+  },
+  {
+    "plan_id": "plan_75bc43a9-a30e-43c3-a8c4-e18435476983",
+    "plan": "framework 模块 P1a 修正 + manifest 范围调整",
+    "modified_files": [
+      "scripts/build-client.mjs",
+      "package.json"
+    ],
+    "summary": "执行总结：1) 修复 build-client.mjs 第 9 行 JSDoc 块注释中的 glob 文本 'packages/client/*/lib/client.js'——'*' 紧跟 '/' 构成 '*/' 提前闭合块注释致 node SyntaxError，改为「各 client 包的 lib/client.js 产物（参照 ui-skill）」，已 grep 确认全文仅剩合法注释定界符，脚本逻辑/banner/footer/产物格式零改动；2) package.json 全部 workspace:^ 改 '*'（peerDependencies 8 项 @deepseek-ai/dsh-* 含 cordis + dependencies 的 @deepseek-ai/schemastery），JSON 合法、结构不变、devDependencies 保持。current_spec「包骨架与类型检查」与 module_definition package.json 说明已同步为版本 '*' 表述；change_history 已记录。未改 host 业务逻辑。\n测试总结：语法修正与 manifest 范围调整无业务规则可测；node --check / npm install / client:build 均需 bash 非文件操作，本环境（力牧 bash 仅文件删改）无法执行，按计划由风后侧执行验证：npm i -D esbuild 应成功，npm run client:build 产出根 client.js 且含 window.__ModuleLoader__.load({ id: '@deepseek-ai/dsh-module-agent'、尾部 return module.exports; 与 }});、单换行结尾。",
+    "errors": []
+  }
+]

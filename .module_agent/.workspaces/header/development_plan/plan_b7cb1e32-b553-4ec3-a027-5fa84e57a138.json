@@ -1,0 +1,10 @@
+{
+  "plan_id": "plan_b7cb1e32-b553-4ec3-a027-5fa84e57a138",
+  "module_name": "framework",
+  "development_plan": "在 module-agent 工程添加最小 client 插件探针（P0），验证 dsh web 的 client-modules 能否装载\"profile 相对路径插件的 client 面\"。\n\n## 背景\ndsh 通过 client-modules（packages/client/modules 的 Node half）扫描 host Loader 条目里声明 dsh.client 的包并纳入 web 插件表。module-agent 部署为 profile 相对路径插件（cordis.patch insert './module-agent/src/index.ts'），其 owning manifest 是 module-agent/package.json。本探针验证：在该包声明 dsh.client + exports[\"./client\"] 并新增零依赖 client 入口后，dsh web 是否装载并执行该 client 面。\n\n## 修改目标（framework 模块，文件：package.json 与新增 src/client.ts）\n1. package.json：\n   - 在现有 \"exports\" 基础上追加 \"./client\" 子路径（保留现有 \".\" 与 \"./package.json\" 不变）：\n     \"./client\": { \"types\": \"./src/client.ts\", \"default\": \"./src/client.ts\" }\n   - 顶层新增 \"dsh\" 字段：{ \"client\": { \"platform\": \"web\" } }（不填 inject，P0 无依赖）。\n   - 不改变 name/version/main/types/scripts/dependencies 等任何现有内容。\n2. 新增 src/client.ts（零 import 最小探针）：\n   - 导出 name = 'module-agent-client-probe'；导出 apply(ctx) 仅 console.info('[module-agent-client-probe] client loaded')。形参 ctx 不使用，类型可用 unknown 或省略推断（cordis 调用方会传 ctx）。文件以单个换行结尾。\n   - 附简短注释说明这是临时探针，用于验证 dsh client-modules 对 profile 相对插件的 client 装载；P0 验证后替换。\n3. 将 src/client.ts 登记入 framework 模块 module_definition（module_agent_updater update_definition files_to_add，description 说明其为 client 装载探针入口，P0 验证用）。\n4. 不改动任何既有 host 逻辑；不添加测试（运行验证依赖部署 dsh web）。\n\n## 约束\n- package.json 保持合法 JSON（逗号/括号正确）。\n- 只动 package.json 与新增 src/client.ts 及对应元数据；不触碰其它文件。",
+  "session_id": "ses_f8aa29dd1ffeRFBmB35TTv5N0r",
+  "modified_files": [
+    "package.json",
+    "src/client.ts"
+  ]
+}

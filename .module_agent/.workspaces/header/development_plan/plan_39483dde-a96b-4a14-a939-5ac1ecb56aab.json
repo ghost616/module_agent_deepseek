@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_39483dde-a96b-4a14-a939-5ac1ecb56aab",
-  "module_name": "framework",
-  "development_plan": "type-only 清理：将 src/lib/tool_output.ts 的 `import type { JsonValue } from '@deepseek-ai/dsh-session'` 改为 `@deepseek-ai/dsh-util-values`（对齐 module_agent_executor.ts 现有用法；dsh 0.1.2-alpha.5 下 JsonValue 实际导出方以 typecheck 为准）。纯 type import 修改，不改逻辑；确认 framework src 在 dsh 0.1.2-alpha.5 类型下 0 错误（仅存 dsh 依赖自身噪音）。",
-  "session_id": "ses_f8f7ce28ffferLIeV45qvIgKCJ",
-  "modified_files": [
-    "src/lib/tool_output.ts"
-  ]
-}
