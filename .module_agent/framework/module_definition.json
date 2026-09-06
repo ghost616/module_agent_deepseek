@@ -31,7 +31,7 @@
     },
     {
       "path": "src/lib/session_state.ts",
-      "description": "会话模式注册表（dsh 改写）：AgentMode 类型与分类（modeFromPersona/modeFromProvider/personaForMode），SessionState 类提供 getAgentMode/setAgentMode/clearAgentMode/cleanStaleModes 会话身份注册、清理与失效兜底（cleanStaleModes 按 isAlive 判定清理残留 mode），registerSessionState 仅绑定 subagent/start 生命周期（provider 名约定未命中时经 foldSubagentDescriptor 从持久化 descriptor.persona 识别 marker 重建冷恢复身份；mode 清理改由 subagent-settled 处理后 clearAgentMode 及 cleanStaleModes 兜底，不再绑定 agent/disposed），directoryOfAgent 解析项目根目录"
+      "description": "会话模式注册表（dsh 改写）：AgentMode 类型与分类（modeFromPersona/modeFromProvider/personaForMode），SessionState 类提供 getAgentMode/setAgentMode/clearAgentMode/cleanStaleModes 会话身份注册、清理与失效兜底（cleanStaleModes 按 isAlive 判定清理残留 mode），registerSessionState 绑定 subagent/start（provider 名约定未命中时经 foldSubagentDescriptor 从持久化 descriptor.persona 识别 marker 重建冷恢复身份）与 agent/session-start 生命周期：恢复宿主会话（风后/岐伯/隶首）持久化 host mode（内存已有跳过）；并在该分支对 dsh 普通顶层 fork child（header.parentSession 存在且 origin!=='subagent'）继承父会话 host mode（内存 ?? restoreMode(directory) 持久化，为宿主模式时 setAgentMode+persistMode）与工作空间绑定 inheritWorkspaceBinding（父无 mode/绑定或非宿主 mode 静默跳过，子代理 fork/续用走 descriptor 通道不触发）；mode 清理改由 subagent-settled 处理后 clearAgentMode 及 cleanStaleModes 兜底，不再绑定 agent/disposed；directoryOfAgent 解析项目根目录"
     },
     {
       "path": "src/lib/module_tree.ts",
@@ -83,7 +83,7 @@
     },
     {
       "path": "src/lib/workspace.ts",
-      "description": "工作空间索引共享读写：.module_agent/.workspaces/index.json 的创建/列表/风后绑定/解析工作空间/失效清理，含同步读取 getBoundWorkspaceSync（供提示词注入）"
+      "description": "工作空间索引共享读写：.module_agent/.workspaces/index.json 的创建/列表/风后绑定/解析工作空间/失效清理；新增幂等 helper inheritWorkspaceBinding（dsh 普通顶层 fork child 继承父绑定：父绑定非空且 child 未绑定写 bindings[child]=父绑定、child 已有绑定跳过、父无绑定返回 null，不做 bindFengzhou 抛错校验、不写 session_workspaces），含同步读取 getBoundWorkspaceSync（供提示词注入）"
     },
     {
       "path": "src/lib/knowledge_base.ts",
@@ -123,11 +123,15 @@
     },
     {
       "path": "client-src/index.ts",
-      "description": "dsh client 面源码（P1b，含样式对齐）：导出 name='module-agent-client'、inject=['slots'] 与 apply(ctx)；apply 经 ctx.slots.inject('conversation.input.right', ...) 注册 composer 右侧图标工具按钮项（id='module-agent-retry'），按钮以 React.createElement 组合 @deepseek-ai/dsh-client-ui-primitives 的 IconBranchOutline16（PLATFORM_MODULE，运行时 external require）+ Tooltip，带 data-module-agent-retry/aria-label/title，onClick 仅 console.info 标记（P1c 接入「回退并重发」fork/回填）；apply 首经 ensureRetryStyle 注入 data-plugin-css 去重的自有 <style>（--dsw token：hover interactive-bg-hover-solid、active interactive-bg-active、focus-visible border-l3、glyph 15px、28px 透明圆角图标按钮）。react 与 primitives 均以 external 由 dsh web 模块表提供，无需 dsh.client.inject/external。由 scripts/build-client.mjs 打包为 __ModuleLoader__.load 合规单文件 client.js。"
+      "description": "dsh client 面源码（P1b 样式对齐 + P1c 回退接入）：导出 name='module-agent-client'、inject=['slots','sessions'] 与 apply(ctx)。apply 经 ctx.slots.inject('conversation.input.right', ...) 注册 composer 右侧图标工具按钮项（id='module-agent-retry'，列表项 inject 回调按会话生成 bound onRewind 含并发护栏），按钮以 React.createElement 组合 primitives 的 IconBranchOutline16 + Tooltip（label/aria-label 回退并重发、data-module-agent-retry、title 撤销最近一轮并回填），onClick 执行 rewindLastRound：读 ctx.sessions.binding(sessionId).eventSource 事件 → scanRewindTarget 定位 atSeq/用户文本 → ctx.sessions.fork({sessionId,atSeq,increaseTitle:true}) → 经 sessions.scope(child).get('conversation').input.for(scope).setDraft 回填新分支草稿（queue dock 模式；conversation 不可达时 loud 记录并继续回退的最小偏差）→ sessions.open(child) 切到新分支；reportRewind 失败/阻塞（no-user-message/no-completed-turn/no-text/fork-failed）经 composer notify 可见提示 + console，成功 console。apply 首经 ensureRetryStyle 注入 data-plugin-css 去重 <style>（--dsw token、glyph 15px、28px 透明圆角）。react 与 primitives 以 external 由 dsh web 模块表提供，sessions 为注入 cordis 服务，conversation 经 scope ctx.get 惰性解析，无需 dsh.client.inject/external。由 scripts/build-client.mjs 打包为 __ModuleLoader__.load 合规单文件 client.js。"
     },
     {
       "path": "scripts/build-client.mjs",
       "description": "client 构建脚本（P1a，ESM，node scripts/build-client.mjs；P1b 修正产物尾部换行与编码）：用 esbuild 将 client-src/index.ts 打包为 cjs（bundle + platform browser + charset:'utf8' 保持中文以字面输出 + external react/react-dom/@deepseek-ai/*，write:false 内存产物），包裹 window.__ModuleLoader__.load({ id:'@deepseek-ai/dsh-module-agent', factory:(require)=>{...} }) banner/footer 写入仓库根 client.js（LOAD_FOOTER 不含结尾换行，写入时统一补单个 \\n，保证产物以单个换行结尾、无多余空行）；出错 loud 退出。产物格式对齐 dsh packages/client/*/lib/client.js 装载协议。"
+    },
+    {
+      "path": "client-src/rewind.ts",
+      "description": "「回退并重发」client 纯逻辑面（P1c，无 React/服务依赖可独立单测）：EventWindowEntryLike 对齐宿主 SessionEventLikeEntry 判别契约 {type:'event';event}|{type:'chunks';event}（判别字段 type、event 必选，禁用 kind 判别）；scanRewindTarget 以 entry.type==='event' 命中候选并定位最后一条用户消息（event.type==='user/message' 且 data.source.kind==='user'，排除 plugin/compact 注入，抽取 text 块文本）及其前最近已完成回合的 turn/end seq 作为 fork atSeq（fork 边界对齐后端 commands.ts fork 语义，前缀止于上一已完成回合）；rewindLastRound 编排 fork/切分支/回填 composer 草稿（草稿回填能力经调用方注入，不可达时以 backfilled=false 上报不阻断回退）。导出 RewindBlockReason/RewindTarget/RewindDraftFace/RewindServiceFace/RewindOutcome 等类型与 DurableEventLike 结构子集。由 scripts/build-client.mjs 打包并入 client.js。"
     }
   ]
 }

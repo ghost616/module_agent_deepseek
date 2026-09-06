@@ -1,0 +1,11 @@
+{
+  "plan_id": "plan_15ab51a1-cdbb-4963-9f5f-d01d56b2c954",
+  "module_name": "framework",
+  "development_plan": "framework 模块 P1c 修正：将 rewind 逻辑的事件窗口条目判别从 kind 改为宿主 dsh 真实契约的 type。\n\n## 背景\n皋陶驳回 plan_8e60d524（P1c）：dsh 真实会话事件窗口条目 SessionEventLikeEntry 的判别字段为 type（type:'event'|'chunks'，event 必选；见 packages/api/session-controller/src/client/contract/events.ts:10-12、history.ts:358-364、transport.ts:63、ui-conversation assembler.ts:132），而非实现所用的 kind。当前 client-src/rewind.ts 用 entry.kind 判别致真实宿主事件被全部跳过，scanRewindTarget 恒返回 no-user-message，P1c 在真实 dsh web 不可用。单测因 fixtures 与实现同构（{kind,...}）未捕获。\n\n## 修改目标（framework 模块，client-src 为主）\n1. client-src/rewind.ts：\n   - EventWindowEntryLike 及相关结构判别改为 type：{ type:'event'; event: EventLike } | { type:'chunks'; event: EventLike }（event 均必选），与宿主 SessionEventLikeEntry 对齐；\n   - scanRewindTarget 内 entry 判定改用 entry.type === 'event'；对候选事件再按 event.type（'user/message' / 'turn/end' 等）处理；\n   - atSeq 回溯循环以 entry.type === 'event' 且 event.type === 'turn/end' 命中。\n2. client-src/index.ts：SessionBindingLike/eventSource 快照的结构子集按宿主（type 判别）校正，避免类型面掩盖真实形态。\n3. 单测 fixtures：将 .lizhu_env/tests（或 client-src 对应测试）中按 {kind,...} 构造的窗口条目改为宿主形态 {type:'event'|'chunks', event}，新增覆盖：含 chunks 行时仍命中其后的真实 user/message、窗口内无更早 turn/end 返回 no-completed-turn 等；rewind 纯逻辑与 index 接线测试随动更新并回归。\n4. 重跑 npm run client:build 产出根 client.js（含 type 判别的扫描），产物断言（load id、onRewind/fork 中文 utf8、return module.exports、}});、单换行）与 node --check 通过。\n5. 元数据（module_definition/current_spec/change_history）同步；host 侧 src/、scripts/build-client.mjs、package.json 零改动。\n\n## 验证/部署复测\n同步 client.js 到 profile module-agent 目录重启 dsh web：多轮对话点「回退并重发」→ 真实事件下应命中最后 user 并 fork 到其前最近完成回合、切新分支、回填草稿；无回退点给出提示。回归不破坏 P1a/P1b。\n\n## 约束\n- 以 D:/deepseek-harness 宿主事件契约（type 判别）为准；禁止再引入 kind 判别。\n- 不改 dsh 源码与 host 业务。",
+  "session_id": "ses_f8a106241ffep6r3F3giPYrqoq",
+  "modified_files": [
+    "client-src/rewind.ts",
+    "client-src/index.ts",
+    "client.js"
+  ]
+}

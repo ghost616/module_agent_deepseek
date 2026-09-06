@@ -25,5 +25,7 @@
   "cordis.patch.yml": "14944b628e6b46f377a8ab7a54710522",
   "src/lib/tool_output.ts": "58f1185307d3fbb1798cd4b220c138af",
   "src/client.ts": "3cafb86a5b0a9d0916a7fed543a1fb53",
-  "scripts/build-client.mjs": "497a7a599b74e9420c3d5afc44a4357c"
+  "scripts/build-client.mjs": "497a7a599b74e9420c3d5afc44a4357c",
+  "client-src/index.ts": "3f5c6b698c82c644885bf54f94c2cffe",
+  "client-src/rewind.ts": "74b7987d9a781580da7ff417eb7060c1"
 }

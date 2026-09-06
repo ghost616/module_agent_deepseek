@@ -1,15 +1,23 @@
 [
   {
-    "plan_id": "plan_8d26908c-4b5d-4bb2-9983-8413d85023c5",
-    "plan_summary": "P1b：module-agent client 面注册 conversation.input.right composer 按钮，重 build client.js 并部署复测按钮出现",
+    "plan_id": "plan_8e60d524-7952-4d84-b084-11adbeda14fe",
+    "plan_summary": "P1c：按钮接入 fork(atSeq)+切新分支+回填草稿，撤销最近一轮；产 client.js 并部署复测",
     "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_fb596d37-1938-4b2a-b8f8-076d6614d7ec",
-    "plan_summary": "P1b 样式对齐：client 按钮改为与 composer 工具项一致的图标工具按钮（primitives 图标 + --dsw tokens 内联样式），重 build client.js",
+    "plan_id": "plan_15ab51a1-cdbb-4963-9f5f-d01d56b2c954",
+    "plan_summary": "P1c 修正：rewind 事件窗口判别 kind→type（宿主契约），单测对齐宿主，重 build client.js 复测",
+    "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_7dd45555-8643-4c0e-a8e3-19e7ffa407c0",
+    "plan_summary": "fork 继承：fork child 启动时继承父会话 host mode（fengzhou/qibo/lishou）+ workspace 绑定，恢复 module_agent 工具可用性",
     "starter_session_id": "ses_feda718deffeSo8MvvxSK4coLk",
     "code_reviewed": true,
     "plan_completed": true,

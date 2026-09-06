@@ -15,6 +15,10 @@
     {
       "content": "README 的「安装与加载」部署说明不应写技术细节（如 dsh_plugin_packages / nearestManifest 上溯等根因解释），只需给出操作步骤即可；技术原因保留在 cordis.patch.yml 头注释等维护者视角位置。",
       "timestamp": "2026-09-04T11:50:52.984Z"
+    },
+    {
+      "content": "「回退并重发」fork 出的新分支会话未继承 module-agent 的工作空间绑定与宿主会话类型（风后 mode）：fork child 是新会话 id，.module_agent 的 workspace 绑定、session_workspaces 与 host session mode 均按 id 键控，导致新分支里 module_agent 工具不可用（无工作空间/非风后）。fork 时需让 child 继承 parent 的工作空间与 host mode。",
+      "timestamp": "2026-09-06T10:42:12.579Z"
     }
   ]
 }

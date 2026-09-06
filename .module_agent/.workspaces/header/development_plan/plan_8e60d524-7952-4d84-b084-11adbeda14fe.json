@@ -1,0 +1,11 @@
+{
+  "plan_id": "plan_8e60d524-7952-4d84-b084-11adbeda14fe",
+  "module_name": "framework",
+  "development_plan": "framework 模块 P1c：为 composer「回退并重发」按钮接入 fork + 回填逻辑。\n\n## 背景\nP1a（client 装载）、P1b（按钮 + 样式）均已通过。P1c 让按钮执行：撤销最近一轮——把最后一条用户消息及其后的回复作废（fork 到其上一个已完成回合终点），切到新分支，并把该用户消息文本回填 composer 草稿。\n\n## 实现前必读（D:/deepseek-harness 只读精读，禁止臆造 client API）\n1. packages/api/session-controller 的 client 注入面：第三方 client 插件如何取得可调 fork 的服务（ui-chat apply 里 forkAt 经 ctx.sessions.fork({sessionId, atSeq, increaseTitle})——确认 ctx.sessions 来自哪个注入模块/服务名，及 module-agent 应注入哪些 client 模块拿到同等能力）；以及读取当前会话事件（user/message 内容与 turn/end 的 seq）的可用接口（session page/history/快照）。\n2. packages/client/ui-conversation 与 ui-chat：在 conversation.input.right 的 list 项中如何取得当前 sessionId、写 composer 草稿（setDraft/输入 shell）与 fork 后切换/打开新会话（sessions.open / conversation open）的 API；确认项组件经何 props/hook 获得（P1b 按钮项当前 props 面不足的话如何补足——必要时改为从注入的 store/服务自取）。\n3. fork 语义对齐后端（packages/api/session-controller/src/commands.ts fork）：atSeq 取「最后一条 user/message 之前最近一个 turn/end」的 seq，使新分支前缀止于上一已完成回合，从而把最后 user 及其后全部作废。\n4. 确认需更新的 package.json dsh.client（inject/external）与运行时 external require 模块清单。\n\n## 修改目标（framework 模块，client-src 为主）\n1. client-src/index.ts onClick 接入 P1c：\n   - 解析当前会话事件，定位最后一条 user/message（文本 + seq）；计算 atSeq = 其前最近 turn/end（无则提示「无更早回合可回退」）\n   - 调 fork({sessionId, atSeq, increaseTitle:true}) → 新会话 id\n   - 切到新分支会话（打开的 API 以调研结果为准）\n   - 将该 user 文本 setDraft 回填 composer（供编辑/原样重发）\n   - 成功/失败均有可读反馈（console + 必要时可见提示）\n   - 保留 P1b 的图标按钮、Tooltip、样式与 aria-label\n2. 若经确认某能力第三方 client 不可达（如不能直接写 draft / 事件读取受限），loud 记录并采用可行的最小偏差（在实现说明与交付判据写明），不臆造私有 API。\n3. package.json：按需更新 dsh.client（inject/external）。\n4. 重跑 npm run client:build 产出 client.js（含 onClick 逻辑），编译验证（参照前几轮 client:build 产物断言：load id、单 LF 等）。\n5. 元数据（module_definition/current_spec/change_history）同步；host 逻辑零改动。\n\n## 验证 / 部署复测（由风后/用户）\n同步 client.js（必要时 package.json）到 ~/.dsh/profiles/web/module-agent，重启 dsh web：在有多轮的对话中点「回退并重发」→ 期望产生新分支（此前缀止于上一已完成回合，最后一条 user 消息及其回复不再延续）、自动切到新分支、composer 回填最后一条 user 文本；无回退点时给出可读提示。回归不破坏 P1a/P1b。\n\n## 约束\n- 不改 host 业务；不改 dsh 源码；只扩展 module-agent 的 client-src 与其构建产物/清单。\n- client API 一律以 D:/deepseek-harness 源码为准。",
+  "session_id": "ses_f8a106241ffep6r3F3giPYrqoq",
+  "modified_files": [
+    "client-src/index.ts",
+    "client-src/rewind.ts",
+    "client.js"
+  ]
+}
