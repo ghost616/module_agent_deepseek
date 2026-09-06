@@ -8,6 +8,7 @@ import type {} from '@deepseek-ai/dsh-subagent'
 import { foldSubagentDescriptor } from '@deepseek-ai/dsh-subagent'
 import { SESSION_MODES_FILE } from './constants.ts'
 import { readJsonSync, writeJsonSync } from './fs.ts'
+import { inheritWorkspaceBinding } from './workspace.ts'
 
 export type AgentMode = 'fengzhou' | 'qibo' | 'limu' | 'gaotao' | 'lishou' | 'lizhu' | 'kui'
 
@@ -208,6 +209,12 @@ export async function cleanStalePersistedModes(
  * {@link persistMode} 写入的 `.module_agent/session_modes.json` 恢复：内存已有 mode
  * 时跳过（不覆盖 subagent/start 刚建立的子代理身份），restoreMode 命中且为宿主
  * 模式才注册。
+ *
+ * dsh 普通顶层 fork（commands.fork 创建的 child：无 origin、isSeeded、parentSession
+ * 指向父会话）新会话启动时，继承父会话的宿主 host mode（内存 ?? 持久化）与工作空间
+ * 绑定 {@link inheritWorkspaceBinding}，使 fork 分支内 module-agent 工具的工作空间
+ * 解析与风后权限即时恢复；子代理 fork/续用（origin='subagent'）走 descriptor 身份
+ * 通道，不触发本继承。父无 mode/绑定或非宿主 mode 时静默跳过（不误标、不改文件）。
  * @param fallback agent 会话 cwd 缺失时兜底的项目根目录（与 persistMode 写入端一致）
  */
 export function registerSessionState(ctx: Context, state: SessionState, fallback?: string): () => Promise<void> {
@@ -226,8 +233,23 @@ export function registerSessionState(ctx: Context, state: SessionState, fallback
 
     yield ctx.on('agent/session-start', ({ agent }) => {
       if (state.getAgentMode(agent.id) !== undefined) return
-      const mode = restoreMode(directoryOfAgent(agent, fallback))[agent.id]
-      if (mode !== undefined && isHostMode(mode)) state.setAgentMode(agent.id, mode)
+      const directory = directoryOfAgent(agent, fallback)
+      const persisted = restoreMode(directory)
+      const own = persisted[agent.id]
+      if (own !== undefined && isHostMode(own)) {
+        state.setAgentMode(agent.id, own)
+        return
+      }
+      // dsh 普通顶层 fork child：无 origin、parentSession 指向父会话。继承父宿主 mode
+      // 与工作空间绑定（幂等、静默；父无绑定/非宿主 mode 时跳过）。
+      const header = agent.session.header
+      if (header.parentSession === undefined || header.origin === 'subagent') return
+      const parentMode = state.getAgentMode(header.parentSession) ?? persisted[header.parentSession]
+      if (parentMode !== undefined && isHostMode(parentMode)) {
+        state.setAgentMode(agent.id, parentMode)
+        persistMode(directory, agent.id, parentMode)
+      }
+      inheritWorkspaceBinding(directory, header.parentSession, agent.id)
     })
   }, 'module-agent.sessionState()')
 }
