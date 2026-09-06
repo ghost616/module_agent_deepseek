@@ -8,7 +8,7 @@
 
 将本插件源码放入 dsh 的 profile 目录，并在 profile 的 `cordis.patch.yml` 中声明加载。
 
-1. 将本项目的 `src/` 与 `package.json` 一并复制到 profile 目录下的 `module-agent/` 子目录，例如 `~/.dsh/profiles/web/module-agent/`。
+1. 将本项目的 `src/`、`package.json` 与仓库根目录的 `client.js` 一并复制到 profile 目录下的 `module-agent/` 子目录，例如 `~/.dsh/profiles/web/module-agent/`。`client.js` 为本插件的 dsh web 界面构建产物（随源码一并提供），用于在 dsh web 对话输入框上提供「回退并重发」按钮；未复制时仅缺少该界面按钮，插件其余能力不受影响。
 2. 在 profile 目录的 `cordis.patch.yml`（`~/.dsh/profiles/web/cordis.patch.yml`）中新增：
 
    ```yaml
@@ -23,6 +23,19 @@
    ```
 
 3. 启动 `dsh web`，插件自动加载。
+
+## 回退并重发
+
+「回退并重发」是 dsh web 对话输入框工具栏上的一个图标按钮，帮助你在多轮对话中撤销最近一轮。
+
+- **入口**：dsh web 对话输入框工具栏上的「回退并重发」图标按钮。
+- **作用**：撤销最近一轮——把最后一条用户消息及其后的模型回复作废，回到此前的内容继续交流。
+- **表现**：
+  - 会新建一个干净的分支会话继续，原会话保留、可随时回看；
+  - 自动切换到新分支会话；
+  - 把最后那条用户消息回填到输入框，便于修改后重新发送；
+  - 当没有可回退的已完成回合等场景时，会给出提示。
+- **注意**：该按钮仅出现在启用了本插件的 dsh 会话（如风后工作流会话）输入框上；由分支产生的新会话沿用同一会话上下文，可继续使用。
 
 ## 快速开始
 
