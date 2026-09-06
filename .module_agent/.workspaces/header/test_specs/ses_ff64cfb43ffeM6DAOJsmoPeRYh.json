@@ -1,5 +1,0 @@
-{
-  "session_id": "ses_ff64cfb43ffeM6DAOJsmoPeRYh",
-  "content": "# 待测试功能：cleanStalePersistedModes 接入 stale_cleanup\n\n## 变更文件\n- `src/lib/stale_cleanup.ts`（orchestration 模块）\n\n## 功能说明\n1. 从 `./session_state.ts` 补充值导入 `cleanStalePersistedModes`（原仅导入 type SessionState）。\n2. `ExternalCleanupStats` 接口新增字段 `persisted_agent_modes: number`。\n3. `cleanExternalStale` 在 `sessionState.cleanStaleModes(isAlive)` 之后调用 `cleanStalePersistedModes(directory, isAlive)`，并将结果加入返回值。\n\n## 需要验证\n1. **编译测试（typecheck）**：TypeScript 类型检查通过（整个项目 typecheck 可通过 `.lizhu_env/typecheck-probe` 或项目自身的 typecheck 脚本执行）。\n2. **行为测试**：`cleanExternalStale` 调用后，`.module_agent/session_modes.json` 中 isAlive 返回 false 的失效 sessionId 条目被删除；isAlive 返回 true 的有效 sessionId 保留。`ExternalCleanupStats.persisted_agent_modes` 返回被清理数量。",
-  "timestamp": "2026-08-16T08:32:31.835Z"
-}

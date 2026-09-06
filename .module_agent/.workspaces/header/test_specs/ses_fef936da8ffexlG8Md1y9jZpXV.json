@@ -1,5 +1,0 @@
-{
-  "session_id": "ses_fef936da8ffexlG8Md1y9jZpXV",
-  "content": "# 测试功能说明\n\n## 变更内容\n\n修复力牧计划完成后调用 module_agent_updater_plan 被拒的问题：在 `src/tools/module_agent_updater_plan.ts` 的 execute 内补上力牧计划有效性守卫。\n\n## 涉及文件\n\n- `src/tools/module_agent_updater_plan.ts`：execute 内在力牧身份校验后无条件调用 `limuPlanGuard(directory, agentId)`，返回非 null 时以 `{ status: 'error', error: 拒绝理由 }` 拒绝；守卫覆盖 write_result / add_plan_files / remove_plan_files / check_active_plan 全部 action。\n- `src/lib/limu_plan_guard.ts`：limuPlanGuard 守卫实现（会话须已关联工作空间、存在未完成的开发计划，不合法返回拒绝理由字符串，合法返回 null）。\n\n## 可测试功能\n\n1. 编译检查：TypeScript 类型检查通过，`limuPlanGuard` 导入与调用类型正确（返回 `Promise<string | null>`，`if (guard) return { status: 'error', error: guard }` 合法）。\n2. 行为验证：module_agent_updater_plan 仅限力牧身份调用（mode !== 'limu' 时拒绝）；守卫在身份校验后无条件生效。",
-  "timestamp": "2026-08-17T15:54:30.352Z"
-}

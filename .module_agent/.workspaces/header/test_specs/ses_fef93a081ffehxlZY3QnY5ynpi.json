@@ -1,5 +1,0 @@
-{
-  "session_id": "ses_fef93a081ffehxlZY3QnY5ynpi",
-  "content": "# module_agent_updater 力牧计划守卫 测试说明\n\n## 变更功能\n修复力牧计划完成后调用 module_agent_updater（append_history 等）被拒的问题。\n\n在 src/tools/module_agent_updater.ts 的 execute 内，将原 TODO(orchestration) 注释处补上力牧计划守卫：\n- 当 mode === 'limu' 时调用 limuPlanGuard(directory, agentId)\n- 若返回非 null（拒绝理由）则 return { status: 'error', error: 拒绝理由 }\n- 守卫放在权限校验之后、action 分发之前，仅对 mode === 'limu' 生效\n- 与 opencode 源码 module_agent_updater.ts 对齐：if (mode === 'limu') { const guard = await limuPlanGuard(...); if (guard) return guard }\n\n## 涉及文件\n- src/tools/module_agent_updater.ts（导入 limuPlanGuard from '../lib/limu_plan_guard.ts'；execute 内权限校验后、action 分发前增加守卫）\n- src/lib/limu_plan_guard.ts（既有实现，未改动）\n\n## 需验证的功能点\n1. src typecheck 无错误（tsc --noEmit）。\n2. 回归：力牧在活跃计划下调用 module_agent_updater（append_history 等）不被误拒（守卫返回 null 时正常放行）。\n3. 行为对齐：mode === 'limu' 时执行 limuPlanGuard；非 limu 模式（风后/隶首等）不受守卫影响。\n",
-  "timestamp": "2026-08-17T15:53:23.151Z"
-}

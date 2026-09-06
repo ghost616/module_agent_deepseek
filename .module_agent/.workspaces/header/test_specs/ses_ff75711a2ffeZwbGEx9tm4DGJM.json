@@ -1,5 +1,0 @@
-{
-  "session_id": "ses_ff75711a2ffeZwbGEx9tm4DGJM",
-  "content": "# 待测试功能说明：cleanExternalStale 兜底清理残留 mode\n\n## 功能变更\n在 orchestration 模块的 stale_cleanup 中，cleanExternalStale 增加对 session_state 内存残留 mode 的兜底清理：\n\n1. `src/lib/stale_cleanup.ts`：\n   - `ExternalCleanupStats` 接口新增 `agent_modes: number` 字段（对齐 opencode 版 ExternalCleanupStats.agent_modes）。\n   - `cleanExternalStale(isAlive, directory, sessionState)` 新增第三参数 `sessionState: SessionState`，调用 `sessionState.cleanStaleModes(isAlive)` 清理 isAlive=false 的残留 mode，删除数计入返回值 `agent_modes`。\n   - 从 `./session_state.ts` 导入 `type SessionState`。\n\n2. `src/tools/module_agent_cleanup.ts`：\n   - `clean_external` 分支调用 `cleanExternalStale` 时传入工具持有的 `options.sessionState`。\n\n## 待测试内容\n- 编译/类型检查：`npm run typecheck`（tsc --noEmit）通过，无类型错误（特别是 ExternalCleanupStats 新增字段、cleanExternalStale 新参数签名、SessionState 导入）。\n- 行为验证：cleanExternalStale 能清理 isAlive=false 的残留 mode 并返回 agent_modes 删除数；isAlive=true 的 mode 保留。\n\n## 涉及代码文件\n- src/lib/stale_cleanup.ts\n- src/tools/module_agent_cleanup.ts\n- src/lib/session_state.ts（cleanStaleModes 为已实现方法，本次仅被调用）",
-  "timestamp": "2026-08-16T03:42:03.665Z"
-}

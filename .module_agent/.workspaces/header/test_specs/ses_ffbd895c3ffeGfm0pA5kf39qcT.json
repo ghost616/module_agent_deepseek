@@ -1,5 +1,0 @@
-{
-  "session_id": "ses_ffbd895c3ffeGfm0pA5kf39qcT",
-  "content": "## 待测试功能\n\n本次变更仅修改 `src/lib/file_backup.ts`，修复备份工具 mapping.json 损坏导致 backup 失败的 bug：\n\n1. **readMapping 容错**（src/lib/file_backup.ts:23-33）：原实现在 mapping.json 存在时直接 `readJson` 解析，JSON 损坏（如 \"Unexpected non-whitespace character after JSON\"）会抛错使整个 backup 失败。现改为 try/catch，解析失败返回 `{}`，backup 可继续，下次 writeMapping 会重写为合法 JSON 自愈。\n\n2. **writeMapping 原子写**（src/lib/file_backup.ts:35-43）：原实现直接用 `writeText`（fs.writeFile 先 truncate 再写）写 mapping.json，写中断或并发 backup 交错会产生损坏中间态。现改为先写 `${path}.tmp` 临时文件，再 `rename` 原子覆盖（同目录 rename 为原子操作）；rename 后残留 .tmp 文件不影响下次写入。\n\n涉及代码文件：\n- `src/lib/file_backup.ts`（readMapping / writeMapping 两处实现，import 增加 node:fs/promises 的 rename）\n\n## 验证方式\n\n1. **TypeScript 类型检查**：本项目 `tsc --noEmit` 无新增错误（注意：deepseek-harness 未安装 node_modules 时会出现指向 dsh 源码的环境噪音报错，本项目 src/**/*.ts 自身应保持 0 错误）。请在独立目录 `.lizhu_env/typecheck-probe` 或本项目根目录执行验证。\n2. **行为验证**：验证 readMapping 在 mapping.json 内容损坏时返回空对象而非抛错；writeMapping 写入后 mapping.json 内容合法且正常可读。",
-  "timestamp": "2026-08-15T06:41:59.936Z"
-}

@@ -1,5 +1,0 @@
-{
-  "session_id": "ses_fffaa596bffe3dAQU9P1NaB1KX",
-  "content": "## 待测试功能\n\n本次变更为 module-management 模块中 sessionId 文件名 sanitize 遗漏修复，涉及以下文件：\n\n1. `src/tools/module_agent_reader.ts`\n   - handleReadTestResults：读取 `test_reports/<lizhuSid>.json` 时使用 `sanitizeIdSegment(lizhuSid)` 编码文件名，与 testing.ts 的 writeTestReport 写入侧保持一致。\n   - handleReadTestSpecs：读取 `test_specs/<specSessionId>.json` 时使用 `sanitizeIdSegment(specSessionId)` 编码文件名，与 testing.ts 的 writeTestSpec 写入侧保持一致。\n\n2. `src/tools/module_classification.ts`\n   - getFilePath：`.module_agent/.classifications/<sessionId>.json` 文件名使用 `sanitizeIdSegment(sessionId)`，消除路径穿越风险；写（writeData）读（readData）均经此统一入口，内部保持一致。\n\n需验证：typecheck（tsc）编译无错误；依赖的 sanitizeIdSegment/desanitizeIdSegment 为同一 fs.ts 函数，与 execution_result/review_result/kui_plan/testing 的既有用法一致。",
-  "timestamp": "2026-08-14T12:54:05.609Z"
-}

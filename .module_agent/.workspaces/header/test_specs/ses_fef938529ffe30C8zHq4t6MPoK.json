@@ -1,5 +1,0 @@
-{
-  "session_id": "ses_fef938529ffe30C8zHq4t6MPoK",
-  "content": "# 待测试功能说明\n\n## 功能\n修复力牧计划完成后调用 module_agent_plan 被拒的问题。\n\n在 `src/tools/module_agent_plan.ts` 的 execute 内补上力牧计划守卫：\n- 新增 `limuPlanGuard` 导入（`../lib/limu_plan_guard.ts`）。\n- 在 checkPermission 权限校验之后、resolveWorkspace 之前，加入 `if (mode === 'limu') { const guard = await limuPlanGuard(directory, agentId); if (guard) return { status: 'error', error: guard } }`。\n- 守卫仅对 mode === 'limu' 生效，不影响风后/皋陶/夔调用。\n- plan_complete 时映射仍存在能通过守卫，守卫只拦\"无关联计划或计划已完成\"的情况。\n\n## 涉及文件\n- src/tools/module_agent_plan.ts\n\n## 测试要求\n- 编译检查通过（TypeScript 类型检查 / tsc）。\n- 建议对守卫逻辑进行验证：mode === 'limu' 且无关联计划时返回拒绝；有未完成计划时放行；非 limu 模式不受影响。",
-  "timestamp": "2026-08-17T15:53:52.107Z"
-}

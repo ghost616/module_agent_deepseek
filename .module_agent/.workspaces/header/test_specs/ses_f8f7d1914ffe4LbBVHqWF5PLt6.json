@@ -1,5 +1,0 @@
-{
-  "session_id": "ses_f8f7d1914ffe4LbBVHqWF5PLt6",
-  "content": "## 待测试功能说明\n\n本次变更为纯 type import 清理，无运行时逻辑变更。\n\n变更文件：\n- src/tools/module_agent_plan.ts（workflow 模块）：将 `import type { JsonValue } from '@deepseek-ai/dsh-session'` 改为 `import type { JsonValue } from '@deepseek-ai/dsh-util-values'`。\n\n需要验证：\n- 编译/类型检查：在 dsh 0.1.2-alpha.5 类型环境下，workflow src 类型检查 0 错误（JsonValue 应从 @deepseek-ai/dsh-util-values 正常解析，dsh-session 不再作为 JsonValue 导入源）。\n",
-  "timestamp": "2026-09-05T09:01:04.298Z"
-}
