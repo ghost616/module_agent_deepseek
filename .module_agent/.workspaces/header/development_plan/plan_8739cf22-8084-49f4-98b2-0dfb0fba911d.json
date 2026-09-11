@@ -1,0 +1,12 @@
+{
+  "plan_id": "plan_8739cf22-8084-49f4-98b2-0dfb0fba911d",
+  "module_name": "workspace",
+  "development_plan": "新增风后共享计划工具与存储库（供风后在工作空间内写入/读取/删除计划，其他风后会话可读取）。需求：多条列表式、纯文本内容、限当前工作空间、仅风后可用。任务：1. 新增 src/lib/shared_plan.ts：定义 SharedPlanEntry 接口（id、content、created_by、created_at）；实现 readSharedPlans(workspaceDir)（读 <workspaceDir>/shared_plans.json，文件缺失/解析失败返回空数组）、appendSharedPlan(workspaceDir, content, createdBy)（追加一条并生成唯一 id 与 ISO 时间戳，返回新条目）、removeSharedPlan(workspaceDir, id)（按 id 删除，不存在返回 false）；文件结构 { plans: [...] }。实现风格参照 src/lib/corrections.ts。2. 新增 src/tools/module_agent_shared_plan.ts：定义 module_agent_shared_plan 工具，仅风后可调用（sessionState.getAgentMode(sessionId)==='fengzhou'，否则报错）；参数 action('write'|'read'|'delete'，必填)、content(write 必填，纯文本)、id(delete 必填)；write 追加并返回新计划 id；read 返回当前工作空间全部计划列表（含 index/id/content/created_by/created_at）；delete 按 id 删除；工作空间用 resolveWorkspace + getWorkspaceDir 解析，未绑定报错。结构参照 src/tools/correction.ts（defineTool + jsonToolOutput）。3. 更新本模块元数据：module_definition 新增上述两个文件条目并写 description；current_spec 补充“风后共享计划”功能领域说明；change_history 追加变更记录。完成后运行 npm run typecheck 通过。",
+  "session_id": "ses_f6fb92747ffeF63iBc3i0s6lvP",
+  "modified_files": [
+    "src/lib/shared_plan.ts",
+    "src/tools/module_agent_shared_plan.ts",
+    "src/tools/index.ts",
+    "src/index.ts"
+  ]
+}

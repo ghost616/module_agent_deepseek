@@ -111,7 +111,7 @@
     },
     {
       "path": "src/tools/index.ts",
-      "description": "工具注册集成点：registerModuleAgentTools 注册全部 25 个工具（verification_code、module_agent_backup 真实实现 + 23 个骨架占位）"
+      "description": "工具注册集成点：registerModuleAgentTools 注册全部 26 个 module-agent 工具（verification_code、module_agent_backup 等真实实现，原 23 个骨架占位已全部替换为真实实现；新增注册 module_agent_shared_plan——风后共享计划，工具实现位于 workspace 模块 src/tools/module_agent_shared_plan.ts）。"
     },
     {
       "path": "README.md",

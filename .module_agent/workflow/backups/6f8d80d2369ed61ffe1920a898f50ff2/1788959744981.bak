@@ -116,7 +116,6 @@ export function markPlanComplete(
   const entry = metadata.find(m => m.plan_id === planId)
   if (entry) {
     entry.plan_completed = true
-    delete entry.abandoned
     writeMetadataSync(workspaceDir, metadata)
   }
   return true
@@ -131,20 +130,6 @@ export function markTestPassed(
   const entry = metadata.find(m => m.plan_id === planId)
   if (!entry) return false
   entry.test_passed = testPassed
-  writeMetadataSync(workspaceDir, metadata)
-  return true
-}
-
-/**
- * 置位计划的 abandoned 标记：标识该计划因力牧未调用 plan_complete 而被夔提醒/放行。
- * 幂等：条目已 abandoned 时直接返回 true 不再写盘；条目不存在时返回 false。
- */
-export function markPlanAbandoned(workspaceDir: string, planId: string): boolean {
-  const metadata = readAllMetadataSync(workspaceDir)
-  const entry = metadata.find(m => m.plan_id === planId)
-  if (!entry) return false
-  if (entry.abandoned) return true
-  entry.abandoned = true
   writeMetadataSync(workspaceDir, metadata)
   return true
 }

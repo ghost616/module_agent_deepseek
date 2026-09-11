@@ -91,7 +91,7 @@ async function getLimuBlockReason(wsDir: string, moduleName: string | null, sess
   if (planId && records.length > 0) {
     const metadata = await readAllMetadata(wsDir)
     const meta = metadata.find(m => m.plan_id === planId)
-    isActive = meta ? !meta.plan_completed && !meta.abandoned : false
+    isActive = meta ? !meta.plan_completed : false
   }
   if (isActive && !isSessionChecked(wsDir, sessionId)) {
     return '力牧正在执行任务且未经过二次检查，无法关闭。请先通过 module_agent_executor(action="ping", ...) 进行二次检查。'

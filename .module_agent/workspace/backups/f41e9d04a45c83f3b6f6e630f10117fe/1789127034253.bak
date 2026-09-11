@@ -55,7 +55,6 @@ const CUSTOM_TOOLS = new Set([
   'agent_model_config',
   'module_agent_testing',
   'module_agent_correction',
-  'module_agent_shared_plan',
   'knowledge_base',
 ])
 

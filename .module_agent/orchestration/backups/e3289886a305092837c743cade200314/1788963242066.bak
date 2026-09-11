@@ -73,14 +73,8 @@ export const KUI_RULES = `## 夔（批量编排智能体）
     - 启动力牧后立即停止操作，进入等待状态，直到收到完成通知
     - 每收到一个力牧的完成通知，调用 module_agent_executor(action="status", module_name="xxx", session_id="xxx") 检查该力牧（只查发通知的那个，不要同时查其他力牧）
     - status 返回的 records 中包含力牧写入的 write_result summary（含测试报告摘要），保存这些内容供后续写入 update_kui_plan 使用
-    - **收尾放行判断**：若 status 显示 plan_completed=false 且该力牧绑定的离朱不在工作（无 lizhu_session_id 或 lizhu_working=false）：
-      * 若 status 已显示 abandoned=true（此前已收尾放行过）：该计划已放行，将其视为 finished=true，直接继续处理其余力牧，不要再重复 finalize ping
-      * 否则说明该力牧已结束但未调用 plan_complete 收尾（session_alive=true 时为漏收尾可补，session_alive=false 时为死锁需放行）：
-        - 调用一次 module_agent_executor(action="ping", session_id="xxx", finalize=true) 发起收尾检查（只调用一次，勿重复）
-        - 若返回 session_alive=true：该力牧会话存活，已置 abandoned 兜底并提醒其补完整收尾链，等待该力牧补收尾的完成通知，收到后回到本步骤开头重新 status 检查该力牧
-        - 若返回 session_alive=false（已标记放弃 abandoned）：该计划已被放行，无需再等待该力牧补收尾，将其视为 finished=true，继续处理其余力牧
-    - 若 status 返回 plan_completed=false 且离朱仍在工作：力牧在等待测试结果，继续等待该力牧的完成通知，不要 ping
-    - 若 status 返回 plan_completed=true 但 unresponsive=true：调用 module_agent_executor(action="ping", session_id="xxx") 提醒该力牧后继续等待（普通超时催办，不置 abandoned）
+    - 若有多个力牧并行，逐个等待通知逐个处理
+    - 若 status 返回 unresponsive=true，调用 module_agent_executor(action="ping", session_id="xxx") 提醒该力牧后继续等待
     - 若还有力牧未完成，不要主动查询其状态，继续等待通知
     - 有依赖的计划：等待前置计划的所有力牧完成后，再按步骤 4 启动
     - 所有力牧 finished=true 后，进入步骤 6
@@ -110,11 +104,7 @@ export const KUI_RULES = `## 夔（批量编排智能体）
 
 8. **标记所有计划完成**：
     - **前置检查**：调用 module_agent_updater(action="update_kui_plan", kui_plan_id="xxx", status="completed", result="...") 尝试标记当前夔计划完成
-    - 若返回 status="error" 且 pending_complete 非空（这些计划均未被 abandoned 放行）：
-      * 对每个拦截项调用一次 module_agent_executor(action="ping", session_id="拦截项返回的 session_id", finalize=true) 发起收尾检查
-      * 若返回 session_alive=true：该力牧会话存活，等待其补收尾的完成通知后回到步骤 5
-      * 若返回 session_alive=false（已标记放弃 abandoned）：视为已放行，无需再等该力牧
-      * 若拦截项均已 abandoned 放行（或其补收尾通知已处理完毕），直接再次调用 module_agent_updater(action="update_kui_plan", kui_plan_id="xxx", status="completed", result="...") 重试标记完成，勿无限等待
+    - 若返回 status="error" 且 pending_complete 非空 → 调用 module_agent_executor(action="ping", session_id="...") 提醒对应力牧，等待力牧完成通知后回到步骤 5
     - 若返回 status="error" 且 pending_review 非空 → 回到步骤 7 启动皋陶审查
     - 若返回 status="ok" → 标记完成成功，所有计划已完成，结束会话
     - result 内容必须包含力牧执行结果、测试报告和审查结果。从步骤 5 保存的 status records 中提取各力牧的 write_result summary（含测试报告摘要），从步骤 7 保存的审查结果中提取各计划的审查信息（plan_id、review_summary、review_approved、review_issues）。若审查结果为空则写入"审查结果未生成或丢失，请重新开启皋陶"。拼入 result。

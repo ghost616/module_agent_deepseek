@@ -57,8 +57,6 @@ export interface PlanMeta {
   code_reviewed: boolean
   plan_completed: boolean
   test_passed: boolean
-  /** 力牧 settle 但未调用 plan_complete 时由夔置位，放行夔计划 completion。 */
-  abandoned?: boolean
 }
 
 export interface PlanDetail {

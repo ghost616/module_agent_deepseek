@@ -1,0 +1,13 @@
+[
+  {
+    "plan_id": "plan_18a4df0b-23a6-4105-818f-be0af5a5c9e7",
+    "plan": "修复夔死锁-阶段4（orchestration）",
+    "modified_files": [
+      "src/tools/module_agent_executor.ts",
+      "src/lib/kui_rules.ts",
+      "src/tools/module_agent_done.ts"
+    ],
+    "summary": "执行总结：修复夔死锁-阶段4完成。改动 src/tools/module_agent_executor.ts（ping schema/ExecutorArgs 新增 finalize 收尾模式标记，夔专用；handlePing finalize 分支：仅夔可调用、由会话解析关联计划、plan_completed=false 时置 abandoned，会话可用则 followup 提醒力牧补完整收尾链+markSessionChecked，会话不可用仅置 abandoned 返回『已标记放弃』，绑定离朱在工拒置；普通超时催办不置 abandoned 语义不变；handleStatus 各力牧分支新增 session_alive 与 abandoned，isActive 将 abandoned 视为不活跃 finished=true）；src/lib/kui_rules.ts（步骤5 收尾放行判断：plan_completed=false 且离朱不在工则一次 finalize ping，按 session_alive/abandoned 决定等待补收尾或视为放行、不重复 finalize；步骤8 对 pendingComplete 拦截项 finalize ping、均 abandoned 放行后直接重试 completed）；src/tools/module_agent_done.ts（getLimuBlockReason 将 abandoned 计划视为不活跃，不阻止关闭）。影响面核查：limu_monitor.ts 以 activity 判定活跃不涉及 plan_completed，无需改动；executor.ts:828 recoverAgentMode 的 .events.slice 为变更前既有类型缺陷，超出本计划范围，与本次变更无关。测试总结：离朱验证 14/14 单测通过，三变更文件 scoped typecheck 0 类型错误（完整 npm run typecheck 受独立副本缺少 monorepo references 环境限制无法执行，属既有环境限制）。",
+    "errors": []
+  }
+]

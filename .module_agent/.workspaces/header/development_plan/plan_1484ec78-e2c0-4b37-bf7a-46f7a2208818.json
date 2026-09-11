@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_1484ec78-e2c0-4b37-bf7a-46f7a2208818",
+  "module_name": "workflow",
+  "development_plan": "修复夔死锁-阶段2（workflow）：在开发计划元数据存储层提供 abandoned 的置位与复位能力，供后续 executor ping 与 updater 前检查使用。任务：1. 在 src/lib/development_plan.ts 新增 markPlanAbandoned(workspaceDir, planId)：在 metadata 中找到对应条目则置 abandoned=true 并写回，幂等（重复调用无副作用），条目不存在时返回失败/约定错误。2. 在现有 markPlanComplete 置 plan_completed=true 时同时清除该条目的 abandoned（置回 false 或删除字段），保证力牧事后补收尾后 abandoned 不残留（与『abandoned 仅放行兜底』语义一致）。只改动 src/lib/development_plan.ts。完成后运行 npm run typecheck 通过。",
+  "session_id": "ses_f79b0ed3effe4VGmWOSkBldbqr",
+  "modified_files": [
+    "src/lib/development_plan.ts"
+  ]
+}

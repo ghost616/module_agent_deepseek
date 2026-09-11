@@ -31,3 +31,13 @@ workspace 工具的创建/绑定/列表/状态/配置读取与开发模式设置
 
 - 提供 module_agent_setup 工具（createModuleAgentSetupTool）：校验会话模式互斥（风后/力牧/皋陶/隶首/离朱已激活时拒绝），写入 qibo 模式，并通过 agent.inject 将 SETUP_GUIDE 注入当前会话。
 - 规则文本 lib/setup_guide.ts 的 SETUP_GUIDE：定义岐伯工具使用限制、确认机制（verification_code）、Phase 1 需求设计 / Phase 2 代码规范 / Phase 3 模块设计引导流程。
+## 风后共享计划
+
+
+### 风后共享计划（module_agent_shared_plan）
+
+- 提供 module_agent_shared_plan 工具（createModuleAgentSharedPlanTool），操作：write / read / delete，仅风后可调用，需已绑定工作空间。
+- write：向当前工作空间追加一条纯文本计划（content 必填），生成唯一 id 与 ISO 时间戳，返回新计划 id；read：返回当前工作空间全部计划列表（含 index/id/content/created_by/created_at）；delete：按 id 删除计划（id 必填）。
+- 数据层 lib/shared_plan.ts：readSharedPlans（文件缺失/解析失败返回空数组）、appendSharedPlan（追加并返回新条目）、removeSharedPlan（按 id 删除，不存在返回 false）；记录存于空间目录 shared_plans.json，结构为 `{ plans: [...] }`，条目含 id / content / created_by / created_at。
+- 计划为多条列表式、纯文本内容，限当前工作空间存储；其他风后会话绑定同一工作空间即可读取。
+

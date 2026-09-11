@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_ee5e6a1f-55cf-4fb3-813a-e87f56249569",
+  "module_name": "framework",
+  "development_plan": "修复夔死锁-阶段1（framework）：力牧 settle 结束但未调用 plan_complete 时，夔无法把夔计划置 completed 而死锁。本阶段为计划元数据引入 abandoned 放行标记。任务：1. 在 src/lib/types.ts 的 PlanMeta 接口新增可选布尔字段 abandoned（标识该计划因力牧未 plan_completed 已被夔提醒/放行）；现有 metadata 读写逻辑应天然兼容该可选字段，无需改动 savePlan/writeMetadataSync 等。2. 确保新增字段不影响现有以 plan_completed 为前提的过滤逻辑（get_pending_review、deleteCompletedPlans、clean_completed 等，本阶段不修改）。只改动 src/lib/types.ts。完成后运行 npm run typecheck 通过。",
+  "session_id": "ses_f79bb6d3effeANGXKaDTBId4mY",
+  "modified_files": [
+    "src/lib/types.ts"
+  ]
+}

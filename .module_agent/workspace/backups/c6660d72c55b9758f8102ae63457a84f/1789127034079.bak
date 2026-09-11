@@ -15,7 +15,6 @@ import { createModuleAgentClassifierTool } from './module_agent_classifier.ts'
 import { createWorkspaceTool } from './workspace.ts'
 import { createKnowledgeBaseTool } from './knowledge_base.ts'
 import { createCorrectionTool } from './correction.ts'
-import { createModuleAgentSharedPlanTool } from './module_agent_shared_plan.ts'
 import { createAgentModelConfigTool } from './agent_model_config.ts'
 import { createAgentModelListTool } from './agent_model_list.ts'
 import { createModuleAgentSetupTool } from './module_agent_setup.ts'
@@ -41,12 +40,12 @@ export interface RegisterToolsOptions {
 }
 
 /**
- * 注册全部 26 个 module-agent 工具。
+ * 注册全部 25 个 module-agent 工具。
  * 本期实现 module-management 与 workspace 模块的工具与库：module_agent_admin、
  * module_design_admin、module_agent_reader、module_agent_updater、
  * module_agent_explorer、module_agent_analyzer、module_agent_line_reader、
  * module_agent_backup、module_classification、module_agent_classifier、workspace、
- * knowledge_base、module_agent_correction、module_agent_shared_plan、agent_model_config、agent_model_list、
+ * knowledge_base、module_agent_correction、agent_model_config、agent_model_list、
  * module_agent_setup，workflow 模块的 module_agent_plan、module_agent_updater_plan、
  * module_agent_updater_review、module_agent_testing，orchestration 模块的
  * module_agent_executor、module_agent_start、module_agent_done、module_agent_cleanup，
@@ -71,7 +70,6 @@ export function registerModuleAgentTools(ctx: Context, options: RegisterToolsOpt
   ctx.tools.register(createWorkspaceTool(opts))
   ctx.tools.register(createKnowledgeBaseTool(opts))
   ctx.tools.register(createCorrectionTool(opts))
-  ctx.tools.register(createModuleAgentSharedPlanTool(opts))
   ctx.tools.register(createAgentModelConfigTool({ ...opts, catalog: options.catalog }))
   ctx.tools.register(createAgentModelListTool({ catalog: options.catalog }))
   ctx.tools.register(createModuleAgentSetupTool(opts))

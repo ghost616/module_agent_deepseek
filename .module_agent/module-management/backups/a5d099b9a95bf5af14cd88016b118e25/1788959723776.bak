@@ -312,7 +312,6 @@ async function handleUpdateKuiPlan(
       if (!meta) continue
 
       if (!meta.plan_completed) {
-        if (meta.abandoned) continue
         const detail = await readPlan(wsDir, pid)
         pendingComplete.push({
           plan_id: pid,

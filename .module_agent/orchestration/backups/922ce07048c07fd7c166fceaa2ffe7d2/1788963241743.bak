@@ -13,7 +13,7 @@ import {
   writeExecutionRecord,
 } from '../lib/execution_result.ts'
 import { readReviewResult, deleteReviewResult } from '../lib/review_result.ts'
-import { savePlan, getFirstPendingReview, readAllMetadata, markPlanAbandoned } from '../lib/development_plan.ts'
+import { savePlan, getFirstPendingReview, readAllMetadata } from '../lib/development_plan.ts'
 import { recordMapping, getPlanIdBySession } from '../lib/session_plan_map.ts'
 import {
   writeKuiPlan,
@@ -82,8 +82,6 @@ interface ExecutorArgs {
   plan_summary?: string
   session_id?: string
   code_conventions?: string
-  /** ping 收尾模式标记（夔专用）：true 时按"已收尾放行"处理而非普通超时催办。 */
-  finalize?: boolean
   plans?: Array<{ module_name: string; development_plan: string }>
 }
 
@@ -260,10 +258,6 @@ export function createModuleAgentExecutorTool(options: ModuleAgentExecutorToolOp
       plan_id: { type: 'string', description: '计划 ID，由 module_agent_plan(action="confirm_plan") 返回（action=start 时必填）' },
       plan_summary: { type: 'string', description: '计划简要说明（action=start 时必填）' },
       session_id: { type: 'string', description: '会话 ID（action=status 时必填）' },
-      finalize: {
-        type: 'boolean',
-        description: 'ping 收尾模式标记（夔专用）：true 时表示夔确认该力牧已结束但计划未 plan_completed、且绑定的离朱不在工作，要求收尾放行（置关联计划 abandoned 并尽力提醒力牧补完整收尾链）；false/缺省表示普通超时催办（不置 abandoned）',
-      },
       code_conventions: { type: 'string', description: '风后传入的代码规范，若代码规范文件为空时必须传入，文件不为空则无需传入' },
       plans: {
         type: 'array',
@@ -635,13 +629,11 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
 
   const planId = getPlanIdBySession(workspaceDir, session_id)
   const meta = planId ? readAllMetadata(workspaceDir).find(m => m.plan_id === planId) : undefined
-  const sessionAlive = await isAlive(session_id)
-  const planAbandoned = meta?.abandoned === true
 
   if (allRecords.length > 0) {
-    let isActive = meta ? !meta.plan_completed && !planAbandoned : false
+    let isActive = meta ? !meta.plan_completed : false
     const limuActive = isActive
-    if (!isActive && !planAbandoned && lizhuWorking) {
+    if (!isActive && lizhuWorking) {
       isActive = true
     }
 
@@ -658,11 +650,9 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
     return {
       type: 'limu',
       finished: !isActive,
-      session_alive: sessionAlive,
       plan_id: planId,
       plan_summary: meta?.plan_summary ?? null,
       plan_completed: meta?.plan_completed ?? false,
-      abandoned: planAbandoned,
       records: allRecords as unknown as JsonValue,
       ...(isActive ? { current_work: lizhuWorking ? '等待离朱测试完成' : (lastRecord?.summary ?? null) } : {}),
       ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}),
@@ -672,20 +662,20 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
     }
   }
 
-  if (!sessionAlive) {
-    return { type: 'limu', finished: true, session_alive: false, plan_id: planId, plan_summary: meta?.plan_summary ?? null, abandoned: planAbandoned, error: `会话 ${session_id} 的力牧已关闭，请人工确认。`, last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
+  if (!(await isAlive(session_id))) {
+    return { type: 'limu', finished: true, plan_id: planId, plan_summary: meta?.plan_summary ?? null, error: `会话 ${session_id} 的力牧已关闭，请人工确认。`, last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
   }
 
   if (!meta) {
-    return { type: 'limu', finished: true, session_alive: true, plan_id: null, plan_summary: null, message: `模块 '${module_name}' 没有执行计划。`, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
+    return { type: 'limu', finished: true, plan_id: null, plan_summary: null, message: `模块 '${module_name}' 没有执行计划。`, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
   }
 
-  if (meta.plan_completed || planAbandoned) {
+  if (meta.plan_completed) {
     clearSessionChecked(workspaceDir, session_id)
-    return { type: 'limu', finished: true, session_alive: true, plan_id: planId, plan_summary: meta.plan_summary, plan_completed: meta.plan_completed, abandoned: planAbandoned, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
+    return { type: 'limu', finished: true, plan_id: planId, plan_summary: meta.plan_summary, plan_completed: true, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
   }
 
-  return { type: 'limu', finished: false, session_alive: true, plan_id: planId, plan_summary: meta.plan_summary, plan_completed: false, message: '力牧正在执行，暂无执行结果记录。', ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive }
+  return { type: 'limu', finished: false, plan_id: planId, plan_summary: meta.plan_summary, plan_completed: false, message: '力牧正在执行，暂无执行结果记录。', ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive }
 }
 
 async function handleGaotaoStatus(handler: HandlerContext): Promise<JsonValue> {
@@ -840,58 +830,12 @@ async function recoverAgentMode(ctx: Context, sessionId: string): Promise<AgentM
 async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<JsonValue> {
   const { ctx, host, sessionState, workspaceDir, caller, signal } = handler
   const sessionId = args.session_id
-  const finalize = args.finalize === true
 
   if (!sessionId) {
     return { status: 'error', error: 'session_id 必填' }
   }
 
-  const alive = await handler.isAlive(sessionId)
-  const callerMode = sessionState.getAgentMode(handler.callerId)
-  const prefix = callerMode === 'kui' ? '夔提醒' : '风后提醒'
-
-  // 收尾模式（夔专用，区分于普通超时催办）：力牧已结束但计划未 plan_completed
-  // 且绑定的离朱不在工作时，夔调用本分支放行：置关联计划 abandoned，会话可用则
-  // followup 提醒力牧补完整收尾链，会话不可用则仅置 abandoned（返回『已标记放弃』）。
-  if (finalize) {
-    if (callerMode !== 'kui') {
-      return { status: 'error', error: 'ping 收尾模式（finalize=true）仅供夔调用。' }
-    }
-
-    const planId = getPlanIdBySession(workspaceDir, sessionId)
-    const meta = planId ? readAllMetadata(workspaceDir).find(m => m.plan_id === planId) : undefined
-
-    if (!planId || !meta) {
-      return { status: 'ok', finalize: true, session_alive: alive, abandoned: false, plan_id: planId, message: `会话 ${sessionId} 未关联开发计划，无需收尾放行。` }
-    }
-
-    if (meta.plan_completed) {
-      return { status: 'ok', finalize: true, session_alive: alive, abandoned: false, plan_id: planId, message: `计划 ${planId} 已完成（plan_completed=true），无需收尾放行。` }
-    }
-
-    if (alive) {
-      const lizhuSid = getBoundLizhu(workspaceDir, sessionId)
-      if (lizhuSid) {
-        const lizhuIdle = getSessionIdle(lizhuSid)
-        if (!lizhuIdle.unresponsive) {
-          return { status: 'ok', finalize: true, session_alive: true, abandoned: false, plan_id: planId, lizhu_session_id: lizhuSid, message: `力牧 ${sessionId} 绑定的离朱 ${lizhuSid} 仍在工作，计划 ${planId} 可能仍在等待测试结果，不置 abandoned。` }
-        }
-      }
-    }
-
-    markPlanAbandoned(workspaceDir, planId)
-
-    if (!alive) {
-      return { status: 'ok', finalize: true, session_alive: false, abandoned: true, plan_id: planId, message: `会话 ${sessionId} 不可用，已将其计划 ${planId} 标记为放弃（abandoned），夔可视为已放行继续调度/收尾。` }
-    }
-
-    await host.followup(caller, sessionId, `${prefix}收尾：检测到你所在计划 ${planId} 尚未调用 plan_complete。若你已完成该计划开发工作，请补完整收尾链：如需测试先调用 module_agent_plan(action="set_test_passed", plan_id="${planId}", test_passed=...)，再写入执行总结 module_agent_updater_plan(action="write_result", summary="执行总结")，最后调用 module_agent_plan(action="plan_complete", files=["..."])，并在 write_result 中自报未及时收尾的根因。若你确实无法继续，请说明原因后结束。`, signal)
-    recordActivity(sessionId)
-    markSessionChecked(workspaceDir, sessionId)
-    return { status: 'ok', finalize: true, session_alive: true, abandoned: true, plan_id: planId, message: `已向力牧会话 ${sessionId} 发送收尾提醒并标记计划 ${planId} abandoned（已放行兜底）。` }
-  }
-
-  if (!alive) {
+  if (!(await handler.isAlive(sessionId))) {
     return { status: 'error', error: `会话 ${sessionId} 不存在。` }
   }
 
@@ -902,6 +846,8 @@ async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<
       sessionState.setAgentMode(sessionId, targetMode)
     }
   }
+  const callerMode = sessionState.getAgentMode(handler.callerId)
+  const prefix = callerMode === 'kui' ? '夔提醒' : '风后提醒'
 
   const idleInfo = getSessionIdle(sessionId)
   if (!idleInfo.unresponsive) {

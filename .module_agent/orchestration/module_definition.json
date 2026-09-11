@@ -27,7 +27,7 @@
     },
     {
       "path": "src/lib/kui_rules.ts",
-      "description": "夔（批量编排智能体）规则文本（KUI_RULES）：允许工具白名单、严格禁止轮询与提问、按依赖分析/文件锁检测/启动力牧/等待通知/启动皋陶审查/标记计划完成的完整工作流程。"
+      "description": "夔（批量编排智能体）规则文本（KUI_RULES）：允许工具白名单、严格禁止轮询与提问、按依赖分析/文件锁检测/启动力牧/等待通知/启动皋陶审查/标记计划完成的完整工作流程；步骤5/8 支持对 plan_completed=false 的力牧发起带 finalize 标记的收尾 ping，并依据 session_alive/abandoned 决定等待该力牧补收尾通知或视为已放行继续调度/收尾。"
     },
     {
       "path": "src/lib/reviewer_rules.ts",
@@ -55,7 +55,7 @@
     },
     {
       "path": "src/tools/module_agent_executor.ts",
-      "description": "智能体调度执行工具：start（启动力牧，含会话复用/计划确认码校验/模型校验）、status（查询力牧执行状态）、ping（二次检查提醒）、start_review/review_status/check_reviewer（皋陶审查调度）、kui_status/start_kui（夔批量编排）、start_lizhu/list_unbound_lizhu（离朱测试调度）。基于 SubagentHost 与 module_session_tracker 实现 dsh 会话建立与复用。"
+      "description": "智能体调度执行工具：start（启动力牧，含会话复用/计划确认码校验/模型校验）、status（查询力牧执行状态，返回 session_alive 与 abandoned 供夔/风后判断等待补收尾或按已放行处理）、ping（二次检查提醒；支持 finalize=true 收尾模式：力牧已结束但计划未 plan_completed 时置关联计划 abandoned 放行，会话可用则 followup 提醒补完整收尾链，会话不可用则仅置 abandoned 返回『已标记放弃』）、start_review/review_status/check_reviewer（皋陶审查调度）、kui_status/start_kui（夔批量编排）、start_lizhu/list_unbound_lizhu（离朱测试调度）。基于 SubagentHost 与 module_session_tracker 实现 dsh 会话建立与复用。"
     },
     {
       "path": "src/tools/module_agent_start.ts",
@@ -63,7 +63,7 @@
     },
     {
       "path": "src/tools/module_agent_done.ts",
-      "description": "会话关闭工具：风后关闭力牧/皋陶/离朱/夔会话并清理关联数据（执行记录/计划/映射/文件锁/工作空间映射/会话绑定），支持 close、close_all（全部可关闭才关闭）、list_idle；关闭前检测忙碌/二次检查/结果未读取等阻塞原因，需确认码。"
+      "description": "会话关闭工具：风后关闭力牧/皋陶/离朱/夔会话并清理关联数据（执行记录/计划/映射/文件锁/工作空间映射/会话绑定），支持 close、close_all（全部可关闭才关闭）、list_idle；关闭前检测忙碌/二次检查/结果未读取等阻塞原因，需确认码。力牧关闭检测将已 abandoned（放行）计划视为不活跃，不阻止关闭。"
     },
     {
       "path": "src/tools/module_agent_cleanup.ts",
