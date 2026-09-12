@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_63017755-2674-4b08-aa24-af67f7dc76bc",
+    "plan": "为皋陶/夔/离朱复用会话分支补写 setSessionWorkspace，对齐 handleStart 力牧复用分支",
+    "modified_files": [
+      "src/tools/module_agent_executor.ts"
+    ],
+    "summary": "修复子代理会话复用时会话-工作空间映射缺失：在 src/tools/module_agent_executor.ts 的 handleStartReview（boundGaotao）、handleStartLizhu（available）、handleStartKui（boundKui）三个复用分支的 followup 后各补 await setSessionWorkspace(directory, <sessionId>, workspaceName)；handleStart 力牧复用分支已具备该调用，未改动。离朱测试：新建 session-workspace-reuse.test.ts，6 个单元用例全部通过（覆盖皋陶/夔/离朱/力牧复用及旧映射覆盖、非复用分支回归）；等价类型检查新增错误数 0（环境缺 dsh monorepo 布局导致 npm run typecheck 不可直接执行，基线预存 module_agent_executor.ts:830 recoverAgentMode 类型错误与本次无关）；全量回归 472/474 通过，2 项失败为 entry.test.ts 工具数断言陈旧（预存，与本次无关）。",
+    "errors": []
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "plan_id": "plan_63017755-2674-4b08-aa24-af67f7dc76bc",
+  "module_name": "orchestration",
+  "development_plan": "修复子代理会话复用时的会话-工作空间映射缺失，导致皋陶审查等工具被阻塞。\n\n背景：src/tools/module_agent_executor.ts 中各子代理的“复用已有会话”分支只调用了 setAgentMode，未补写 setSessionWorkspace；当复用会话的工作空间映射已丢失（会话被关闭清理或 stale 清理后仍可复用）时，皋陶的 module_agent_updater_review、夔的 module_agent_reader/updater、离朱的 module_agent_testing 等工具调用 resolveWorkspace 失败，报“当前会话未关联工作空间”而阻塞。力牧复用分支（handleStart）已正确调用 setSessionWorkspace(directory, reusable, workspaceName)，可作为对齐参照。\n\n任务（均在 src/tools/module_agent_executor.ts）：\n1. handleStartReview 复用分支：在 getBoundGaotao 命中并 followup 后，补 await setSessionWorkspace(directory, boundGaotao, workspaceName)。\n2. handleStartKui 复用分支：在 getBoundKui 命中并 followup 后，补 await setSessionWorkspace(directory, boundKui, workspaceName)。\n3. handleStartLizhu 复用分支：在 getAvailableLizhuSession 命中并 followup 后，补 await setSessionWorkspace(directory, available, workspaceName)。\n4. 核查 handleStart 力牧复用分支已具备 setSessionWorkspace，无需改动。\n保持与现有代码风格一致；完成后运行 npm run typecheck 通过。",
+  "session_id": "ses_f69bdd441ffehY6Ls97tRUeG8c",
+  "modified_files": [
+    "src/tools/module_agent_executor.ts",
+    ".lizhu_env/tests/session-workspace-reuse.test.ts"
+  ]
+}

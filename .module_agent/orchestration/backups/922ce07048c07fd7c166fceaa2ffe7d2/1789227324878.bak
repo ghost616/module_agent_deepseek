@@ -566,8 +566,6 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
     sessionState.setAgentMode(boundGaotao, 'gaotao')
     recordActivity(boundGaotao)
 
-    await setSessionWorkspace(directory, boundGaotao, workspaceName)
-
     return { reviewer_session_id: boundGaotao, reused: true, notice: CODE_CONSUMED_NOTICE }
   }
 
@@ -967,8 +965,6 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
 
     recordActivity(available)
 
-    await setSessionWorkspace(directory, available, workspaceName)
-
     ctx.logger.info(`module-agent: Reused lizhu session ${available}`, { lizhu_session_id: available, starter_session_id: starterSessionId })
 
     return { lizhu_session_id: available, reused: true }
@@ -1071,8 +1067,6 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
     await host.followup(caller, boundKui, `有新夔计划写入，请调用 module_agent_reader(action="read_kui_plan") 读取计划并执行。${skippedNote}`, signal)
 
     recordActivity(boundKui)
-
-    await setSessionWorkspace(directory, boundKui, workspaceName)
 
     return {
       kui_session_id: boundKui,

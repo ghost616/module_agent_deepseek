@@ -1,17 +1,5 @@
 {
-  "framework": [
-    "ses_f79bb6d3effeANGXKaDTBId4mY"
-  ],
-  "module-management": [
-    "ses_f79b124e2ffeXmCQ1xupwsrYyu"
-  ],
-  "workflow": [
-    "ses_f79b0ed3effe4VGmWOSkBldbqr"
-  ],
   "orchestration": [
-    "ses_f7983884effep00H23KjrJvJoi"
-  ],
-  "workspace": [
-    "ses_f6fb92747ffeF63iBc3i0s6lvP"
+    "ses_f69bdd441ffehY6Ls97tRUeG8c"
   ]
 }

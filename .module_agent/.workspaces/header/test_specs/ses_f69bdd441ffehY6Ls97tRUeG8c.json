@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_f69bdd441ffehY6Ls97tRUeG8c",
+  "content": "# 待测试功能说明\n\n## 变更目标\n修复子代理会话复用时的会话-工作空间映射缺失，导致皋陶审查、夔编排、离朱测试等工具调用 `resolveWorkspace` 失败并报「当前会话未关联工作空间」而阻塞的问题。\n\n## 变更内容（均在 src/tools/module_agent_executor.ts）\n1. `handleStartReview` 复用分支（`getBoundGaotao` 命中并 `host.followup` 后）：新增 `await setSessionWorkspace(directory, boundGaotao, workspaceName)`。\n2. `handleStartKui` 复用分支（`getBoundKui` 命中并 `host.followup` 后）：新增 `await setSessionWorkspace(directory, boundKui, workspaceName)`。\n3. `handleStartLizhu` 复用分支（`getAvailableLizhuSession` 命中并 `host.followup` 后）：新增 `await setSessionWorkspace(directory, available, workspaceName)`。\n4. `handleStart` 力牧复用分支已存在 `await setSessionWorkspace(directory, reusable, workspaceName)`，确认无需改动。\n\n## 涉及文件\n- src/tools/module_agent_executor.ts（修改）\n- src/lib/session_workspace.ts（被调用，未修改）\n\n## 需验证\n- 编译检查：`npm run typecheck` 通过（TypeScript 类型检查）。\n- 单元测试：复用会话分支执行后，对应子代理会话 ID 在 `.module_agent/session_workspaces.json` 中写入/恢复为当前 workspaceName；覆盖皋陶（start_review）、夔（start_kui）、离朱（start_lizhu）三条复用路径；力牧复用路径回归不受影响。\n",
+  "timestamp": "2026-09-12T15:35:39.986Z"
+}

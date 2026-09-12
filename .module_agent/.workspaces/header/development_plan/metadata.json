@@ -46,5 +46,13 @@
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
+  },
+  {
+    "plan_id": "plan_63017755-2674-4b08-aa24-af67f7dc76bc",
+    "plan_summary": "修复子代理（皋陶/夔/离朱）会话复用分支漏写会话-工作空间映射，导致审查等工具报“未关联工作空间”被阻塞",
+    "starter_session_id": "ses_f892483afffes7GMHy2qgN1BKw",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
   }
 ]
