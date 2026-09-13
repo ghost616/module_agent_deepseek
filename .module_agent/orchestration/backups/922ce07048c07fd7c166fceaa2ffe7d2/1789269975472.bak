@@ -1,9 +1,10 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { ContinuableStart } from '@deepseek-ai/dsh-subagent'
-import type { JsonValue } from '@deepseek-ai/dsh-session'
+import { foldSubagentDescriptor, type ContinuableStart } from '@deepseek-ai/dsh-subagent'
+import { SessionId } from '@deepseek-ai/dsh-session'
+import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { directoryOfAgent, personaForMode, type SessionState } from '../lib/session_state.ts'
+import { directoryOfAgent, modeFromPersona, personaForMode, type AgentMode, type SessionState } from '../lib/session_state.ts'
 import { findModule } from '../lib/module_tree.ts'
 import { readAgentProfile } from '../lib/agent_profile.ts'
 import { readCodeConventions } from '../lib/code_conventions.ts'
@@ -12,7 +13,7 @@ import {
   writeExecutionRecord,
 } from '../lib/execution_result.ts'
 import { readReviewResult, deleteReviewResult } from '../lib/review_result.ts'
-import { savePlan, getFirstPendingReview, readAllMetadata } from '../lib/development_plan.ts'
+import { savePlan, getFirstPendingReview, readAllMetadata, markPlanAbandoned } from '../lib/development_plan.ts'
 import { recordMapping, getPlanIdBySession } from '../lib/session_plan_map.ts'
 import {
   writeKuiPlan,
@@ -29,15 +30,18 @@ import {
   clearSessionChecked,
   getBoundGaotao,
   bindGaotao,
+  unbindGaotao,
   getBoundLizhu,
   bindLizhu,
   getAvailableLizhuSession,
+  removeLizhuSession,
   getAllUnboundLizhuSessions,
   addLizhuSession,
   bindLimuStarter,
   getLimuStarter,
   bindLizhuFengzhou,
   bindKui,
+  unbindKui,
   getBoundKui,
   getKuiSubAgentsStatus,
   getKuiStarter,
@@ -48,7 +52,7 @@ import { REVIEWER_RULES } from '../lib/reviewer_rules.ts'
 import { LIZHU_RULES } from '../lib/lizhu_rules.ts'
 import { KUI_RULES } from '../lib/kui_rules.ts'
 import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
-import { setSessionWorkspace } from '../lib/session_workspace.ts'
+import { getSessionWorkspace, setSessionWorkspace } from '../lib/session_workspace.ts'
 import { readAgentModelConfig, validateModelConfig, type ModelCatalog } from '../lib/agent_model_config.ts'
 import { SubagentHost } from '../lib/subagent_host.ts'
 import {
@@ -81,6 +85,8 @@ interface ExecutorArgs {
   plan_summary?: string
   session_id?: string
   code_conventions?: string
+  /** ping 收尾模式标记（夔专用）：true 时按"已收尾放行"处理而非普通超时催办。 */
+  finalize?: boolean
   plans?: Array<{ module_name: string; development_plan: string }>
 }
 
@@ -125,11 +131,11 @@ function buildModuleAgentSystem(agentProfile: string, codeConventions: string, m
 
 1. **加载上下文**：使用 module_agent_reader 工具读取模块信息 —— action="read_spec" 了解功能、action="read_definition" 获取文件路径列表、action="read_descriptions"（paths=[...]）了解相关文件职责、action="read_history" 了解变更历史。
 
-2. **跟踪执行进度 — 每次调用 write / edit 工具后必须执行以下步骤**：
+2. **跟踪执行进度 — 每次调用文件编辑工具后必须执行以下步骤**：
    - 开始执行时立即写入执行状态和计划修改的文件列表：
       a. module_agent_updater_plan(action="write_result", summary="xx任务已启动")
       b. module_agent_updater_plan(action="add_plan_files", files=["src/auth/login.ts", ...], status="started")
-   - 每次调用 write / edit 工具后更新执行状态：
+   - 每次调用文件编辑工具后更新执行状态：
       module_agent_updater_plan(action="write_result", summary="更新了 xxx 文件")
    - 每次完成文件修改后释放对应文件锁：
       module_agent_updater_plan(action="remove_plan_files", files=["src/auth/login.ts"])
@@ -137,11 +143,11 @@ function buildModuleAgentSystem(agentProfile: string, codeConventions: string, m
       module_agent_updater_plan(action="write_result", summary="执行总结")
 
 3. **执行开发计划**：根据用户消息中的开发计划，进行代码编写、文件修改等操作。每次文件操作后必须先执行步骤 2 更新进度。
-    - **重要：每次调用 write / edit 修改文件前，必须先调用 module_agent_updater_plan(action="check_active_plan", module_name="${moduleName}") 检测计划有效性。若返回 status="error"，说明计划已失效（已完成或被清理），必须立即停止所有文件修改操作并报告。**
-   - **重要：每次调用 write / edit 修改已有文件前，必须先调用 module_agent_backup(action="backup", module_name="${moduleName}", file_path="<相对路径>") 备份该文件。新建文件无需备份。**
-   - **重要：当修改已有方法的输入参数或返回值类型（即方法签名变更）时，必须使用 grep 搜索项目中所有引用该方法的地方（包括测试文件），确保所有调用方同步更新。**
+    - **重要：每次调用文件编辑工具修改文件前，必须先调用 module_agent_updater_plan(action="check_active_plan", module_name="${moduleName}") 检测计划有效性。若返回 status="error"，说明计划已失效（已完成或被清理），必须立即停止所有文件修改操作并报告。**
+   - **重要：每次调用文件编辑工具修改已有文件前，必须先调用 module_agent_backup(action="backup", module_name="${moduleName}", file_path="<相对路径>") 备份该文件。新建文件无需备份。**
+   - **重要：当修改已有方法的输入参数或返回值类型（即方法签名变更）时，必须使用文件搜索与读取工具搜索项目中所有引用该方法的地方（包括测试文件），确保所有调用方同步更新。**
 
-4. **完成代码变更或调用 write / edit 工具后，若变更涉及以下情况才调用 module_agent_updater 记录**：
+4. **完成代码变更或调用文件编辑工具后，若变更涉及以下情况才调用 module_agent_updater 记录**：
 
    a. 调用 module_agent_updater(action="update_spec", ...)
         —— **仅当本次变更影响了模块的功能边界/职责范围时才需要更新**（如新增功能模块、新增对外接口、职责拆分合并等）。
@@ -207,7 +213,7 @@ function buildModuleAgentSystem(agentProfile: string, codeConventions: string, m
 
        —— 若有测试失败：不调用 write_result，直接根据失败信息修复代码，然后回到步骤 a 重新写入测试说明并启动离朱，直到全部通过。
 
-     注意：不要直接使用 write/edit 工具修改 .module_agent/ 下的文件，必须通过 module_agent_updater / module_agent_updater_plan / module_agent_plan 工具操作。
+     注意：不要直接使用文件编辑工具修改 .module_agent/ 下的文件，必须通过 module_agent_updater / module_agent_updater_plan / module_agent_plan 工具操作。
 `
 
   return prompt
@@ -257,6 +263,10 @@ export function createModuleAgentExecutorTool(options: ModuleAgentExecutorToolOp
       plan_id: { type: 'string', description: '计划 ID，由 module_agent_plan(action="confirm_plan") 返回（action=start 时必填）' },
       plan_summary: { type: 'string', description: '计划简要说明（action=start 时必填）' },
       session_id: { type: 'string', description: '会话 ID（action=status 时必填）' },
+      finalize: {
+        type: 'boolean',
+        description: 'ping 收尾模式标记（夔专用）：true 时表示夔确认该力牧已结束但计划未 plan_completed、且绑定的离朱不在工作，要求收尾放行（置关联计划 abandoned 并尽力提醒力牧补完整收尾链）；false/缺省表示普通超时催办（不置 abandoned）',
+      },
       code_conventions: { type: 'string', description: '风后传入的代码规范，若代码规范文件为空时必须传入，文件不为空则无需传入' },
       plans: {
         type: 'array',
@@ -535,6 +545,24 @@ async function handleStart(handler: HandlerContext, args: ExecutorArgs): Promise
   return { session_id: sessionId, plan_id, reused: false, notice: CODE_CONSUMED_NOTICE }
 }
 
+/**
+ * 校验复用候选子会话是否有效：工作空间归属必须等于当前工作空间，且框架角色必须
+ * 识别为期望角色（内存 mode 或从 persona 恢复）。用于阻止已关闭、其他工程或身份
+ * 不明的残留会话被复用。
+ */
+async function isValidReusableSession(
+  ctx: Context,
+  sessionState: SessionState,
+  directory: string,
+  workspaceName: string,
+  sessionId: string,
+  expectedMode: AgentMode,
+): Promise<boolean> {
+  if (getSessionWorkspace(directory, sessionId) !== workspaceName) return false
+  const mode = sessionState.getAgentMode(sessionId) ?? (await recoverAgentMode(ctx, sessionId))
+  return mode === expectedMode
+}
+
 async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
   const { ctx, host, sessionState, directory, workspaceDir, workspaceName, caller, callerId, signal, isAlive } = handler
 
@@ -543,7 +571,12 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
   const modelConfig = await readAgentModelConfig(workspaceDir)
 
-  const boundGaotao = await getBoundGaotao(workspaceDir, callerId, isAlive)
+  let boundGaotao = await getBoundGaotao(workspaceDir, callerId, isAlive)
+
+  if (boundGaotao && !(await isValidReusableSession(ctx, sessionState, directory, workspaceName, boundGaotao, 'gaotao'))) {
+    unbindGaotao(workspaceDir, callerId)
+    boundGaotao = null
+  }
 
   if (boundGaotao) {
     if (isWorking(boundGaotao)) {
@@ -552,14 +585,16 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
     const pending = await getFirstPendingReview(workspaceDir, callerId)
     if (!pending) {
-      return { status: 'ok', message: '当前没有需要代码审查的计划。', reviewer_session_id: boundGaotao, notice: CODE_CONSUMED_NOTICE }
+      return { status: 'ok', message: '当前没有需要代码审查的计划。', reviewer_session_id: boundGaotao }
     }
 
     await host.followup(caller, boundGaotao, '请检查是否有待审查计划并执行审查循环。', signal)
     sessionState.setAgentMode(boundGaotao, 'gaotao')
     recordActivity(boundGaotao)
 
-    return { reviewer_session_id: boundGaotao, reused: true, notice: CODE_CONSUMED_NOTICE }
+    await setSessionWorkspace(directory, boundGaotao, workspaceName)
+
+    return { reviewer_session_id: boundGaotao, reused: true }
   }
 
   if (!modelConfig?.gaotao) {
@@ -583,6 +618,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
       {
         persona,
         agentOptions: { provider: modelConfig.gaotao.providerID, model: modelConfig.gaotao.modelID },
+        toolFilter: { deny: ['write', 'edit'] },
       },
       signal,
     )
@@ -600,7 +636,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
   ctx.logger.info(`module-agent: Started reviewer session ${reviewerSessionId}`, { reviewer_session_id: reviewerSessionId })
 
-  return { reviewer_session_id: reviewerSessionId, notice: CODE_CONSUMED_NOTICE }
+  return { reviewer_session_id: reviewerSessionId }
 }
 
 async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promise<JsonValue> {
@@ -625,16 +661,15 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
   const lizhuSid = getBoundLizhu(workspaceDir, session_id)
   const lizhuWorking = lizhuSid ? isWorking(lizhuSid) : false
 
+  const planId = getPlanIdBySession(workspaceDir, session_id)
+  const meta = planId ? readAllMetadata(workspaceDir).find(m => m.plan_id === planId) : undefined
+  const sessionAlive = await isAlive(session_id)
+  const planAbandoned = meta?.abandoned === true
+
   if (allRecords.length > 0) {
-    const planId = await getPlanIdBySession(workspaceDir, session_id)
-    let isActive = false
-    if (planId) {
-      const metadata = await readAllMetadata(workspaceDir)
-      const meta = metadata.find(m => m.plan_id === planId)
-      isActive = meta ? !meta.plan_completed : false
-    }
+    let isActive = meta ? !meta.plan_completed && !planAbandoned : false
     const limuActive = isActive
-    if (!isActive && lizhuWorking) {
+    if (!isActive && !planAbandoned && lizhuWorking) {
       isActive = true
     }
 
@@ -651,6 +686,11 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
     return {
       type: 'limu',
       finished: !isActive,
+      session_alive: sessionAlive,
+      plan_id: planId,
+      plan_summary: meta?.plan_summary ?? null,
+      plan_completed: meta?.plan_completed ?? false,
+      abandoned: planAbandoned,
       records: allRecords as unknown as JsonValue,
       ...(isActive ? { current_work: lizhuWorking ? '等待离朱测试完成' : (lastRecord?.summary ?? null) } : {}),
       ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}),
@@ -660,25 +700,20 @@ async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promis
     }
   }
 
-  if (!(await isAlive(session_id))) {
-    return { type: 'limu', finished: true, error: `会话 ${session_id} 的力牧已关闭，请人工确认。`, last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
+  if (!sessionAlive) {
+    return { type: 'limu', finished: true, session_alive: false, plan_id: planId, plan_summary: meta?.plan_summary ?? null, abandoned: planAbandoned, error: `会话 ${session_id} 的力牧已关闭，请人工确认。`, last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
   }
-
-  const lastPlanId = await getPlanIdBySession(workspaceDir, session_id)
-  const meta = lastPlanId
-    ? (await readAllMetadata(workspaceDir)).find(m => m.plan_id === lastPlanId)
-    : undefined
 
   if (!meta) {
-    return { type: 'limu', finished: true, plan_id: null, message: `模块 '${module_name}' 没有执行计划。`, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
+    return { type: 'limu', finished: true, session_alive: true, plan_id: null, plan_summary: null, message: `模块 '${module_name}' 没有执行计划。`, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
   }
 
-  if (meta.plan_completed) {
+  if (meta.plan_completed || planAbandoned) {
     clearSessionChecked(workspaceDir, session_id)
-    return { type: 'limu', finished: true, plan_id: lastPlanId, plan_completed: true, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
+    return { type: 'limu', finished: true, session_alive: true, plan_id: planId, plan_summary: meta.plan_summary, plan_completed: meta.plan_completed, abandoned: planAbandoned, ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive: false }
   }
 
-  return { type: 'limu', finished: false, plan_id: lastPlanId, plan_completed: false, message: '力牧正在执行，暂无执行结果记录。', ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive }
+  return { type: 'limu', finished: false, session_alive: true, plan_id: planId, plan_summary: meta.plan_summary, plan_completed: false, message: '力牧正在执行，暂无执行结果记录。', ...(lizhuSid ? { lizhu_session_id: lizhuSid, lizhu_working: lizhuWorking } : {}), last_activity: activity ?? null, idle_seconds: idleSeconds, unresponsive }
 }
 
 async function handleGaotaoStatus(handler: HandlerContext): Promise<JsonValue> {
@@ -796,21 +831,105 @@ async function handleKuiStatus(handler: HandlerContext): Promise<JsonValue> {
   return output as JsonValue
 }
 
+/**
+ * 从会话身份恢复子智能体角色：mode 被清除（子智能体 settle 后）或从未标记
+ * （普通会话）时，从 persona 中识别 module-agent:role=<mode> marker 重建身份。
+ * 内存活跃会话经 ctx.agents 取回 agent，用 session.ownEvents()（fork 继承
+ * 前缀之后的 child 自有事件）折叠 subagent descriptor；内存无 agent（已持久化
+ * 冷会话）经 sessionPersistence.open(id, 'read') 取得 handle，按
+ * handle.inheritedEventCount 截断 events 后同样折叠识别。
+ * @returns 识别出的角色，无法识别返回 undefined
+ */
+async function recoverAgentMode(ctx: Context, sessionId: string): Promise<AgentMode | undefined> {
+  const agent = ctx.agents.get(SessionId(sessionId))
+  if (agent !== undefined) {
+    const descriptor = foldSubagentDescriptor(agent.session.ownEvents())
+    if (descriptor?.mode !== 'continuable') return undefined
+    return modeFromPersona(descriptor.persona ?? '')
+  }
+  const persistence = ctx.get('sessionPersistence')
+  if (persistence === undefined) return undefined
+  try {
+    const handle = await persistence.open(SessionId(sessionId), 'read')
+    try {
+      const events = await handle.read(0)
+      const descriptor = foldSubagentDescriptor(events.slice(handle.inheritedEventCount))
+      if (descriptor?.mode !== 'continuable') return undefined
+      return modeFromPersona(descriptor.persona ?? '')
+    } finally {
+      await handle.close()
+    }
+  } catch {
+    // open/read/close 失败（会话不存在或损坏）视为无法识别身份。
+    return undefined
+  }
+}
+
 async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<JsonValue> {
-  const { host, sessionState, workspaceDir, caller, signal } = handler
+  const { ctx, host, sessionState, workspaceDir, caller, signal } = handler
   const sessionId = args.session_id
+  const finalize = args.finalize === true
 
   if (!sessionId) {
     return { status: 'error', error: 'session_id 必填' }
   }
 
-  if (!(await handler.isAlive(sessionId))) {
+  const alive = await handler.isAlive(sessionId)
+  const callerMode = sessionState.getAgentMode(handler.callerId)
+  const prefix = callerMode === 'kui' ? '夔提醒' : '风后提醒'
+
+  // 收尾模式（夔专用，区分于普通超时催办）：力牧已结束但计划未 plan_completed
+  // 且绑定的离朱不在工作时，夔调用本分支放行：置关联计划 abandoned，会话可用则
+  // followup 提醒力牧补完整收尾链，会话不可用则仅置 abandoned（返回『已标记放弃』）。
+  if (finalize) {
+    if (callerMode !== 'kui') {
+      return { status: 'error', error: 'ping 收尾模式（finalize=true）仅供夔调用。' }
+    }
+
+    const planId = getPlanIdBySession(workspaceDir, sessionId)
+    const meta = planId ? readAllMetadata(workspaceDir).find(m => m.plan_id === planId) : undefined
+
+    if (!planId || !meta) {
+      return { status: 'ok', finalize: true, session_alive: alive, abandoned: false, plan_id: planId, message: `会话 ${sessionId} 未关联开发计划，无需收尾放行。` }
+    }
+
+    if (meta.plan_completed) {
+      return { status: 'ok', finalize: true, session_alive: alive, abandoned: false, plan_id: planId, message: `计划 ${planId} 已完成（plan_completed=true），无需收尾放行。` }
+    }
+
+    if (alive) {
+      const lizhuSid = getBoundLizhu(workspaceDir, sessionId)
+      if (lizhuSid) {
+        const lizhuIdle = getSessionIdle(lizhuSid)
+        if (!lizhuIdle.unresponsive) {
+          return { status: 'ok', finalize: true, session_alive: true, abandoned: false, plan_id: planId, lizhu_session_id: lizhuSid, message: `力牧 ${sessionId} 绑定的离朱 ${lizhuSid} 仍在工作，计划 ${planId} 可能仍在等待测试结果，不置 abandoned。` }
+        }
+      }
+    }
+
+    markPlanAbandoned(workspaceDir, planId)
+
+    if (!alive) {
+      return { status: 'ok', finalize: true, session_alive: false, abandoned: true, plan_id: planId, message: `会话 ${sessionId} 不可用，已将其计划 ${planId} 标记为放弃（abandoned），夔可视为已放行继续调度/收尾。` }
+    }
+
+    await host.followup(caller, sessionId, `${prefix}收尾：检测到你所在计划 ${planId} 尚未调用 plan_complete。若你已完成该计划开发工作，请补完整收尾链：如需测试先调用 module_agent_plan(action="set_test_passed", plan_id="${planId}", test_passed=...)，再写入执行总结 module_agent_updater_plan(action="write_result", summary="执行总结")，最后调用 module_agent_plan(action="plan_complete", files=["..."])，并在 write_result 中自报未及时收尾的根因。若你确实无法继续，请说明原因后结束。`, signal)
+    recordActivity(sessionId)
+    markSessionChecked(workspaceDir, sessionId)
+    return { status: 'ok', finalize: true, session_alive: true, abandoned: true, plan_id: planId, message: `已向力牧会话 ${sessionId} 发送收尾提醒并标记计划 ${planId} abandoned（已放行兜底）。` }
+  }
+
+  if (!alive) {
     return { status: 'error', error: `会话 ${sessionId} 不存在。` }
   }
 
-  const targetMode = sessionState.getAgentMode(sessionId)
-  const callerMode = sessionState.getAgentMode(handler.callerId)
-  const prefix = callerMode === 'kui' ? '夔提醒' : '风后提醒'
+  let targetMode = sessionState.getAgentMode(sessionId)
+  if (targetMode === undefined) {
+    targetMode = await recoverAgentMode(ctx, sessionId)
+    if (targetMode !== undefined) {
+      sessionState.setAgentMode(sessionId, targetMode)
+    }
+  }
 
   const idleInfo = getSessionIdle(sessionId)
   if (!idleInfo.unresponsive) {
@@ -825,6 +944,10 @@ async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<
         return { status: 'ok', message: `力牧 ${sessionId} 绑定的离朱 ${lizhuSid} 仍在工作（空闲 ${lizhuIdle.idleSeconds} 秒），力牧可能在等待测试结果，无需 ping。`, lizhu_session_id: lizhuSid }
       }
     }
+    await host.followup(caller, sessionId, `${prefix}：请尽快完成当前任务并写入执行总结 module_agent_updater_plan(action="write_result", summary="执行总结")。如果没有测试，请先判断是否需要测试，再调用 module_agent_plan(action="plan_complete", files=["..."])。`, signal)
+    recordActivity(sessionId)
+    markSessionChecked(workspaceDir, sessionId)
+    return { status: 'ok', message: `已向力牧会话 ${sessionId} 发送提醒并标记二次检查。` }
   }
 
   if (targetMode === 'gaotao') {
@@ -846,12 +969,7 @@ async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<
     return { status: 'ok', message: `已向夔会话 ${sessionId} 发送提醒。` }
   }
 
-  await host.followup(caller, sessionId, `${prefix}：请尽快完成当前任务并写入执行总结 module_agent_updater_plan(action="write_result", summary="执行总结")。如果没有测试，请先判断是否需要测试，再调用 module_agent_plan(action="plan_complete", files=["..."])。`, signal)
-
-  recordActivity(sessionId)
-  markSessionChecked(workspaceDir, sessionId)
-
-  return { status: 'ok', message: `已向会话 ${sessionId} 发送提醒并标记二次检查。` }
+  return { status: 'error', error: `会话 ${sessionId} 的角色无法识别，请确认会话状态后再 ping。` }
 }
 
 async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
@@ -866,7 +984,11 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
     return { status: 'error', error: '已有绑定的离朱，请先调用 module_agent_reader(action="read_test_results") 读取测试结果后重试。', lizhu_session_id: boundLizhu }
   }
 
-  const available = await getAvailableLizhuSession(workspaceDir, isAlive)
+  let available = await getAvailableLizhuSession(workspaceDir, isAlive, starterSessionId, (childId, parentId) => host.childAlive(childId, parentId))
+  if (available && !(await isValidReusableSession(ctx, sessionState, directory, workspaceName, available, 'lizhu'))) {
+    removeLizhuSession(workspaceDir, available)
+    available = null
+  }
   if (available) {
     bindLizhu(workspaceDir, starterSessionId, available)
     sessionState.setAgentMode(available, 'lizhu')
@@ -874,6 +996,8 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
     await host.followup(caller, available, '请读取测试说明并执行测试：调用 module_agent_reader(action="read_test_specs") 获取待测试功能说明，然后按需执行测试。', signal)
 
     recordActivity(available)
+
+    await setSessionWorkspace(directory, available, workspaceName)
 
     ctx.logger.info(`module-agent: Reused lizhu session ${available}`, { lizhu_session_id: available, starter_session_id: starterSessionId })
 
@@ -901,6 +1025,7 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
       {
         persona,
         agentOptions: { provider: modelConfig.lizhu.providerID, model: modelConfig.lizhu.modelID },
+        toolFilter: { deny: ['module_agent_admin', 'module_agent_executor', 'module_agent_done', 'module_agent_plan', 'module_agent_setup'] },
       },
       signal,
     )
@@ -959,7 +1084,11 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
   const modelConfig = await readAgentModelConfig(workspaceDir)
 
-  const boundKui = await getBoundKui(workspaceDir, callerId, isAlive)
+  let boundKui = await getBoundKui(workspaceDir, callerId, isAlive)
+  if (boundKui && !(await isValidReusableSession(ctx, sessionState, directory, workspaceName, boundKui, 'kui'))) {
+    unbindKui(workspaceDir, callerId)
+    boundKui = null
+  }
   if (boundKui) {
     writeKuiPlan(workspaceDir, callerId, {
       kui_plan_id,
@@ -977,13 +1106,14 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
     recordActivity(boundKui)
 
+    await setSessionWorkspace(directory, boundKui, workspaceName)
+
     return {
       kui_session_id: boundKui,
       kui_plan_id,
       reused: true,
       written: dedupedPlans.length,
       ...(skippedPlans.length > 0 ? { skipped: skippedPlans.map(p => p.module_name) } : {}),
-      notice: CODE_CONSUMED_NOTICE,
     }
   }
 
@@ -1016,6 +1146,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
       {
         persona,
         agentOptions: { provider: modelConfig.kui.providerID, model: modelConfig.kui.modelID },
+        toolFilter: { allow: ['module_agent_executor', 'module_agent_reader', 'module_agent_updater', 'module_agent_plan', 'verification_code', 'read', 'grep'] },
       },
       signal,
     )
@@ -1033,5 +1164,5 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
   ctx.logger.info(`module-agent: Started kui session ${kuiSessionId} for kui plan ${kui_plan_id}`, { kui_session_id: kuiSessionId, kui_plan_id, starter: callerId })
 
-  return { kui_session_id: kuiSessionId, kui_plan_id, plan_count: plans.length, notice: CODE_CONSUMED_NOTICE }
+  return { kui_session_id: kuiSessionId, kui_plan_id, plan_count: plans.length }
 }

@@ -16,7 +16,6 @@ import {
   getFengzhouLimuSessions,
   getFengzhouLizhuSessions,
   getModuleNameBySession,
-  cleanOrphanBindings,
   unbindKui,
   getBoundKui,
   isKuiBoundToFengzhou,
@@ -126,7 +125,6 @@ interface CleanupContext {
   host: SubagentHost
   sessionState: SessionState
   directory: string
-  workspaceName: string
 }
 
 async function cleanupLizhu(c: CleanupContext, wsDir: string, sessionId: string, alive: boolean): Promise<void> {
@@ -226,7 +224,7 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
 
       const host = new SubagentHost(options.ctx, options.subagentProvider)
       const isAlive = makeAliveChecker(host)
-      const cleanup: CleanupContext = { host, sessionState: options.sessionState, directory, workspaceName: boundWs }
+      const cleanup: CleanupContext = { host, sessionState: options.sessionState, directory }
 
       if (action === 'list_idle') {
         return handleListIdle(wsDir, agentId, isAlive)
@@ -262,7 +260,6 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
           }
         }
         await cleanupLizhu(cleanup, wsDir, sessionId, alive)
-        cleanOrphanBindings(wsDir, cleanup.directory, cleanup.workspaceName)
         return alive
           ? { title: '离朱已关闭', ...closedNotice(`离朱会话 ${sessionId} 已关闭。`) }
           : { title: '会话不存在', ...closedNotice(`会话 ${sessionId} 不存在，已清理关联数据。`) }
@@ -277,7 +274,6 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
           return { status: 'error', error: reason }
         }
         await cleanupGaotao(cleanup, wsDir, agentId, sessionId, alive)
-        cleanOrphanBindings(wsDir, cleanup.directory, cleanup.workspaceName)
         return alive
           ? { title: '皋陶已关闭', ...closedNotice(`模块 '${moduleName}' 的皋陶会话 ${sessionId} 已关闭。`) }
           : { title: '会话不存在', ...closedNotice(`会话 ${sessionId} 不存在，已清理关联数据。`) }
@@ -345,7 +341,6 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
 
         await cleanupKui(cleanup, wsDir, agentId, sessionId, alive)
         closed.push(sessionId)
-        cleanOrphanBindings(wsDir, cleanup.directory, cleanup.workspaceName)
 
         return closedNotice(`夔及其关联的 ${closed.length - 1} 个会话已关闭。`)
       }
@@ -364,7 +359,6 @@ export function createModuleAgentDoneTool(options: ModuleAgentDoneToolOptions) {
         }
       }
       await cleanupLimu(cleanup, wsDir, moduleName, sessionId, alive)
-      cleanOrphanBindings(wsDir, cleanup.directory, cleanup.workspaceName)
       return alive
         ? { title: '力牧已关闭', ...closedNotice(`模块 '${moduleName}' 的力牧会话 ${sessionId} 已关闭。`) }
         : { title: '会话不存在', ...closedNotice(`会话 ${sessionId} 不存在，已清理关联数据。`) }
@@ -378,9 +372,6 @@ async function handleCloseAll(
   fengzhouSessionId: string,
   isAlive: IsAlive,
 ): Promise<JsonValue> {
-  // 关闭前先清理工作空间内孤儿绑定（已关闭/其他工程会话的残留）
-  cleanOrphanBindings(wsDir, c.directory, c.workspaceName)
-
   // 收集当前风后关联的会话
   const gaotaoSid = await getBoundGaotao(wsDir, fengzhouSessionId, isAlive)
   const kuiSid = await getBoundKui(wsDir, fengzhouSessionId, isAlive)

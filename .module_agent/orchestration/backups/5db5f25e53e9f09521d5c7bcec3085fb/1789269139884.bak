@@ -2,7 +2,6 @@ import { mkdirSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { isWorking } from './limu_monitor.ts'
 import { existsSync, readJsonSync, writeJsonSync } from './fs.ts'
-import { getSessionWorkspace } from './session_workspace.ts'
 
 /** 会话存活判定：dsh 侧由 subagent_host 的 liveness checker 提供。 */
 export type IsAlive = (sessionId: string) => Promise<boolean>
@@ -611,61 +610,4 @@ export async function getKuiSubAgentsStatus(
   }
 
   return { allIdle: runningAgents.length === 0, runningAgents }
-}
-
-// ============================================================
-// 孤儿绑定清理（关闭流程兜底）
-// ============================================================
-
-/**
- * 清理当前工作空间 session_bindings.json 中「绑定子代理会话的工作空间归属不等于当前
- * 工作空间（含无记录）」的残留条目：gaotao/lizhu/kui 检查绑定值会话，limu/lizhu_fengzhou
- * 检查绑定键会话（均取其中的子代理会话）。用于关闭流程兜底清理已关闭/其他工程会话的
- * 残留绑定，避免其被后续复用；当前工作空间内正常绑定（归属一致）不受影响。
- * @param workspaceDir 工作空间数据目录（存放 session_bindings.json）
- * @param directory 项目根目录（存放 session_workspaces.json）
- * @param workspaceName 当前工作空间名
- * @returns 清理的条目数
- */
-export function cleanOrphanBindings(workspaceDir: string, directory: string, workspaceName: string): number {
-  const data = readBindingsSync(workspaceDir)
-  let removed = 0
-
-  for (const [fengzhouSid, gaotaoSid] of Object.entries(data.gaotao)) {
-    if (getSessionWorkspace(directory, gaotaoSid) !== workspaceName) {
-      delete data.gaotao[fengzhouSid]
-      removed++
-    }
-  }
-
-  for (const [limuSid] of Object.entries(data.limu)) {
-    if (getSessionWorkspace(directory, limuSid) !== workspaceName) {
-      delete data.limu[limuSid]
-      removed++
-    }
-  }
-
-  for (const [starterSid, lizhuSid] of Object.entries(data.lizhu)) {
-    if (getSessionWorkspace(directory, lizhuSid) !== workspaceName) {
-      delete data.lizhu[starterSid]
-      removed++
-    }
-  }
-
-  for (const [lizhuSid] of Object.entries(data.lizhu_fengzhou)) {
-    if (getSessionWorkspace(directory, lizhuSid) !== workspaceName) {
-      delete data.lizhu_fengzhou[lizhuSid]
-      removed++
-    }
-  }
-
-  for (const [fengzhouSid, kuiSid] of Object.entries(data.kui)) {
-    if (getSessionWorkspace(directory, kuiSid) !== workspaceName) {
-      delete data.kui[fengzhouSid]
-      removed++
-    }
-  }
-
-  if (removed > 0) writeBindingsSync(workspaceDir, data)
-  return removed
 }

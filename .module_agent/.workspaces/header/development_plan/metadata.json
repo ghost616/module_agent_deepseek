@@ -54,5 +54,21 @@
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
+  },
+  {
+    "plan_id": "plan_59326d81-9038-4b68-b768-b66072aba188",
+    "plan_summary": "修复 start_review/start_kui 误报确认码作废；复用前校验会话工作空间归属与角色；close/close_all 清理孤儿绑定",
+    "starter_session_id": "ses_f892483afffes7GMHy2qgN1BKw",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_d5c24f58-8aff-4f5f-b280-1c5b01fab007",
+    "plan_summary": "handleStartKui 复用分支补 setAgentMode(boundKui,'kui')，对齐皋陶/离朱复用分支，消除夔复用后权限校验被拒隐患",
+    "starter_session_id": "ses_f892483afffes7GMHy2qgN1BKw",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
   }
 ]

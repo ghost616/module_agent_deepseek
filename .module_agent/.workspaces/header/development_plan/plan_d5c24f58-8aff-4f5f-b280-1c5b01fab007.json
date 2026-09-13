@@ -1,0 +1,10 @@
+{
+  "plan_id": "plan_d5c24f58-8aff-4f5f-b280-1c5b01fab007",
+  "module_name": "orchestration",
+  "development_plan": "修复皋陶审查 warning（orchestration 模块）：handleStartKui 复用分支在通过 isValidReusableSession 校验后，未补设 sessionState.setAgentMode(boundKui, 'kui')，与 handleStartReview / handleStartLizhu 复用分支不对称。隐患：框架子代理 settle 时 src/index.ts 会 clearAgentMode，被复用的夔若依赖 recoverAgentMode 识别身份，其内存 mode 为空，夔后续调用 module_agent_executor(action=\"start\") 会在 checkGenericPermission 因 mode 既非 fengzhou 也非 kui 而被拒。\n\n任务：在 src/tools/module_agent_executor.ts 的 handleStartKui 复用分支（isValidReusableSession 通过之后、host.followup 附近），补 sessionState.setAgentMode(boundKui, 'kui')，与 handleStartReview、handleStartLizhu 复用分支保持一致。完成后运行 npm run typecheck 通过，并补充/更新相关单测。",
+  "session_id": "ses_f69bdd441ffehY6Ls97tRUeG8c",
+  "modified_files": [
+    "src/tools/module_agent_executor.ts",
+    ".lizhu_env/tests/session-workspace-reuse.test.ts"
+  ]
+}

@@ -30,18 +30,15 @@ import {
   clearSessionChecked,
   getBoundGaotao,
   bindGaotao,
-  unbindGaotao,
   getBoundLizhu,
   bindLizhu,
   getAvailableLizhuSession,
-  removeLizhuSession,
   getAllUnboundLizhuSessions,
   addLizhuSession,
   bindLimuStarter,
   getLimuStarter,
   bindLizhuFengzhou,
   bindKui,
-  unbindKui,
   getBoundKui,
   getKuiSubAgentsStatus,
   getKuiStarter,
@@ -52,7 +49,7 @@ import { REVIEWER_RULES } from '../lib/reviewer_rules.ts'
 import { LIZHU_RULES } from '../lib/lizhu_rules.ts'
 import { KUI_RULES } from '../lib/kui_rules.ts'
 import { resolveWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
-import { getSessionWorkspace, setSessionWorkspace } from '../lib/session_workspace.ts'
+import { setSessionWorkspace } from '../lib/session_workspace.ts'
 import { readAgentModelConfig, validateModelConfig, type ModelCatalog } from '../lib/agent_model_config.ts'
 import { SubagentHost } from '../lib/subagent_host.ts'
 import {
@@ -545,24 +542,6 @@ async function handleStart(handler: HandlerContext, args: ExecutorArgs): Promise
   return { session_id: sessionId, plan_id, reused: false, notice: CODE_CONSUMED_NOTICE }
 }
 
-/**
- * 校验复用候选子会话是否有效：工作空间归属必须等于当前工作空间，且框架角色必须
- * 识别为期望角色（内存 mode 或从 persona 恢复）。用于阻止已关闭、其他工程或身份
- * 不明的残留会话被复用。
- */
-async function isValidReusableSession(
-  ctx: Context,
-  sessionState: SessionState,
-  directory: string,
-  workspaceName: string,
-  sessionId: string,
-  expectedMode: AgentMode,
-): Promise<boolean> {
-  if (getSessionWorkspace(directory, sessionId) !== workspaceName) return false
-  const mode = sessionState.getAgentMode(sessionId) ?? (await recoverAgentMode(ctx, sessionId))
-  return mode === expectedMode
-}
-
 async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
   const { ctx, host, sessionState, directory, workspaceDir, workspaceName, caller, callerId, signal, isAlive } = handler
 
@@ -571,12 +550,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
   const modelConfig = await readAgentModelConfig(workspaceDir)
 
-  let boundGaotao = await getBoundGaotao(workspaceDir, callerId, isAlive)
-
-  if (boundGaotao && !(await isValidReusableSession(ctx, sessionState, directory, workspaceName, boundGaotao, 'gaotao'))) {
-    unbindGaotao(workspaceDir, callerId)
-    boundGaotao = null
-  }
+  const boundGaotao = await getBoundGaotao(workspaceDir, callerId, isAlive)
 
   if (boundGaotao) {
     if (isWorking(boundGaotao)) {
@@ -585,7 +559,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
     const pending = await getFirstPendingReview(workspaceDir, callerId)
     if (!pending) {
-      return { status: 'ok', message: '当前没有需要代码审查的计划。', reviewer_session_id: boundGaotao }
+      return { status: 'ok', message: '当前没有需要代码审查的计划。', reviewer_session_id: boundGaotao, notice: CODE_CONSUMED_NOTICE }
     }
 
     await host.followup(caller, boundGaotao, '请检查是否有待审查计划并执行审查循环。', signal)
@@ -594,7 +568,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
     await setSessionWorkspace(directory, boundGaotao, workspaceName)
 
-    return { reviewer_session_id: boundGaotao, reused: true }
+    return { reviewer_session_id: boundGaotao, reused: true, notice: CODE_CONSUMED_NOTICE }
   }
 
   if (!modelConfig?.gaotao) {
@@ -636,7 +610,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
   ctx.logger.info(`module-agent: Started reviewer session ${reviewerSessionId}`, { reviewer_session_id: reviewerSessionId })
 
-  return { reviewer_session_id: reviewerSessionId }
+  return { reviewer_session_id: reviewerSessionId, notice: CODE_CONSUMED_NOTICE }
 }
 
 async function handleStatus(handler: HandlerContext, args: ExecutorArgs): Promise<JsonValue> {
@@ -984,11 +958,7 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
     return { status: 'error', error: '已有绑定的离朱，请先调用 module_agent_reader(action="read_test_results") 读取测试结果后重试。', lizhu_session_id: boundLizhu }
   }
 
-  let available = await getAvailableLizhuSession(workspaceDir, isAlive, starterSessionId, (childId, parentId) => host.childAlive(childId, parentId))
-  if (available && !(await isValidReusableSession(ctx, sessionState, directory, workspaceName, available, 'lizhu'))) {
-    removeLizhuSession(workspaceDir, available)
-    available = null
-  }
+  const available = await getAvailableLizhuSession(workspaceDir, isAlive, starterSessionId, (childId, parentId) => host.childAlive(childId, parentId))
   if (available) {
     bindLizhu(workspaceDir, starterSessionId, available)
     sessionState.setAgentMode(available, 'lizhu')
@@ -1084,11 +1054,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
   const modelConfig = await readAgentModelConfig(workspaceDir)
 
-  let boundKui = await getBoundKui(workspaceDir, callerId, isAlive)
-  if (boundKui && !(await isValidReusableSession(ctx, sessionState, directory, workspaceName, boundKui, 'kui'))) {
-    unbindKui(workspaceDir, callerId)
-    boundKui = null
-  }
+  const boundKui = await getBoundKui(workspaceDir, callerId, isAlive)
   if (boundKui) {
     writeKuiPlan(workspaceDir, callerId, {
       kui_plan_id,
@@ -1103,7 +1069,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
       : ''
 
     await host.followup(caller, boundKui, `有新夔计划写入，请调用 module_agent_reader(action="read_kui_plan") 读取计划并执行。${skippedNote}`, signal)
-    sessionState.setAgentMode(boundKui, 'kui')
+
     recordActivity(boundKui)
 
     await setSessionWorkspace(directory, boundKui, workspaceName)
@@ -1114,6 +1080,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
       reused: true,
       written: dedupedPlans.length,
       ...(skippedPlans.length > 0 ? { skipped: skippedPlans.map(p => p.module_name) } : {}),
+      notice: CODE_CONSUMED_NOTICE,
     }
   }
 
@@ -1164,5 +1131,5 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
   ctx.logger.info(`module-agent: Started kui session ${kuiSessionId} for kui plan ${kui_plan_id}`, { kui_session_id: kuiSessionId, kui_plan_id, starter: callerId })
 
-  return { kui_session_id: kuiSessionId, kui_plan_id, plan_count: plans.length }
+  return { kui_session_id: kuiSessionId, kui_plan_id, plan_count: plans.length, notice: CODE_CONSUMED_NOTICE }
 }
