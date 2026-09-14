@@ -1,13 +1,12 @@
 维护插件入口 index.ts（注册全部工具与事件钩子、权限拦截、会话模式守卫），公共类型 types.ts、常量 constants.ts、文件工具 fs.ts、会话状态 session_state.ts、智能体画像 agent_profile.ts、代码规范 code_conventions.ts、新手提示 beginner_tips.ts、文件备份 file_backup.ts、失效数据清理 stale_cleanup.ts，以及 verification_code、module_agent_backup、module_agent_cleanup 工具。
 ## 插件入口与事件钩子
 
-- 权限与拦截：`tools/pre-execute` 自动放行自定义工具、deny 越出工程目录的 write/edit；`tools.guard` 执行各智能体模式守卫（风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单与 action 级限制、框架子代理禁用 dsh report 工具——framework 子代理本有专用报告机制 module_agent_testing write_report / module_agent_updater_review write_review，不依赖 dsh report，禁用避免与 settle 的 subagent-settled 重复产生 subagent-report；离朱可自由 write/edit 编写测试文件）。
+- 权限与拦截：`tools/pre-execute` 自动放行自定义工具、deny 越出工程目录的 write/edit；`tools.guard` 执行各智能体模式守卫（风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单与 action 级限制、框架子代理禁用 dsh report 工具——framework 子代理本有专用报告机制 module_agent_testing write_report / module_agent_updater_review write_review，不依赖 dsh report，禁用避免与 settle 的 subagent-settled 重复产生 subagent-report；框架子代理同时禁用 dsh 的 send_message / interrupt_agent 工具（@deepseek-ai/dsh-tool-subagent-control）——两者可直接向父代理发消息、绕过框架专用报告与完成通知链路（力牧 write_result + 系统完成通知），提示改用 module_agent_updater_plan write_result / module_agent_updater_review write_review，避免干扰风后/夔编排；离朱可自由 write/edit 编写测试文件）。
 - 系统提示词注入：`systemPrompt.section` 为框架子智能体注入知识库清单、为风后新手模式注入需求引导规则。
 - 完成通知：`agent/pre-step` 拦截发往风后/夔/力牧等框架 owner 的 dsh `subagent-settled` 通知（框架子代理 report 工具已被 tools.guard 禁用，故仅此单一消息源）并替换为框架完成通知（力牧含 module_name，供 module_agent_executor(action="status") 使用），避免 owner 收到重复/原始消息（离朱 settle 给力牧时，力牧收到「离朱测试完毕…」而非原始 subagent-settled）；替换完成后清除已 settle 子代理的 mode；`agent/status` 仅维护活跃监控（running 对框架子智能体记录活动、idle 无条件清除活动，不再发送完成通知；idle 不依赖 mode，防御性兜底避免任何提前清 mode 场景导致 lastActivity 残留致 isWorking 恒 true、力牧被误拦「离朱仍在运行」）；`tools/post-execute` 在框架子智能体每次工具执行后刷新活动时间。
 - 会话模式冷恢复：`subagent/start` 分类链在 classifyProvider（`module-agent:<mode>` provider 命名）未命中时，经 ctx.agents 取回 agent，以 dsh 0.1.2-alpha.5 新会话形态 `foldSubagentDescriptor(agent.session.ownEvents())` 折叠 child 自有事件（fork 继承前缀截断 = ownEvents()，自 inheritedEventCount 起）中的 subagent/descriptor（version 3），continuable 且 persona 含 marker 才注册 mode（与 module_agent_executor.recoverAgentMode 同构；不再使用旧 header.seedLength / events.slice）。
 
 - 会话模式与工作空间 fork 继承（dsh 顶层 fork child）：registerSessionState 的 agent/session-start handler 在原「内存已有 mode 跳过 / 自身持久化宿主 mode 恢复 return」之后，对 dsh 普通顶层 fork child（agent.session.header.parentSession 存在且 origin!=='subagent'）继承父会话 host mode 与工作空间绑定：父 host mode = state.getAgentMode(parentSession) ?? restoreMode(directory)[parentSession]，为宿主模式（fengzhou/qibo/lishou，isHostMode）时 setAgentMode(child) + persistMode(child)；随后恒调 workspace.ts 的幂等 helper inheritWorkspaceBinding(directory, parentSessionId, childId)。父无 mode/绑定或非宿主 mode 静默跳过（不误标、不改文件）；子代理 fork/续用（origin='subagent'）走 descriptor/classifyProvider 身份通道不触发。
-
 ## 公共数据层
 
 framework 提供共享数据层，沿用 `.module_agent/*.json` 文件存储，逻辑与原 opencode 版保持一致，仅调整类型/导入：

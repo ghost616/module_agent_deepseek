@@ -1,0 +1,10 @@
+{
+  "plan_id": "plan_f370330b-6a7e-470c-a50c-4d90900bd846",
+  "module_name": "framework",
+  "development_plan": "禁止框架子代理调用 dsh 的 send_message / interrupt_agent（framework 模块）。\n\n背景：dsh 全局注册了 send_message 与 interrupt_agent（@deepseek-ai/dsh-tool-subagent-control），框架子代理（力牧/皋陶/离朱/夔）可调用它们直接给父代理发消息，绕过框架的专用报告与完成通知链路（力牧 write_result + 系统完成通知），可能干扰风后/夔的编排流程。这与框架此前禁用 dsh report 工具的原因同类（见 src/index.ts 中 report 拒绝逻辑的注释）。\n\n任务：在 src/index.ts 的 ctx.tools.guard 中，针对框架子代理模式（isFrameworkSubagentMode(mode) 为 true），当 exec.name 为 'send_message' 或 'interrupt_agent' 时返回拒绝原因；提示改用框架专用机制（例如力牧通过 module_agent_updater_plan(action=\"write_result\") 写入执行总结，完成时系统会自动通知启动者；皋陶用 module_agent_updater_review(action=\"write_review\")）。实现风格与相邻的 report 拒绝逻辑保持一致，不改变其他模式的工具可见性。\n\n完成后运行 npm run typecheck 通过，并补充/更新相关单测。",
+  "session_id": "ses_f6536a8b5ffe4pupwLKyq7u10P",
+  "modified_files": [
+    "src/index.ts",
+    ".lizhu_env/tests/guards-regression.test.ts"
+  ]
+}

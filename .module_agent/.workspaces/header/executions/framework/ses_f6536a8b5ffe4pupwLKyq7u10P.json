@@ -1,0 +1,12 @@
+[
+  {
+    "plan_id": "plan_f370330b-6a7e-470c-a50c-4d90900bd846",
+    "plan": "在 src/index.ts 的 ctx.tools.guard 中拦截框架子代理调用 dsh send_message / interrupt_agent，并补充单测",
+    "modified_files": [
+      "src/index.ts",
+      ".lizhu_env/tests/guards-regression.test.ts"
+    ],
+    "summary": "已完成。src/index.ts 的 registerGuards 在 report 拒绝之后新增对框架子代理（limu/gaotao/lizhu/kui）调用 dsh send_message / interrupt_agent 的拒绝逻辑，返回提示改用框架专用机制（力牧 module_agent_updater_plan write_result、皋陶 module_agent_updater_review write_review），风格对齐 report 拒绝，不改变其他模式工具可见性；同步更新 registerGuards JSDoc、current_spec 与 module_definition。离朱验证：guards-regression 目标用例 31/31 全绿（新增 11 例 send_message/interrupt_agent 覆盖四模式拒绝、非框架模式/未注册放行、其他工具不受影响、既有 report/写文件/夔白名单无回归）；src/index.ts scoped tsc 无类型错误。全量回归 507/509，2 处失败在 entry.test.ts（工具数 25→26 陈旧断言，与本次变更无关）；module_agent_executor.ts:856 的 SessionHandleReadResult.slice 为历史遗留类型错误。",
+    "errors": []
+  }
+]

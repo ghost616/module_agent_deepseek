@@ -11,7 +11,7 @@
     },
     {
       "path": "src/index.ts",
-      "description": "插件入口：Cordis apply(ctx, config) + inject(['tools','systemPrompt','agents','subagents'])，组装 session_state 注册、25 工具注册、权限/拦截（tools/pre-execute + tools.guard：风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单；离朱可自由 write/edit 编写测试文件）、系统提示词注入（systemPrompt.section）、完成通知（agent/pre-step 拦截发往风后/夔的 dsh subagent-settled 通知并替换为框架完成通知，力牧含 module_name，替换后清除已 settle 子代理的 mode；agent/status 仅维护活跃监控；tools/post-execute 刷新活动时间）"
+      "description": "插件入口：Cordis apply(ctx, config) + inject(['tools','systemPrompt','agents','subagents','llm','sessions'])，组装 session_state 注册、26 工具注册、权限/拦截（tools/pre-execute 放行自定义工具并 deny 越出工程目录的 write/edit；tools.guard：风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单与 action 级限制、框架子代理禁用 dsh 的 report / send_message / interrupt_agent 工具并提示改用 module_agent 专用报告机制；离朱可自由 write/edit 编写测试文件）、系统提示词注入（systemPrompt.section：框架子智能体知识库清单、风后新手模式需求引导）、完成通知（agent/pre-step 拦截发往风后/夔/力牧等框架 owner 的 dsh subagent-settled 通知并替换为框架完成通知，力牧含 module_name，替换后清除已 settle 子代理的 mode；agent/status 仅维护活跃监控；tools/post-execute 刷新活动时间）"
     },
     {
       "path": "src/config.ts",

@@ -93,7 +93,8 @@ function assertWithin(directory: string, filePath: string): boolean {
 /**
  * 挂载权限与拦截层（opencode permission.ask / tool.execute.before 的 dsh 等价物）。
  * - tools/pre-execute：自定义工具继续 waterfall 交由 orchestration 守卫；write/edit 越出工程目录则 deny。
- * - tools.guard：各智能体模式的工具守卫（写文件禁令、力牧 .module_agent 禁令、夔白名单）。
+ * - tools.guard：各智能体模式的工具守卫（写文件禁令、力牧 .module_agent 禁令、
+ *   夔白名单、框架子代理禁用 dsh 的 report / send_message / interrupt_agent 工具）。
  */
 function registerGuards(ctx: Context, state: SessionState, config: ModuleAgentConfig): void {
   ctx.on('tools/pre-execute', async (exec, next): Promise<PreToolDecision> => {
@@ -129,6 +130,17 @@ function registerGuards(ctx: Context, state: SessionState, config: ModuleAgentCo
     // settle 的 subagent-settled 重复产生 subagent-report、owner 收到重复/原始消息。
     if (isFrameworkSubagentMode(mode) && exec.name === 'report') {
       return `${AGENT_MODE_LABELS[mode]}已禁用 dsh 的 report 工具，请使用 module_agent 的专用报告机制（module_agent_testing write_report / module_agent_updater_review write_review），完成后系统会自动通知启动者。`
+    }
+
+    // 框架子代理禁用 dsh 的 send_message / interrupt_agent 工具
+    // （@deepseek-ai/dsh-tool-subagent-control）：两者可直接给父代理发消息，绕过
+    // 框架的专用报告与完成通知链路（力牧 write_result + 系统完成通知），可能干扰
+    // 风后/夔的编排流程，故显式拒绝。框架子代理应使用专用机制（力牧
+    // module_agent_updater_plan write_result 写入执行总结、皋陶
+    // module_agent_updater_review write_review 写入审查结果），完成后系统会自动
+    // 通知启动者。
+    if (isFrameworkSubagentMode(mode) && (exec.name === 'send_message' || exec.name === 'interrupt_agent')) {
+      return `${AGENT_MODE_LABELS[mode]}已禁用 dsh 的 ${exec.name} 工具，请使用 module_agent 的专用机制（力牧 module_agent_updater_plan write_result 写入执行总结、皋陶 module_agent_updater_review write_review 写入审查结果），完成后系统会自动通知启动者。`
     }
 
     if (mode === 'limu' && !exec.name.startsWith('module_agent_')) {

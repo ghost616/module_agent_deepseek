@@ -70,5 +70,13 @@
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
+  },
+  {
+    "plan_id": "plan_f370330b-6a7e-470c-a50c-4d90900bd846",
+    "plan_summary": "在 tools.guard 中对框架子代理拒绝 dsh 的 send_message/interrupt_agent，提示改用框架专用报告机制",
+    "starter_session_id": "ses_f892483afffes7GMHy2qgN1BKw",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
   }
 ]
