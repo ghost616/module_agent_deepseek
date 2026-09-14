@@ -8,5 +8,14 @@
     ],
     "summary": "已完成。src/index.ts 的 registerGuards 在 report 拒绝之后新增对框架子代理（limu/gaotao/lizhu/kui）调用 dsh send_message / interrupt_agent 的拒绝逻辑，返回提示改用框架专用机制（力牧 module_agent_updater_plan write_result、皋陶 module_agent_updater_review write_review），风格对齐 report 拒绝，不改变其他模式工具可见性；同步更新 registerGuards JSDoc、current_spec 与 module_definition。离朱验证：guards-regression 目标用例 31/31 全绿（新增 11 例 send_message/interrupt_agent 覆盖四模式拒绝、非框架模式/未注册放行、其他工具不受影响、既有 report/写文件/夔白名单无回归）；src/index.ts scoped tsc 无类型错误。全量回归 507/509，2 处失败在 entry.test.ts（工具数 25→26 陈旧断言，与本次变更无关）；module_agent_executor.ts:856 的 SessionHandleReadResult.slice 为历史遗留类型错误。",
     "errors": []
+  },
+  {
+    "plan_id": "plan_be0593ec-72d0-42f3-acf9-605565057ccc",
+    "plan": "将 README.md 的「## 回退并重发」章节从「安装与加载」之后移动到「## 知识库」之后、「## 与 opencode 版实现方案差异」之前",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "已完成。README.md 的「## 回退并重发」章节（标题与全部条目文字未改）整体从「## 安装与加载」之后移至「## 知识库」之后、「## 与 opencode 版实现方案差异」之前；移动后章节间均保持一个空行分隔。经 grep 核对章节顺序为：安装与加载 → 快速开始 → 七级智能体 → 架构总览 → 新手模式 → 工作流程 → 知识库 → 回退并重发 → 与 opencode 版实现方案差异，其他章节内容与顺序未动。纯文档变更，无需测试。",
+    "errors": []
   }
 ]

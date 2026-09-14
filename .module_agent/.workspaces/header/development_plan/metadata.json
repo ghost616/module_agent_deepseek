@@ -78,5 +78,13 @@
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
+  },
+  {
+    "plan_id": "plan_be0593ec-72d0-42f3-acf9-605565057ccc",
+    "plan_summary": "将 README 的「回退并重发」章节移动到「知识库」章节之后",
+    "starter_session_id": "ses_f892483afffes7GMHy2qgN1BKw",
+    "code_reviewed": false,
+    "plan_completed": true,
+    "test_passed": true
   }
 ]
