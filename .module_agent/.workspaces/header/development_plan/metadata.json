@@ -86,5 +86,21 @@
     "code_reviewed": false,
     "plan_completed": true,
     "test_passed": true
+  },
+  {
+    "plan_id": "plan_47b2cbca-c700-4d5f-a491-39ce6b6fd22a",
+    "plan_summary": "为框架子代理角色增加文件持久化兜底，并新增单条清理能力（removePersistedMode）",
+    "starter_session_id": "ses_f473c03a8ffeQQtJoXNEzwaTEG",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_455319d8-175c-490c-98d4-0b7a6f5c7768",
+    "plan_summary": "修复 ping/复用冷会话角色识别（read 解构），增加持久化角色文件兜底，并在子代理角色注册/清理点同步持久化",
+    "starter_session_id": "ses_f473c03a8ffeQQtJoXNEzwaTEG",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
   }
 ]

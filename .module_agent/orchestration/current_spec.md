@@ -12,3 +12,7 @@
 - 会话绑定跟踪：module_session_tracker.ts 维护 module_sessions.json 与 session_bindings.json（风后↔皋陶/力牧/夔、启动者↔离朱），支持会话复用与归属校验。
 - 规则文本：orchestrator_rules.ts（风后力牧）、kui_rules.ts（夔）、reviewer_rules.ts（皋陶）、lizhu_rules.ts（离朱）、code_conventions.ts（读取项目代码规范）。
 - 联动：module_agent_reader 的 read_test_specs/read_test_results/read_kui_plan/read_all_kui_plans/read_kui_plan_detail；module_agent_plan 的离朱绑定/皋陶启动者过滤/夔绑定校验；module_agent_testing 的离朱绑定校验。
+## 会话复用与身份恢复
+
+- 会话复用与身份恢复：module_agent_executor 的 recoverAgentMode 按「内存 descriptor → 冷会话 descriptor → 持久化文件」三级顺序识别子会话角色。内存活跃会话经 ctx.agents 取回 agent，用 foldSubagentDescriptor(session.ownEvents()) 折叠 persona marker（module-agent:role=<mode>）；内存无 agent 的冷会话经 sessionPersistence.open(id, 'read') 取得 handle，按 handle.read(0) 返回的 { events } 解构后以 handle.inheritedEventCount 截断再折叠；两级 descriptor 均未识别出角色时，最终回退读取 persistMode 写入的 .module_agent/session_modes.json（restoreMode(directory)[sessionId]），校验 isFrameworkSubagentMode 后返回。文件仅为最后兜底，不改变 descriptor 权威性。handlePing 与 isValidReusableSession 均传入各自 directory。
+- 子代理角色持久化：力牧/皋陶/离朱/夔的新建、复用与身份恢复路径在每个 sessionState.setAgentMode 调用点旁同步调用 persistMode(directory, sessionId, mode) 落地角色；module_agent_done 的 cleanupLizhu/cleanupGaotao/cleanupLimu/cleanupKui 在 clearAgentMode 之后调用 removePersistedMode(directory, sessionId) 清理文件条目。

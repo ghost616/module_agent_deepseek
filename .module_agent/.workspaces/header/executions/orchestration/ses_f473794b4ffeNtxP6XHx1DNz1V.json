@@ -1,0 +1,12 @@
+[
+  {
+    "plan_id": "plan_455319d8-175c-490c-98d4-0b7a6f5c7768",
+    "plan": "修复 ping/复用冷会话角色无法识别 + 子代理角色文件兜底",
+    "modified_files": [
+      "src/tools/module_agent_executor.ts",
+      "src/tools/module_agent_done.ts"
+    ],
+    "summary": "执行总结：本轮修改 src/tools/module_agent_executor.ts、src/tools/module_agent_done.ts。\n1) recoverAgentMode 冷会话分支修复：const { events } = await handle.read(0)（SessionHandleReadResult 形状），再 events.slice(handle.inheritedEventCount) 折叠 descriptor，消除原误当数组 .slice 抛错被吞导致冷会话 ping 恒报「角色无法识别」。\n2) recoverAgentMode 新增 directory 参数，内存/冷会话 descriptor 均未识别时回退 restoreMode(directory)[sessionId]，校验 isFrameworkSubagentMode 后返回（文件仅最后兜底，不改变 descriptor 权威性）；handlePing 解构新增 directory，与 isValidReusableSession 均传入各自 directory。\n3) 力牧/皋陶/离朱/夔全部 9 个 setAgentMode 调用点（新建、复用、handlePing 身份恢复）旁调用 persistMode(directory, sessionId, mode)。\n4) module_agent_done 的 cleanupLizhu/cleanupGaotao/cleanupLimu/cleanupKui 在 clearAgentMode 后调用 removePersistedMode(c.directory, sessionId)。\n5) current_spec 新增功能领域 section「会话复用与身份恢复」。未改动其它调度语义。\n\n测试总结：全部目标测试通过，通过 59 项，失败 0 项，跳过 0 项。\n- 目标用例 59/59：executor-ping.test.ts（18，冷会话 mock 修正为 { eventState, events } 后通过）、executor-recover-persist.test.ts（18）、done-remove-persisted-mode.test.ts（5）、session-mode-persist.test.ts（18）。\n- 覆盖：三级身份恢复链（内存 descriptor → 冷会话 descriptor → 文件兜底）、seed 前缀截断、one-shot/无 marker/open 抛错兜底、文件兜底仅接受框架子代理模式（拒绝 fengzhou/qibo/lishou）、恢复后 setAgentMode+persistMode、isValidReusableSession 四条复用路径、done 四处 cleanup 的 removePersistedMode 与 close_all。\n- 编译检查：本变更文件（module_agent_executor.ts / module_agent_done.ts）零类型错误，并消除了修复前 executor.ts 的 SessionHandleReadResult.slice 类型错误。\n- 全量回归 545/547：仅 2 个失败在 entry.test.ts，为既有夹具过期（工具数 25→26，新增 module_agent_shared_plan），与本变更无关。\n- 遗留环境问题（非本变更引入）：session_state.ts:265 的 agent/session-start 事件名与当前 harness dsh-agent@0.1.6-alpha.1（已更名 agent/created）不匹配；项目根 tsconfig.json extends/references 相对路径失效。",
+    "errors": []
+  }
+]

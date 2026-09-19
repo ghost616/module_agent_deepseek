@@ -4,7 +4,7 @@ import { foldSubagentDescriptor, type ContinuableStart } from '@deepseek-ai/dsh-
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { directoryOfAgent, modeFromPersona, personaForMode, type AgentMode, type SessionState } from '../lib/session_state.ts'
+import { directoryOfAgent, modeFromPersona, personaForMode, persistMode, restoreMode, isFrameworkSubagentMode, type AgentMode, type SessionState } from '../lib/session_state.ts'
 import { findModule } from '../lib/module_tree.ts'
 import { readAgentProfile } from '../lib/agent_profile.ts'
 import { readCodeConventions } from '../lib/code_conventions.ts'
@@ -422,6 +422,7 @@ async function handleStart(handler: HandlerContext, args: ExecutorArgs): Promise
     clearSessionChecked(workspaceDir, reusable)
     bindLimuStarter(workspaceDir, callerId, reusable)
     sessionState.setAgentMode(reusable, 'limu')
+    persistMode(directory, reusable, 'limu')
 
     try {
       await host.followup(caller, reusable, development_plan, signal)
@@ -507,6 +508,7 @@ async function handleStart(handler: HandlerContext, args: ExecutorArgs): Promise
 
   const sessionId = started.childId
   sessionState.setAgentMode(sessionId, 'limu')
+  persistMode(directory, sessionId, 'limu')
   addModuleSession(workspaceDir, module_name, sessionId)
   bindLimuStarter(workspaceDir, callerId, sessionId)
 
@@ -559,7 +561,7 @@ async function isValidReusableSession(
   expectedMode: AgentMode,
 ): Promise<boolean> {
   if (getSessionWorkspace(directory, sessionId) !== workspaceName) return false
-  const mode = sessionState.getAgentMode(sessionId) ?? (await recoverAgentMode(ctx, sessionId))
+  const mode = sessionState.getAgentMode(sessionId) ?? (await recoverAgentMode(ctx, directory, sessionId))
   return mode === expectedMode
 }
 
@@ -590,6 +592,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
     await host.followup(caller, boundGaotao, '请检查是否有待审查计划并执行审查循环。', signal)
     sessionState.setAgentMode(boundGaotao, 'gaotao')
+    persistMode(directory, boundGaotao, 'gaotao')
     recordActivity(boundGaotao)
 
     await setSessionWorkspace(directory, boundGaotao, workspaceName)
@@ -628,6 +631,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
   const reviewerSessionId = started.childId
   sessionState.setAgentMode(reviewerSessionId, 'gaotao')
+  persistMode(directory, reviewerSessionId, 'gaotao')
   bindGaotao(workspaceDir, callerId, reviewerSessionId)
 
   recordActivity(reviewerSessionId)
@@ -837,36 +841,48 @@ async function handleKuiStatus(handler: HandlerContext): Promise<JsonValue> {
  * 内存活跃会话经 ctx.agents 取回 agent，用 session.ownEvents()（fork 继承
  * 前缀之后的 child 自有事件）折叠 subagent descriptor；内存无 agent（已持久化
  * 冷会话）经 sessionPersistence.open(id, 'read') 取得 handle，按
- * handle.inheritedEventCount 截断 events 后同样折叠识别。
+ * handle.inheritedEventCount 截断 events 后同样折叠识别。两条 descriptor 路径
+ * 均未识别出角色时，最终回退读取该会话持久化角色（.module_agent/session_modes.json，
+ * 由 persistMode 写入），校验为框架子代理模式后返回——文件仅为最后兜底，
+ * 不改变 descriptor 的权威性。
+ * @param directory 项目根目录（持久化角色文件所在目录）
  * @returns 识别出的角色，无法识别返回 undefined
  */
-async function recoverAgentMode(ctx: Context, sessionId: string): Promise<AgentMode | undefined> {
+async function recoverAgentMode(ctx: Context, directory: string, sessionId: string): Promise<AgentMode | undefined> {
   const agent = ctx.agents.get(SessionId(sessionId))
   if (agent !== undefined) {
     const descriptor = foldSubagentDescriptor(agent.session.ownEvents())
-    if (descriptor?.mode !== 'continuable') return undefined
-    return modeFromPersona(descriptor.persona ?? '')
-  }
-  const persistence = ctx.get('sessionPersistence')
-  if (persistence === undefined) return undefined
-  try {
-    const handle = await persistence.open(SessionId(sessionId), 'read')
-    try {
-      const events = await handle.read(0)
-      const descriptor = foldSubagentDescriptor(events.slice(handle.inheritedEventCount))
-      if (descriptor?.mode !== 'continuable') return undefined
-      return modeFromPersona(descriptor.persona ?? '')
-    } finally {
-      await handle.close()
+    if (descriptor?.mode === 'continuable') {
+      const mode = modeFromPersona(descriptor.persona ?? '')
+      if (mode !== undefined) return mode
     }
-  } catch {
-    // open/read/close 失败（会话不存在或损坏）视为无法识别身份。
-    return undefined
+  } else {
+    const persistence = ctx.get('sessionPersistence')
+    if (persistence !== undefined) {
+      try {
+        const handle = await persistence.open(SessionId(sessionId), 'read')
+        try {
+          const { events } = await handle.read(0)
+          const descriptor = foldSubagentDescriptor(events.slice(handle.inheritedEventCount))
+          if (descriptor?.mode === 'continuable') {
+            const mode = modeFromPersona(descriptor.persona ?? '')
+            if (mode !== undefined) return mode
+          }
+        } finally {
+          await handle.close()
+        }
+      } catch {
+        // open/read/close 失败（会话不存在或损坏）视为无法识别身份，继续走文件兜底。
+      }
+    }
   }
+  const persisted = restoreMode(directory)[sessionId]
+  if (persisted !== undefined && isFrameworkSubagentMode(persisted)) return persisted
+  return undefined
 }
 
 async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<JsonValue> {
-  const { ctx, host, sessionState, workspaceDir, caller, signal } = handler
+  const { ctx, host, sessionState, directory, workspaceDir, caller, signal } = handler
   const sessionId = args.session_id
   const finalize = args.finalize === true
 
@@ -925,9 +941,10 @@ async function handlePing(handler: HandlerContext, args: ExecutorArgs): Promise<
 
   let targetMode = sessionState.getAgentMode(sessionId)
   if (targetMode === undefined) {
-    targetMode = await recoverAgentMode(ctx, sessionId)
+    targetMode = await recoverAgentMode(ctx, directory, sessionId)
     if (targetMode !== undefined) {
       sessionState.setAgentMode(sessionId, targetMode)
+      persistMode(directory, sessionId, targetMode)
     }
   }
 
@@ -992,6 +1009,7 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
   if (available) {
     bindLizhu(workspaceDir, starterSessionId, available)
     sessionState.setAgentMode(available, 'lizhu')
+    persistMode(directory, available, 'lizhu')
 
     await host.followup(caller, available, '请读取测试说明并执行测试：调用 module_agent_reader(action="read_test_specs") 获取待测试功能说明，然后按需执行测试。', signal)
 
@@ -1035,6 +1053,7 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
 
   const lizhuSessionId = started.childId
   sessionState.setAgentMode(lizhuSessionId, 'lizhu')
+  persistMode(directory, lizhuSessionId, 'lizhu')
   addLizhuSession(workspaceDir, lizhuSessionId)
   bindLizhu(workspaceDir, starterSessionId, lizhuSessionId)
 
@@ -1104,6 +1123,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
     await host.followup(caller, boundKui, `有新夔计划写入，请调用 module_agent_reader(action="read_kui_plan") 读取计划并执行。${skippedNote}`, signal)
     sessionState.setAgentMode(boundKui, 'kui')
+    persistMode(directory, boundKui, 'kui')
     recordActivity(boundKui)
 
     await setSessionWorkspace(directory, boundKui, workspaceName)
@@ -1156,6 +1176,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
   const kuiSessionId = started.childId
   sessionState.setAgentMode(kuiSessionId, 'kui')
+  persistMode(directory, kuiSessionId, 'kui')
   bindKui(workspaceDir, callerId, kuiSessionId)
 
   recordActivity(kuiSessionId)

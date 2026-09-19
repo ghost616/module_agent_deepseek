@@ -150,27 +150,10 @@ export function restoreMode(directory: string): Record<string, AgentMode> {
 }
 
 /**
- * 从 `.module_agent/session_modes.json` 删除指定 sessionId 的持久化 mode：读现有
- * 映射（失败视为空）→ 无该条目时直接返回不写文件 → 有该条目时删除并写回。同步
- * read-modify-write，无并发竞态。
- * @param directory 项目根目录
- * @param sessionId 要清理的会话 id
- */
-export function removePersistedMode(directory: string, sessionId: string): void {
-  const modes = restoreMode(directory)
-  if (!(sessionId in modes)) return
-  delete modes[sessionId]
-  const path = sessionModesPath(directory)
-  mkdirSync(dirname(path), { recursive: true })
-  writeJsonSync(path, modes)
-}
-
-/**
- * 将会话 mode 持久化到 `.module_agent/session_modes.json`：读现有映射（失败视为
- * 空）→ 更新 sessionId→mode → 写文件。同步 read-modify-write，无并发竞态。
- * 写入范围为宿主会话（风后/岐伯/隶首）与框架子代理（力牧/皋陶/离朱/夔）：宿主
- * 身份无 subagent persona marker，只能经本文件跨重启恢复；框架子代理虽以
- * persona marker 为主身份来源，descriptor 折叠失败时同样以本文件作最终兜底。
+ * 将宿主会话 mode 持久化到 `.module_agent/session_modes.json`：读现有映射（失败
+ * 视为空）→ 更新 sessionId→mode → 写文件。同步 read-modify-write，无并发竞态。
+ * 仅宿主会话（风后/岐伯/隶首）应写入；子代理 mode 走 persona marker，由调用方
+ * 保证只对宿主会话调用。
  */
 export function persistMode(directory: string, sessionId: string, mode: AgentMode): void {
   const modes = restoreMode(directory)
@@ -220,10 +203,7 @@ export async function cleanStalePersistedModes(
  * 分类链保持同步：先按 provider 名约定（`module-agent:<mode>`）识别；未命中时
  * 从已持久化的 subagent/descriptor 事件恢复 —— 冷恢复的 continuable 子智能体
  * 同样会触发 subagent/start，此时通过 ctx.agents 取回 agent，用
- * {@link foldSubagentDescriptor} 折叠出其 persona 并识别身份 marker；若
- * descriptor 折叠仍失败（缺失/非 continuable/persona 无 marker），再回退读取
- * {@link restoreMode} 中该会话的持久化角色，命中框架子代理模式才注册（作为
- * 子代理身份的最终兜底），否则不注册。
+ * {@link foldSubagentDescriptor} 折叠出其 persona 并识别身份 marker。
  *
  * 宿主会话（风后/岐伯/隶首）无 subagent descriptor，经 agent/session-start 从
  * {@link persistMode} 写入的 `.module_agent/session_modes.json` 恢复：内存已有 mode
@@ -246,20 +226,9 @@ export function registerSessionState(ctx: Context, state: SessionState, fallback
       // 冷恢复时 session 含 fork 继承前缀，child 自有事件为 ownEvents()
       // （自 inheritedEventCount 起的截断结果），折叠其中 descriptor 再识别身份。
       const descriptor = foldSubagentDescriptor(agent.session.ownEvents())
-      if (descriptor?.mode === 'continuable') {
-        const mode = modeFromPersona(descriptor.persona ?? '')
-        if (mode !== undefined) {
-          state.setAgentMode(info.id, mode)
-          return
-        }
-      }
-      // descriptor 折叠失败（缺失/非 continuable/persona 无 marker）时，回退读取该
-      // 会话的持久化角色（框架子代理亦经 persistMode 写入作最终兜底），命中框架
-      // 子代理模式才注册；否则保持原行为（不注册）。
-      const persisted = restoreMode(directoryOfAgent(agent, fallback))[info.id]
-      if (persisted !== undefined && isFrameworkSubagentMode(persisted)) {
-        state.setAgentMode(info.id, persisted)
-      }
+      if (descriptor?.mode !== 'continuable') return
+      const mode = modeFromPersona(descriptor.persona ?? '')
+      if (mode !== undefined) state.setAgentMode(info.id, mode)
     })
 
     yield ctx.on('agent/session-start', ({ agent }) => {
