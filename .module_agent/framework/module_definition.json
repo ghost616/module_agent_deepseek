@@ -11,7 +11,7 @@
     },
     {
       "path": "src/index.ts",
-      "description": "插件入口：Cordis apply(ctx, config) + inject(['tools','systemPrompt','agents','subagents','llm','sessions'])，组装 session_state 注册、26 工具注册、权限/拦截（tools/pre-execute 放行自定义工具并 deny 越出工程目录的 write/edit；tools.guard：风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单与 action 级限制、框架子代理禁用 dsh 的 report / send_message / interrupt_agent 工具并提示改用 module_agent 专用报告机制；离朱可自由 write/edit 编写测试文件）、系统提示词注入（systemPrompt.section：框架子智能体知识库清单、风后新手模式需求引导）、完成通知（agent/pre-step 拦截发往风后/夔/力牧等框架 owner 的 dsh subagent-settled 通知并替换为框架完成通知，力牧含 module_name，替换后清除已 settle 子代理的 mode；agent/status 仅维护活跃监控；tools/post-execute 刷新活动时间）"
+      "description": "插件入口：Cordis apply(ctx, config) + inject(['tools','systemPrompt','agents','subagents','llm','sessions'])，组装 session_state 注册、27 工具注册、权限/拦截（tools/pre-execute 放行自定义工具并 deny 越出工程目录的 write/edit；tools.guard：风后/皋陶/隶首/夔禁写文件、力牧禁写 .module_agent、夔白名单（含 module_agent_status）与 action 级限制（module_agent_status 限 ask/read/write）、框架子代理禁用 dsh 的 report / send_message / interrupt_agent 工具并提示改用 module_agent 专用报告机制；离朱可自由 write/edit 编写测试文件）、系统提示词注入（systemPrompt.section：框架子智能体知识库清单、风后新手模式需求引导）、完成通知（agent/pre-step 拦截发往风后/夔/力牧等框架 owner 的 dsh subagent-settled 通知并替换为框架完成通知；若子会话状态文件存在则优先提示父会话调用 module_agent_status(action=\"read\") 读取状态文件，否则回退原完成通知、力牧含 module_name；替换后清除已 settle 子代理的 mode；agent/status 仅维护活跃监控；tools/post-execute 刷新活动时间）"
     },
     {
       "path": "src/config.ts",
@@ -111,7 +111,7 @@
     },
     {
       "path": "src/tools/index.ts",
-      "description": "工具注册集成点：registerModuleAgentTools 注册全部 26 个 module-agent 工具（verification_code、module_agent_backup 等真实实现，原 23 个骨架占位已全部替换为真实实现；新增注册 module_agent_shared_plan——风后共享计划，工具实现位于 workspace 模块 src/tools/module_agent_shared_plan.ts）。"
+      "description": "工具注册集成点：registerModuleAgentTools 注册全部 27 个 module-agent 工具（verification_code、module_agent_backup 等真实实现，骨架占位已全部替换为真实实现；含 module_agent_shared_plan——风后共享计划，工具实现位于 workspace 模块 src/tools/module_agent_shared_plan.ts；module_agent_status——父子会话状态问询，工具工厂位于 orchestration 模块 src/tools/module_agent_status.ts）。"
     },
     {
       "path": "README.md",

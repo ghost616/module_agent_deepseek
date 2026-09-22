@@ -18,6 +18,7 @@ import {
 } from './lib/session_state.ts'
 import { getSessionWorkspaceSync } from './lib/session_workspace.ts'
 import { resolveWorkspace, getWorkspaceDir, getBoundWorkspaceSync } from './lib/workspace.ts'
+import { statusReportExists } from './lib/status_report.ts'
 import { getWorkspaceConfigSync } from './lib/workspace_config.ts'
 import { listKnowledgeBasesSync, buildKnowledgeBasePrompt } from './lib/knowledge_base.ts'
 import { BEGINNER_TIPS } from './lib/beginner_tips.ts'
@@ -56,6 +57,7 @@ const CUSTOM_TOOLS = new Set([
   'module_agent_testing',
   'module_agent_correction',
   'module_agent_shared_plan',
+  'module_agent_status',
   'knowledge_base',
 ])
 
@@ -70,6 +72,7 @@ const KUI_ALLOWED_TOOLS = new Set([
   'module_agent_reader',
   'module_agent_updater',
   'module_agent_plan',
+  'module_agent_status',
   'verification_code',
   'read',
   'grep',
@@ -155,7 +158,7 @@ function registerGuards(ctx: Context, state: SessionState, config: ModuleAgentCo
 
     if (mode === 'kui') {
       if (!KUI_ALLOWED_TOOLS.has(exec.name)) {
-        return '夔仅允许使用 module_agent_executor、module_agent_reader、module_agent_updater、module_agent_plan、verification_code、read、grep 工具。'
+        return '夔仅允许使用 module_agent_executor、module_agent_reader、module_agent_updater、module_agent_plan、module_agent_status、verification_code、read、grep 工具。'
       }
       if (exec.name === 'module_agent_executor') {
         const action = stringArg(exec.arguments, 'action') ?? ''
@@ -181,6 +184,13 @@ function registerGuards(ctx: Context, state: SessionState, config: ModuleAgentCo
         const action = stringArg(exec.arguments, 'action') ?? ''
         if (action !== 'confirm_plan' && action !== 'review_complete' && action !== 'create_review_plan') {
           return `夔仅允许 module_agent_plan 的 confirm_plan、review_complete、create_review_plan 操作，当前: ${action}`
+        }
+      }
+      if (exec.name === 'module_agent_status') {
+        const action = stringArg(exec.arguments, 'action') ?? ''
+        const valid = ['ask', 'read', 'write']
+        if (!valid.includes(action)) {
+          return `夔仅允许 module_agent_status 的 ask、read、write 操作，当前: ${action}`
         }
       }
     }
@@ -245,8 +255,9 @@ function completionNotice(mode: AgentMode, agentId: string): string {
 
 /**
  * 框架子智能体 settle 时替换 subagent-settled 通知的完成消息。
- * 力牧通知补充 module_name（解析失败时用占位 '<模块名>'），其余模式复用
- * {@link completionNotice}。
+ * 若子会话状态文件存在（子会话经 module_agent_status write 汇报过状态），提示父会话
+ * 调用 module_agent_status read 读取状态文件；否则回退原完成通知——力牧通知补充
+ * module_name（解析失败时用占位 '<模块名>'），其余模式复用 {@link completionNotice}。
  */
 function frameworkCompletionMessage(
   agent: Agent,
@@ -254,15 +265,21 @@ function frameworkCompletionMessage(
   mode: AgentMode,
   config: ModuleAgentConfig,
 ): UserMessage {
-  let text = completionNotice(mode, childId)
-  if (mode === 'limu') {
-    const directory = directoryOfAgent(agent, config.dataDir)
-    const wsName = resolveWorkspace(directory, childId)
+  const directory = directoryOfAgent(agent, config.dataDir)
+  const wsName = resolveWorkspace(directory, childId)
+  const hasStatusReport = wsName !== null && statusReportExists(getWorkspaceDir(directory, wsName), childId)
+
+  let text: string
+  if (hasStatusReport) {
+    text = `子会话（会话 ${childId}）已汇报状态，请调用 module_agent_status(action="read", session_id="${childId}") 读取状态文件。`
+  } else if (mode === 'limu') {
     let moduleName: string | null = null
     if (wsName !== null) {
       moduleName = getModuleNameBySession(getWorkspaceDir(directory, wsName), childId)
     }
     text = `力牧（会话 ${childId}）任务完成。请调用 module_agent_executor(action="status", module_name="${moduleName ?? '<模块名>'}", session_id="${childId}") 获取力牧完成情况。`
+  } else {
+    text = completionNotice(mode, childId)
   }
   return createUserMessage({
     content: [{ type: 'text', text }] satisfies ContentBlock[],

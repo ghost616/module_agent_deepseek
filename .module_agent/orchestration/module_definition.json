@@ -43,7 +43,7 @@
     },
     {
       "path": "src/lib/stale_cleanup.ts",
-      "description": "失效数据清理：cleanWorkspaceStale 清理工作空间内引用了已不存在会话的数据（计划/映射/会话/绑定/执行记录/审查结果/夔计划/测试说明与报告），cleanExternalStale 清理项目级数据（会话-工作空间映射、工作空间绑定、文件锁），新增 sessionState 参数并调用 sessionState.cleanStaleModes(isAlive) 兜底清理内存残留 agent mode，并调用 cleanStalePersistedModes(directory, isAlive) 清理 `.module_agent/session_modes.json` 中失效 sessionId 的持久化残留，返回 ExternalCleanupStats 含 agent_modes 与 persisted_agent_modes 字段（对齐 opencode 版），基于注入的 isAlive 存活判定。"
+      "description": "失效数据清理：cleanWorkspaceStale 清理工作空间内引用了已不存在会话的数据（计划/映射/会话/绑定/执行记录/审查结果/夔计划/测试说明与报告/状态文件），cleanExternalStale 清理项目级数据（会话-工作空间映射、工作空间绑定、文件锁），新增 sessionState 参数并调用 sessionState.cleanStaleModes(isAlive) 兜底清理内存残留 agent mode，并调用 cleanStalePersistedModes(directory, isAlive) 清理 `.module_agent/session_modes.json` 中失效 sessionId 的持久化残留，返回 ExternalCleanupStats 含 agent_modes 与 persisted_agent_modes 字段（对齐 opencode 版），基于注入的 isAlive 存活判定。WorkspaceCleanupStats 新增 status_reports 字段并接入 cleanStaleStatusReports(workspaceDir, isAlive)。"
     },
     {
       "path": "src/lib/subagent_host.ts",
@@ -55,7 +55,7 @@
     },
     {
       "path": "src/tools/module_agent_executor.ts",
-      "description": "智能体调度执行工具：start（启动力牧，含会话复用/计划确认码校验/模型校验）、status（查询力牧执行状态，返回 session_alive 与 abandoned 供夔/风后判断等待补收尾或按已放行处理）、ping（二次检查提醒；支持 finalize=true 收尾模式：力牧已结束但计划未 plan_completed 时置关联计划 abandoned 放行，会话可用则 followup 提醒补完整收尾链，会话不可用则仅置 abandoned 返回『已标记放弃』）、start_review/review_status/check_reviewer（皋陶审查调度）、kui_status/start_kui（夔批量编排）、start_lizhu/list_unbound_lizhu（离朱测试调度）。基于 SubagentHost 与 module_session_tracker 实现 dsh 会话建立与复用。"
+      "description": "智能体调度执行工具：start（启动力牧，含会话复用/计划确认码校验/模型校验）、status（查询力牧执行状态，返回 session_alive 与 abandoned 供夔/风后判断等待补收尾或按已放行处理）、ping（二次检查提醒；支持 finalize=true 收尾模式：力牧已结束但计划未 plan_completed 时置关联计划 abandoned 放行，会话可用则 followup 提醒补完整收尾链，会话不可用则仅置 abandoned 返回『已标记放弃』）、start_review/review_status/check_reviewer（皋陶审查调度）、kui_status/start_kui（夔批量编排）、start_lizhu/list_unbound_lizhu（离朱测试调度）。基于 SubagentHost 与 module_session_tracker 实现 dsh 会话建立与复用。导出 recoverAgentMode 供 module_agent_status 复用；handleStartKui 的夔 toolFilter allow 列表含 module_agent_status（夔可被问、也可向子级问）。"
     },
     {
       "path": "src/tools/module_agent_start.ts",
@@ -63,11 +63,19 @@
     },
     {
       "path": "src/tools/module_agent_done.ts",
-      "description": "会话关闭工具：风后关闭力牧/皋陶/离朱/夔会话并清理关联数据（执行记录/计划/映射/文件锁/工作空间映射/会话绑定），支持 close、close_all（全部可关闭才关闭）、list_idle；关闭前检测忙碌/二次检查/结果未读取等阻塞原因，需确认码。力牧关闭检测将已 abandoned（放行）计划视为不活跃，不阻止关闭。"
+      "description": "会话关闭工具：风后关闭力牧/皋陶/离朱/夔会话并清理关联数据（执行记录/计划/映射/文件锁/工作空间映射/会话绑定），支持 close、close_all（全部可关闭才关闭）、list_idle；关闭前检测忙碌/二次检查/结果未读取等阻塞原因，需确认码。力牧关闭检测将已 abandoned（放行）计划视为不活跃，不阻止关闭。cleanupLizhu/cleanupGaotao/cleanupLimu/cleanupKui 关闭会话时调用 deleteStatusReport 清理其状态文件。"
     },
     {
       "path": "src/tools/module_agent_cleanup.ts",
       "description": "失效数据清理工具：clean_workspace 清理当前绑定工作空间内的失效数据，clean_external 调用 cleanExternalStale(isAlive, directory, options.sessionState) 清理项目级失效数据及内存残留 agent mode（将工具持有的 SessionState 传入以支持 cleanStaleModes 兜底清理），仅供风后调用；基于 SubagentHost.isAlive 的存活判定。"
+    },
+    {
+      "path": "src/lib/status_report.ts",
+      "description": "子会话状态文件数据模型：工作空间目录下 status_reports/<子会话id>.json 的覆盖写/读取/存在判定/删除/失效清理。文件名字段经 sanitizeIdSegment 编码 sessionId 防路径穿越，cleanStaleStatusReports 用 desanitizeIdSegment 反推原始 sessionId 后调 isAlive。writeStatusReport 覆盖写含 session_id/mode/content/updated_at；statusReportExists 供父会话及 framework 完成通知判断子会话是否已汇报状态；readStatusReport 文件缺失或损坏返回 null；deleteStatusReport 缺失返回 false。均同步 JSON 读写（existsSync/readJsonSync/writeJsonSync/unlinkSync）。"
+    },
+    {
+      "path": "src/tools/module_agent_status.ts",
+      "description": "父子会话状态问询工具（module_agent_status，ask/write/read）：ask 由父会话（风后/夔/力牧）校验调用者为目标真实父级（绑定表 getLimuStarter/getGaotaoStarter/getBoundStarter/getKuiStarter + SubagentHost.childAlive）后，经 followup 唤醒子会话概括进度并写入状态文件；write 由框架子会话解析自身工作空间后覆盖写入状态文件；read 由父会话读取并消费（删除）状态文件、返回摘要内容，无文件时提示先 ask 或等待。目标不存在/已关闭、目标忙碌（isWorking）分别返回明确错误。复用 module_agent_executor 导出的 recoverAgentMode 恢复目标角色。"
     }
   ]
 }

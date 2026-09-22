@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_63f81d09-5b06-4b98-9f4c-8a0a4c8318c5",
-  "module_name": "framework",
-  "development_plan": "注册风后共享计划工具（依赖 workspace 模块新增的 module_agent_shared_plan 工具）。任务：1. 修改 src/tools/index.ts：import createSharedPlanTool（来自 ./module_agent_shared_plan.ts）并 ctx.tools.register(createSharedPlanTool(opts))；更新文件头注释中“注册全部 25 个 module-agent 工具”为 26，并在工具清单说明中加入 module_agent_shared_plan。2. 更新本模块元数据：module_definition 的 src/tools/index.ts description 做累积更新（保留原有职责，补充新增 module_agent_shared_plan 注册）；change_history 追加变更记录。完成后运行 npm run typecheck 通过。",
-  "session_id": "ses_f79bb6d3effeANGXKaDTBId4mY",
-  "modified_files": [
-    "src/tools/index.ts"
-  ]
-}

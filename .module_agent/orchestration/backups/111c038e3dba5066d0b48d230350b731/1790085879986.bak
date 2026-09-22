@@ -32,7 +32,6 @@ import { getBoundWorkspace, getWorkspaceDir } from '../lib/workspace.ts'
 import { deletePlan, readAllMetadata } from '../lib/development_plan.ts'
 import { releasePlanFilesSession } from '../lib/plan_files.ts'
 import { getSessionWorkspace, removeSessionWorkspace } from '../lib/session_workspace.ts'
-import { deleteStatusReport } from '../lib/status_report.ts'
 import { SubagentHost } from '../lib/subagent_host.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
 
@@ -138,7 +137,6 @@ async function cleanupLizhu(c: CleanupContext, wsDir: string, sessionId: string,
   removePersistedMode(c.directory, sessionId)
   clearActivity(sessionId)
   removeLizhuSession(wsDir, sessionId)
-  deleteStatusReport(wsDir, sessionId)
   await removeSessionWorkspace(c.directory, sessionId)
 }
 
@@ -151,7 +149,6 @@ async function cleanupGaotao(c: CleanupContext, wsDir: string, fengzhouSessionId
   clearActivity(sessionId)
   await deleteReviewResult(wsDir, sessionId)
   unbindGaotao(wsDir, fengzhouSessionId)
-  deleteStatusReport(wsDir, sessionId)
   await removeSessionWorkspace(c.directory, sessionId)
 }
 
@@ -173,7 +170,6 @@ async function cleanupLimu(c: CleanupContext, wsDir: string, moduleName: string 
     await deletePlan(wsDir, planId)
   }
   await removeMapping(wsDir, sessionId)
-  deleteStatusReport(wsDir, sessionId)
   await removeSessionWorkspace(c.directory, sessionId)
 }
 
@@ -185,7 +181,6 @@ async function cleanupKui(c: CleanupContext, wsDir: string, fengzhouSessionId: s
   removePersistedMode(c.directory, sessionId)
   clearActivity(sessionId)
   unbindKui(wsDir, fengzhouSessionId)
-  deleteStatusReport(wsDir, sessionId)
   await removeSessionWorkspace(c.directory, sessionId)
 }
 

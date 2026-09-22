@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_480d710e-a02f-4675-9e29-5746ff347365",
-  "module_name": "module-management",
-  "development_plan": "修复夔死锁-阶段3（module-management）：修改 src/tools/module_agent_updater.ts 的 handleUpdateKuiPlan 中 status='completed' 的前置检查：遍历夔计划 plan_ids 时，对 meta.plan_completed=false 的计划，若其 meta.abandoned=true 则不再计入 pendingComplete（视为已放行），允许夔正常把夔计划置 completed；pendingReview 等其他判定保持不变。只改动 src/tools/module_agent_updater.ts。完成后运行 npm run typecheck 通过。",
-  "session_id": "ses_f79b124e2ffeXmCQ1xupwsrYyu",
-  "modified_files": [
-    "src/tools/module_agent_updater.ts"
-  ]
-}

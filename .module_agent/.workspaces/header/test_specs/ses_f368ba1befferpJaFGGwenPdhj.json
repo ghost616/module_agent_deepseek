@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_f368ba1befferpJaFGGwenPdhj",
+  "content": "## 待测试功能说明（补充：CUSTOM_TOOLS 一致性修复）\n\n在上一轮 framework 模块父子会话状态问询接入测试全部通过后，按离朱报告的 info 建议修复一处一致性缺口：\n\n### 变更\n- `src/index.ts` 的 `CUSTOM_TOOLS` 集合新增 `module_agent_status`，使插件自注册的全部自定义工具（含新增的 module_agent_status）均在 `tools/pre-execute` 中被识别为自定义工具并直接 `next()` 交由 orchestration 守卫判定。\n\n### 功能点\n1. `CUSTOM_TOOLS` 包含 `module_agent_status`（与 `module_agent_shared_plan` 等其余自注册工具一致）。\n2. `tools/pre-execute` 行为不变：命中 `CUSTOM_TOOLS` 的 `module_agent_status` 调用直接 `next()`；`module_agent_status` 不因名称匹配而被误当作 write/edit 越界拦截。\n3. 上一轮 4 项功能点（完成通知状态文件优先、agent/pre-step 拦截、module_agent_status 注册、夔守卫放行与 action 校验）无回归。\n4. 编译检查：`src/index.ts` 无新增类型错误。\n",
+  "timestamp": "2026-09-22T14:14:57.805Z"
+}

@@ -15,7 +15,6 @@ import { cleanStaleBindings } from './workspace.ts'
 import { cleanStalePlanFilesForModule } from './plan_files.ts'
 import { cleanStaleTestSpecs, cleanStaleTestReports } from './testing.ts'
 import { cleanStaleKuiPlans } from './kui_plan.ts'
-import { cleanStaleStatusReports } from './status_report.ts'
 import { readModuleTree } from './module_tree.ts'
 import type { IsAlive } from './module_session_tracker.ts'
 import { cleanStalePersistedModes } from './session_state.ts'
@@ -35,7 +34,6 @@ export interface WorkspaceCleanupStats {
   kui_plans: number
   test_specs: number
   test_reports: number
-  status_reports: number
 }
 
 /** 清理工作空间内引用了已不存在会话的数据。 */
@@ -59,7 +57,6 @@ export async function cleanWorkspaceStale(
   const kui_plans = await cleanStaleKuiPlans(workspaceDir, isAlive)
   const test_specs = await cleanStaleTestSpecs(workspaceDir, isAlive)
   const test_reports = await cleanStaleTestReports(workspaceDir, isAlive)
-  const status_reports = await cleanStaleStatusReports(workspaceDir, isAlive)
 
   return {
     plans: deletedPlanIds.length,
@@ -75,7 +72,6 @@ export async function cleanWorkspaceStale(
     kui_plans,
     test_specs,
     test_reports,
-    status_reports,
   }
 }
 

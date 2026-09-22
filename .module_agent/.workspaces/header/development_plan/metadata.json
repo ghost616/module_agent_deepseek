@@ -1,85 +1,5 @@
 [
   {
-    "plan_id": "plan_ee5e6a1f-55cf-4fb3-813a-e87f56249569",
-    "plan_summary": "阶段1（framework）：PlanMeta 接口新增 abandoned 可选字段",
-    "starter_session_id": "ses_f79bc21a2ffej478IAHSntHubf",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_480d710e-a02f-4675-9e29-5746ff347365",
-    "plan_summary": "阶段3（module-management）：handleUpdateKuiPlan 前置检查放行 abandoned 计划",
-    "starter_session_id": "ses_f79bc21a2ffej478IAHSntHubf",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_1484ec78-e2c0-4b37-bf7a-46f7a2208818",
-    "plan_summary": "阶段2（workflow）：development_plan.ts 新增 markPlanAbandoned 并在 markPlanComplete 清除 abandoned",
-    "starter_session_id": "ses_f79bc21a2ffej478IAHSntHubf",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_18a4df0b-23a6-4105-818f-be0af5a5c9e7",
-    "plan_summary": "阶段4（orchestration）：executor ping 收尾模式置 abandoned + status 返回 session_alive + kui_rules 步骤5/8",
-    "starter_session_id": "ses_f79bc21a2ffej478IAHSntHubf",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_8739cf22-8084-49f4-98b2-0dfb0fba911d",
-    "plan_summary": "workspace：新增 shared_plan.ts 存储库与 module_agent_shared_plan 工具，并更新模块元数据",
-    "starter_session_id": "ses_f79bc21a2ffej478IAHSntHubf",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_63f81d09-5b06-4b98-9f4c-8a0a4c8318c5",
-    "plan_summary": "framework：注册 module_agent_shared_plan 工具并更新模块元数据",
-    "starter_session_id": "ses_f79bc21a2ffej478IAHSntHubf",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_63017755-2674-4b08-aa24-af67f7dc76bc",
-    "plan_summary": "修复子代理（皋陶/夔/离朱）会话复用分支漏写会话-工作空间映射，导致审查等工具报“未关联工作空间”被阻塞",
-    "starter_session_id": "ses_f892483afffes7GMHy2qgN1BKw",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_59326d81-9038-4b68-b768-b66072aba188",
-    "plan_summary": "修复 start_review/start_kui 误报确认码作废；复用前校验会话工作空间归属与角色；close/close_all 清理孤儿绑定",
-    "starter_session_id": "ses_f892483afffes7GMHy2qgN1BKw",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_d5c24f58-8aff-4f5f-b280-1c5b01fab007",
-    "plan_summary": "handleStartKui 复用分支补 setAgentMode(boundKui,'kui')，对齐皋陶/离朱复用分支，消除夔复用后权限校验被拒隐患",
-    "starter_session_id": "ses_f892483afffes7GMHy2qgN1BKw",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_f370330b-6a7e-470c-a50c-4d90900bd846",
-    "plan_summary": "在 tools.guard 中对框架子代理拒绝 dsh 的 send_message/interrupt_agent，提示改用框架专用报告机制",
-    "starter_session_id": "ses_f892483afffes7GMHy2qgN1BKw",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
     "plan_id": "plan_be0593ec-72d0-42f3-acf9-605565057ccc",
     "plan_summary": "将 README 的「回退并重发」章节移动到「知识库」章节之后",
     "starter_session_id": "ses_f892483afffes7GMHy2qgN1BKw",
@@ -88,17 +8,17 @@
     "test_passed": true
   },
   {
-    "plan_id": "plan_47b2cbca-c700-4d5f-a491-39ce6b6fd22a",
-    "plan_summary": "为框架子代理角色增加文件持久化兜底，并新增单条清理能力（removePersistedMode）",
-    "starter_session_id": "ses_f473c03a8ffeQQtJoXNEzwaTEG",
+    "plan_id": "plan_62857bbf-af6c-4e9d-8689-2e38c44b3bf7",
+    "plan_summary": "新增父子会话状态问询能力：status_report.ts 状态文件读写与清理、module_agent_status 工具（ask/write/read）、夔工具放行、done 清理接入、stale_cleanup 接入、更新 current_spec",
+    "starter_session_id": "ses_f36c26089ffesHQmqSQCFnENXA",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_455319d8-175c-490c-98d4-0b7a6f5c7768",
-    "plan_summary": "修复 ping/复用冷会话角色识别（read 解构），增加持久化角色文件兜底，并在子代理角色注册/清理点同步持久化",
-    "starter_session_id": "ses_f473c03a8ffeQQtJoXNEzwaTEG",
+    "plan_id": "plan_64aefab2-d42a-43be-91b8-54e8b38b1a49",
+    "plan_summary": "framework 接入状态问询：frameworkCompletionMessage 经 statusReportExists 提示读取状态文件、tools/index.ts 注册 module_agent_status、夔白名单与 action 校验、更新 current_spec/module_definition",
+    "starter_session_id": "ses_f36c26089ffesHQmqSQCFnENXA",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true

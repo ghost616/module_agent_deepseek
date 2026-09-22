@@ -7,6 +7,7 @@
 - 会话模式冷恢复：`subagent/start` 分类链在 classifyProvider（`module-agent:<mode>` provider 命名）未命中时，经 ctx.agents 取回 agent，以 dsh 0.1.2-alpha.5 新会话形态 `foldSubagentDescriptor(agent.session.ownEvents())` 折叠 child 自有事件（fork 继承前缀截断 = ownEvents()，自 inheritedEventCount 起）中的 subagent/descriptor（version 3），continuable 且 persona 含 marker 才注册 mode（与 module_agent_executor.recoverAgentMode 同构；不再使用旧 header.seedLength / events.slice）；descriptor 折叠失败（缺失/非 continuable/persona 无 marker）时回退读取该会话持久化角色 `restoreMode(directoryOfAgent(agent, fallback))[info.id]`，命中且 `isFrameworkSubagentMode` 为真才 `setAgentMode` 注册，否则保持原行为（不注册）——作为框架子代理身份的文件持久化最终兜底。持久化写入范围（`persistMode` 契约）由「仅宿主会话（风后/岐伯/隶首）」扩展为「宿主会话 + 框架子代理（力牧/皋陶/离朱/夔）」，均写 `.module_agent/session_modes.json`；新增 `removePersistedMode(directory, sessionId)` 单条清理（读失败视为空、无该条目时不写文件、有变更才 mkdir + writeJsonSync 写回），所有读写沿用同步 read-modify-write。
 
 - 会话模式与工作空间 fork 继承（dsh 顶层 fork child）：registerSessionState 的 agent/session-start handler 在原「内存已有 mode 跳过 / 自身持久化宿主 mode 恢复 return」之后，对 dsh 普通顶层 fork child（agent.session.header.parentSession 存在且 origin!=='subagent'）继承父会话 host mode 与工作空间绑定：父 host mode = state.getAgentMode(parentSession) ?? restoreMode(directory)[parentSession]，为宿主模式（fengzhou/qibo/lishou，isHostMode）时 setAgentMode(child) + persistMode(child)；随后恒调 workspace.ts 的幂等 helper inheritWorkspaceBinding(directory, parentSessionId, childId)。父无 mode/绑定或非宿主 mode 静默跳过（不误标、不改文件）；子代理 fork/续用（origin='subagent'）走 descriptor/classifyProvider 身份通道不触发。
+- 完成通知（状态文件优先）与夔放行 module_agent_status：`frameworkCompletionMessage` 在生成完成通知前解析子会话工作空间（resolveWorkspace + getWorkspaceDir）并调用 orchestration 的 `statusReportExists` 判断该子会话状态文件是否存在；存在→返回「子会话（会话 <id>）已汇报状态，请调用 module_agent_status(action="read", session_id="<id>") 读取状态文件。」（保留原 source/通知形态）；不存在→回退原完成通知（力牧仍含 module_name）。`registerGuards` 的夔分支 `KUI_ALLOWED_TOOLS` 新增 module_agent_status，并对其 action 做 ask/read/write 白名单校验（与 module_agent_executor 的 action 校验同构）。
 ## 公共数据层
 
 framework 提供共享数据层，沿用 `.module_agent/*.json` 文件存储，逻辑与原 opencode 版保持一致，仅调整类型/导入：
@@ -20,13 +21,13 @@ framework 提供共享数据层，沿用 `.module_agent/*.json` 文件存储，�
 
 ## 工具注册
 
-`src/tools/index.ts` 的 `registerModuleAgentTools` 注册全部 25 个工具（defineTool + ctx.tools.register()）。
+`src/tools/index.ts` 的 `registerModuleAgentTools` 注册全部 27 个工具（defineTool + ctx.tools.register()）；`src/tools/skeleton.ts` 的 SKELETON_TOOLS 已清空，无骨架占位。
 
-本期完整实现：
 - `verification_code`：生成验证随机码并保存至会话；同时导出 generateId、确认码校验/消费等公共函数供 module_agent_plan 等工具复用。
 - `module_agent_backup`：backup/list/read_backup_content 三操作，力牧备份、风后/力牧/皋陶读取，校验模块存在与调用者身份。
+- `module_agent_status`：父子会话状态问询（ask 唤醒子会话写状态 / write 子会话写状态文件 / read 父会话读取并消费状态文件），工具工厂实现位于 orchestration 模块 `src/tools/module_agent_status.ts`。
 
-其余 23 个工具（module_agent_admin/executor/updater/updater_plan/updater_review/reader/start/setup/done、module_design_admin、module_agent_plan、workspace、module_agent_explorer/analyzer/line_reader、module_classification、module_agent_classifier/cleanup、agent_model_list、agent_model_config、module_agent_testing/correction、knowledge_base）在 `src/tools/skeleton.ts` 中为骨架占位（调用返回"尚未实现"），由各后续模块移植为真实实现后从骨架清单移除。
+其余工具（module_agent_admin/executor/updater/updater_plan/updater_review/reader/start/setup/done、module_design_admin、module_agent_plan、workspace、module_agent_explorer/analyzer/line_reader、module_classification、module_agent_classifier/cleanup、agent_model_list、agent_model_config、module_agent_testing/correction、module_agent_shared_plan、knowledge_base）均已由各模块移植为真实实现。
 ## 包骨架与类型检查
 
 `package.json` 为 `@deepseek-ai/dsh-module-agent`（type=module，依赖 `@deepseek-ai/cordis`/`@deepseek-ai/schemastery` 与 dsh peer 包，版本均使用 `*`——这些 dsh 依赖实际由 dsh 宿主提供、工程内无需解析，脱离 monorepo 亦可 `npm install`）。`tsconfig.json` extends `E:/deepseek-harness/tsconfig.base.json`（strict + noImplicitAny 等），通过其 paths 将 `@deepseek-ai/*` 映射到 dsh 源码做类型检查（noEmit，不设 rootDir）。

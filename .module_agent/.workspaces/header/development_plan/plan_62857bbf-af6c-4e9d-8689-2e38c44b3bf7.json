@@ -1,0 +1,13 @@
+{
+  "plan_id": "plan_62857bbf-af6c-4e9d-8689-2e38c44b3bf7",
+  "module_name": "orchestration",
+  "development_plan": "新增父子会话状态问询能力（父会话向子会话询问状态，子会话概括进度写入文件，父会话读取）。\n\n背景：当前父→子只有单向 ping（followup 提醒）且状态查询是读固定持久化记录；新增一个异步的“问状态→子写文件→父读取”链路，状态文件存在与否作为子会话结束返回的信号。\n\n具体任务：\n1. 新增 src/lib/status_report.ts：定义工作空间目录下状态文件路径约定 status_reports/<子会话id>.json；提供 statusReportPath(workspaceDir, sessionId)、statusReportExists(workspaceDir, sessionId)、writeStatusReport(workspaceDir, sessionId, content, mode?)（覆盖写，含 session_id/mode/content/updated_at）、readStatusReport(workspaceDir, sessionId)、deleteStatusReport(workspaceDir, sessionId)、cleanStaleStatusReports(workspaceDir, isAlive)（删除引用了已不存在会话的状态文件）。均用同步 JSON 读写（readJsonSync/writeJsonSync/existsSync，与 execution_result/review_result 同模式）。\n2. 新增 src/tools/module_agent_status.ts 定义工具 module_agent_status，三个 action：\n   - ask（父调用）：参数 session_id。校验调用者为风后/夔/力牧；解析目标会话角色（复用现有角色恢复逻辑：内存 mode → recoverAgentMode）；按绑定表（getLimuStarter/getGaotaoStarter/getBoundStarter/getKuiStarter）与 dsh 父子关系（host.childAlive）校验“调用者=目标真实父级”；目标不存在/已关闭→报“会话不存在”；目标忙碌（isWorking）→报“子会话正在执行中，请稍后 ask”；否则经 SubagentHost.followup 下发“请概括你当前进度，并调用 module_agent_status(action=\\\"write\\\", content=\\\"...\\\") 写入状态”，返回已发送。\n   - write（子调用）：参数 content。校验调用者为框架子会话；解析其工作空间；writeStatusReport 覆盖写入。\n   - read（父调用）：参数 session_id。校验调用者为目标真实父级；无文件→报“当前子会话没有状态文件可读，请先 ask 或等待”；有则读取、deleteStatusReport 删除、返回摘要内容。\n   权限：仅风后/夔/力牧可 ask/read；框架子会话（力牧/皋陶/离朱/夔）可 write。\n3. src/tools/module_agent_executor.ts：handleStartKui 的夔 toolFilter allow 列表加入 module_agent_status（使夔可被问、也可向子级问）。\n4. src/tools/module_agent_done.ts：cleanupLizhu/cleanupGaotao/cleanupLimu/cleanupKui 各自调用 deleteStatusReport(wsDir, sessionId) 清理被关闭会话的状态文件。\n5. src/lib/stale_cleanup.ts：cleanWorkspaceStale 接入 cleanStaleStatusReports(workspaceDir, isAlive)，WorkspaceCleanupStats 新增 status_reports 字段。\n6. 同步更新 current_spec。\n\n依赖：使用 framework 现有 lib（fs/workspace/session_state/module_session_tracker/limu_monitor/subagent_host）；新增的 status_report 需向 framework 暴露 statusReportExists 供完成通知判断。不改动现有调度语义。",
+  "session_id": "ses_f36c23b34ffehKDjrMxMLzZ9S0",
+  "modified_files": [
+    "src/lib/status_report.ts",
+    "src/tools/module_agent_status.ts",
+    "src/tools/module_agent_executor.ts",
+    "src/tools/module_agent_done.ts",
+    "src/lib/stale_cleanup.ts"
+  ]
+}

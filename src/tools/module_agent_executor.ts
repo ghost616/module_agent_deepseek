@@ -848,7 +848,7 @@ async function handleKuiStatus(handler: HandlerContext): Promise<JsonValue> {
  * @param directory 项目根目录（持久化角色文件所在目录）
  * @returns 识别出的角色，无法识别返回 undefined
  */
-async function recoverAgentMode(ctx: Context, directory: string, sessionId: string): Promise<AgentMode | undefined> {
+export async function recoverAgentMode(ctx: Context, directory: string, sessionId: string): Promise<AgentMode | undefined> {
   const agent = ctx.agents.get(SessionId(sessionId))
   if (agent !== undefined) {
     const descriptor = foldSubagentDescriptor(agent.session.ownEvents())
@@ -1166,7 +1166,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
       {
         persona,
         agentOptions: { provider: modelConfig.kui.providerID, model: modelConfig.kui.modelID },
-        toolFilter: { allow: ['module_agent_executor', 'module_agent_reader', 'module_agent_updater', 'module_agent_plan', 'verification_code', 'read', 'grep'] },
+        toolFilter: { allow: ['module_agent_executor', 'module_agent_status', 'module_agent_reader', 'module_agent_updater', 'module_agent_plan', 'verification_code', 'read', 'grep'] },
       },
       signal,
     )

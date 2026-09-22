@@ -28,5 +28,6 @@
   "scripts/build-client.mjs": "497a7a599b74e9420c3d5afc44a4357c",
   "client-src/index.ts": "3f5c6b698c82c644885bf54f94c2cffe",
   "client-src/rewind.ts": "74b7987d9a781580da7ff417eb7060c1",
-  "src/lib/types.ts": "3eb8723c8f2d066f388ab4534b463b67"
+  "src/lib/types.ts": "3eb8723c8f2d066f388ab4534b463b67",
+  "src/tools/index.ts": "c6660d72c55b9758f8102ae63457a84f"
 }
