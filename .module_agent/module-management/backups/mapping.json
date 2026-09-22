@@ -10,5 +10,6 @@
   "src/tools/module_agent_explorer.ts": "b4da928c61b52bfa0ec3763a0b362ee7",
   "src/tools/module_agent_analyzer.ts": "4332eae4dff37ed7ad572ceebf0639ab",
   "src/tools/module_agent_line_reader.ts": "7221af7a85dcb297c12c54d192c637a8",
-  "src/lib/classifier_rules.ts": "ed6080d0e9492e95f21bc9b59dece851"
+  "src/lib/classifier_rules.ts": "ed6080d0e9492e95f21bc9b59dece851",
+  "src/tools/module_agent_classifier.ts": "5def8add7225384e02a8dfbbb48cfd6d"
 }

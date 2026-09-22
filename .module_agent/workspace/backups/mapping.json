@@ -11,5 +11,6 @@
   "src/lib/setup_guide.ts": "c8878d7c968cf0a6f25d2179b90035fd",
   "src/tools/index.ts": "c6660d72c55b9758f8102ae63457a84f",
   "src/index.ts": "f41e9d04a45c83f3b6f6e630f10117fe",
-  "src/lib/shared_plan.ts": "92f9dd31cbd614b6efdbd4c0d28b6f8b"
+  "src/lib/shared_plan.ts": "92f9dd31cbd614b6efdbd4c0d28b6f8b",
+  "src/tools/module_agent_setup.ts": "1aba80f4df2687300a9ee876ce1c8ad8"
 }

@@ -1,5 +1,0 @@
-{
-  "session_id": "ses_f6536a8b5ffe4pupwLKyq7u10P",
-  "content": "## 待测试功能\n\n禁止框架子代理调用 dsh 的 `send_message` / `interrupt_agent` 工具。\n\n### 涉及代码文件\n- `src/index.ts`：`registerGuards` 的 `ctx.tools.guard` 回调，在 report 拒绝逻辑之后新增对 `send_message` / `interrupt_agent` 的拒绝。\n\n### 需验证的行为\n1. 框架子代理模式（limu / gaotao / lizhu / kui）调用 `send_message` 时被拒绝，拒绝原因包含「已禁用 dsh 的 send_message 工具」，并提示改用框架专用机制（力牧 `module_agent_updater_plan` write_result、皋陶 `module_agent_updater_review` write_review）与「完成后系统会自动通知启动者」。\n2. 框架子代理模式（limu / gaotao / lizhu / kui）调用 `interrupt_agent` 时被拒绝，拒绝原因包含「已禁用 dsh 的 interrupt_agent 工具」及相同专用机制提示。\n3. 非框架模式（fengzhou / qibo / lishou）调用 `send_message` / `interrupt_agent` 不被拒绝（返回 undefined）。\n4. 未注册 mode 的会话调用 `send_message` / `interrupt_agent` 不被拒绝。\n5. 框架子代理调用其他工具（如 `module_agent_testing`、`module_agent_updater_plan`）不受影响。\n6. 既有 report 拒绝逻辑与各模式写文件/夔白名单等守卫无回归。\n\n### 测试文件\n- `.lizhu_env/tests/guards-regression.test.ts`（补充/更新用例）\n\n### 编译检查\n- `npm run typecheck`（注意：本目录为脱离 dsh monorepo 的独立副本，tsconfig 相对路径可能无法解析，属环境限制；如无法执行请做 scoped tsc 检查 `src/index.ts`）\n",
-  "timestamp": "2026-09-13T12:42:26.928Z"
-}

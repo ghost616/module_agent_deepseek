@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_0b4ee0b8-2218-457c-8033-52cadda51e7e",
+    "plan": "同步修正 workspace 模块中过时的事件名引用",
+    "modified_files": [
+      "src/tools/module_agent_setup.ts"
+    ],
+    "summary": "执行总结：修改 src/tools/module_agent_setup.ts 第 45 行注释，将过时事件名 agent/session-start 更正为 dsh 实际的 agent/created；同步更新 module_definition 中该文件职责说明的相同表述，并追加变更历史。仅注释与元数据文案修改，代码逻辑零改动。\n测试总结：本次为纯注释/元数据文案修改，不涉及函数实现、接口、页面逻辑；编译检查不受注释变更影响，无适用测试类型，未执行测试流程。",
+    "errors": []
+  }
+]

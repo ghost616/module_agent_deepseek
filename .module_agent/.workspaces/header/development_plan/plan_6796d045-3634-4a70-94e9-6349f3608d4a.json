@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_6796d045-3634-4a70-94e9-6349f3608d4a",
+  "module_name": "framework",
+  "development_plan": "补齐 framework 模块中遗漏的过时事件名引用（dsh 实际事件为 agent/created，agent/session-start 不存在）。\n\n修复要求：\n1. 修改 src/tools/module_agent_start.ts 第 49 行注释「宿主会话身份经文件持久化，重启后由 agent/session-start 恢复。」，将事件名更正为 agent/created。\n2. 用 grep 确认该文件无其他 agent/session-start 残留引用（当前仅此一处），如有则一并更正。\n3. 本次为纯注释文案变更，无代码逻辑改动；无需修改模块定义（module_agent_start.ts 的职责说明未含该表述）；按规范追加 change_history。",
+  "session_id": "ses_f3655d79dffemjeHnpVshQBv76",
+  "modified_files": [
+    "src/tools/module_agent_start.ts"
+  ]
+}

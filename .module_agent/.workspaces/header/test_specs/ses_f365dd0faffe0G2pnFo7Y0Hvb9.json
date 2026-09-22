@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_f365dd0faffe0G2pnFo7Y0Hvb9",
+  "content": "# 待测试功能说明\n\n## 变更文件\n- `src/lib/session_state.ts`\n\n## 需测试的功能\n1. `registerSessionState(ctx, state, fallback?)`：订阅的事件名应为 dsh 实际的 `agent/created`（而非不存在的 `agent/session-start`），确保宿主会话模式恢复逻辑会被触发。\n2. 宿主会话模式恢复：内存已有 mode 时跳过；`restoreMode` 命中且为宿主模式（fengzhou/qibo/lishou）时调用 `setAgentMode`。\n3. dsh 普通顶层 fork child 继承：`agent.session.header.parentSession` 存在且 `origin !== 'subagent'` 时，继承父会话宿主 mode（内存 `getAgentMode` ?? `restoreMode` 持久化）并 `persistMode`，随后调用 `inheritWorkspaceBinding`；父无 mode/绑定或非宿主 mode 时静默跳过；`origin === 'subagent'` 不触发继承。\n4. 文件内 JSDoc/注释不再残留 `agent/session-start`，并说明 `agent/created` 的 source 取值（startup/resume/clear/compact）。\n5. TypeScript 类型检查：`src/lib/session_state.ts` 无新增类型错误。\n",
+  "timestamp": "2026-09-22T15:01:36.949Z"
+}

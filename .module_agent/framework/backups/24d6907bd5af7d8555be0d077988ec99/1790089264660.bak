@@ -38,7 +38,7 @@ export function isFrameworkSubagentMode(mode: AgentMode | undefined): mode is Fr
 /**
  * 宿主会话模式：风后/岐伯/隶首。其身份无 subagent persona marker，mode 经
  * {@link persistMode} 持久化到 `.module_agent/session_modes.json`，重启后由
- * `agent/created` 经 {@link restoreMode} 恢复。
+ * `agent/session-start` 经 {@link restoreMode} 恢复。
  */
 export const HOST_MODES: readonly AgentMode[] = ['fengzhou', 'qibo', 'lishou']
 
@@ -210,7 +210,7 @@ export async function cleanStalePersistedModes(
 }
 
 /**
- * 将 SessionState 绑定到 dsh 生命周期：subagent/start 自动分类 + agent/created
+ * 将 SessionState 绑定到 dsh 生命周期：subagent/start 自动分类 + agent/session-start
  * 恢复宿主会话 mode。返回 effect disposer 交由调用方挂载。
  *
  * mode 清理不再绑定 agent/disposed（dispose 先于 subagent-settled 触发，过早清除
@@ -225,13 +225,10 @@ export async function cleanStalePersistedModes(
  * {@link restoreMode} 中该会话的持久化角色，命中框架子代理模式才注册（作为
  * 子代理身份的最终兜底），否则不注册。
  *
- * 宿主会话（风后/岐伯/隶首）无 subagent descriptor，经 agent/created 从
+ * 宿主会话（风后/岐伯/隶首）无 subagent descriptor，经 agent/session-start 从
  * {@link persistMode} 写入的 `.module_agent/session_modes.json` 恢复：内存已有 mode
  * 时跳过（不覆盖 subagent/start 刚建立的子代理身份），restoreMode 命中且为宿主
- * 模式才注册。agent/created payload 为
- * `{ agent, source: 'startup' | 'resume' | 'clear' | 'compact', signal? }`：全新创建
- * 为 startup，冷恢复/续用为 resume（clear、compact 亦经本事件发布）；source 不参与
- * 恢复判定，恢复仅依据内存 mode 与持久化文件。
+ * 模式才注册。
  *
  * dsh 普通顶层 fork（commands.fork 创建的 child：无 origin、isSeeded、parentSession
  * 指向父会话）新会话启动时，继承父会话的宿主 host mode（内存 ?? 持久化）与工作空间
@@ -265,7 +262,7 @@ export function registerSessionState(ctx: Context, state: SessionState, fallback
       }
     })
 
-    yield ctx.on('agent/created', ({ agent }) => {
+    yield ctx.on('agent/session-start', ({ agent }) => {
       if (state.getAgentMode(agent.id) !== undefined) return
       const directory = directoryOfAgent(agent, fallback)
       const persisted = restoreMode(directory)

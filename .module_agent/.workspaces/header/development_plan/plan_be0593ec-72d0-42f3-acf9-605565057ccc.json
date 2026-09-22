@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_be0593ec-72d0-42f3-acf9-605565057ccc",
-  "module_name": "framework",
-  "development_plan": "调整 README 章节顺序（framework 模块）：将 README.md 中的「## 回退并重发」章节（当前位于「## 安装与加载」之后、「## 快速开始」之前，约 27-39 行）整体移动到「## 知识库」章节之后、「## 与 opencode 版实现方案差异」之前。\n\n要求：仅移动位置，章节标题与全部条目文字保持不变；移动后保证章节之间的空行格式与相邻章节一致（保持一个空行分隔）；不要改动其他章节内容或顺序。完成后确认 README 结构正确（章节顺序为：... 知识库 → 回退并重发 → 与 opencode 版实现方案差异）。",
-  "session_id": "ses_f6536a8b5ffe4pupwLKyq7u10P",
-  "modified_files": [
-    "README.md"
-  ]
-}

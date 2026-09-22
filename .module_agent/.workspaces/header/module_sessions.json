@@ -1,8 +1,12 @@
 {
-  "orchestration": [
-    "ses_f36c23b34ffehKDjrMxMLzZ9S0"
-  ],
   "framework": [
-    "ses_f368ba1befferpJaFGGwenPdhj"
+    "ses_f365dd0faffe0G2pnFo7Y0Hvb9",
+    "ses_f3655d79dffemjeHnpVshQBv76"
+  ],
+  "workspace": [
+    "ses_f365dc23fffe1wpLoXlcNIKsDN"
+  ],
+  "module-management": [
+    "ses_f365da1fdffeGzhrxZBYGn6J4b"
   ]
 }

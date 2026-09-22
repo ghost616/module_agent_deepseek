@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_6796d045-3634-4a70-94e9-6349f3608d4a",
+    "plan": "修正 src/tools/module_agent_start.ts 第 49 行过时事件名注释 agent/session-start → agent/created",
+    "modified_files": [
+      "src/tools/module_agent_start.ts"
+    ],
+    "summary": "执行总结：本轮共修改 1 个文件 src/tools/module_agent_start.ts（第 49 行注释「重启后由 agent/session-start 恢复」更正为「agent/created」）；经 grep 确认 src 下仅此一处残留引用（其余命中为 .module_agent 历史备份/计划/报告，非源码），并追加 change_history。未修改模块定义与 current_spec（职责说明未含该表述，纯注释文案变更）。\n测试总结：本次为纯注释文案变更，不涉及函数实现、接口、页面逻辑，编译检查不受注释变更影响，无适用测试类型，未执行测试流程。",
+    "errors": []
+  }
+]

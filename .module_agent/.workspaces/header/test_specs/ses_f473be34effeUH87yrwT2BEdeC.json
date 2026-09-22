@@ -1,5 +1,0 @@
-{
-  "session_id": "ses_f473be34effeUH87yrwT2BEdeC",
-  "content": "## 待测试功能说明\n\n### 变更文件\n- `src/lib/session_state.ts`\n\n### 需测试的功能\n1. **removePersistedMode(directory, sessionId)**：从 `.module_agent/session_modes.json` 删除指定 sessionId 条目。\n   - 文件存在且含该条目：删除后写回，其余条目保留。\n   - 文件中无该条目：不写文件（文件内容/修改时间不变）。\n   - 文件不存在或坏 JSON：视为空，不抛错、不写文件。\n2. **registerSessionState 的 subagent/start 冷恢复兜底**：\n   - classifyProvider 未命中且 descriptor 折叠失败（缺失/非 continuable/persona 无 marker）时，回退读取 restoreMode(directory)[info.id]；命中且 isFrameworkSubagentMode 为真（limu/gaotao/lizhu/kui）则 setAgentMode 注册。\n   - 持久化命中宿主模式（fengzhou/qibo/lishou）时不注册（保持原行为）。\n   - 持久化无该条目时不注册。\n   - classifyProvider 命中或 descriptor continuable + persona marker 命中时，行为不变（不读持久化兜底）。\n3. **persistMode JSDoc 契约更新**（写入范围扩展为宿主 + 框架子代理）——文档性变更，无行为变化。\n\n### 编译检查\n- TypeScript 类型检查：`src/lib/session_state.ts` 变更后本项目 src 自身类型错误为 0。\n",
-  "timestamp": "2026-09-19T08:24:54.512Z"
-}

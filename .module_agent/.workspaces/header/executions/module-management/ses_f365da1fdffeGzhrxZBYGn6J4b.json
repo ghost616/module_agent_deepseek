@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_abcd5db9-84f6-4b2f-9cf0-7f74b150adcd",
+    "plan": "同步修正 module-management 模块中过时的事件名引用。",
+    "modified_files": [
+      "src/tools/module_agent_classifier.ts"
+    ],
+    "summary": "执行总结：共修改 1 个文件 src/tools/module_agent_classifier.ts（第 46 行注释事件名 agent/session-start → agent/created），并同步更新 module_definition.json 中该文件职责说明的对应事件名，追加变更历史。变更仅为注释与元数据文本，无代码逻辑改动。\n测试总结：纯注释/文档文本变更，无函数实现或类型签名变化，编译测试、单元测试、接口测试、E2E 测试均不适用，跳过测试。",
+    "errors": []
+  }
+]
