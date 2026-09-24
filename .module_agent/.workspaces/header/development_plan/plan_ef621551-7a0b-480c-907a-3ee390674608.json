@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_ef621551-7a0b-480c-907a-3ee390674608",
-  "module_name": "module-management",
-  "development_plan": "适配新版 dsh（会话格式 v4）的 producer-owned 消息源机制：修改 src/tools/module_agent_classifier.ts 中 exec.deferContext(createUserMessage(...)) 的 source，由 { kind:'plugin', plugin:'module-agent', form:'instructions' } 改为 { kind:'module-agent', form:'instructions' }（去掉 plugin 字段）；同步更新 module-management 模块定义中 module_agent_classifier.ts 的文件职责说明。",
-  "session_id": "ses_f2c2938a9ffe8nOaXSMLU0fm8f",
-  "modified_files": [
-    "src/tools/module_agent_classifier.ts"
-  ]
-}
