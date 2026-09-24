@@ -1,0 +1,13 @@
+[
+  {
+    "plan_id": "plan_9ad176f4-4cb3-49ba-a8d1-0b2588666891",
+    "plan": "适配 dsh 会话格式 v4 producer-owned 消息源：修改 src/tools/module_agent_start.ts 中 agent.inject(createUserMessage(...)) 的 source，由 { kind:'plugin', plugin:'module-agent', form:'notice', summary:'风后力牧规则注入' } 改为 { kind:'module-agent', form:'notice', summary:'风后力牧规则注入' }（去掉 plugin 字段）；并同步更新 orchestration 模块定义中 module_agent_start.ts 的文件职责说明。",
+    "modified_files": [
+      "src/tools/module_agent_start.ts"
+    ],
+    "summary": "已完成 module_agent_start.ts 的 source 适配：注入风后力牧规则的用户消息 source 改为 producer-owned 形式 { kind:'module-agent', form:'notice', summary:'风后力牧规则注入' }，移除退役的 kind:'plugin'/plugin 包装（kind 由 src/index.ts 的 MessageSourceMap 声明合并背书）。同时更新了 orchestration 模块定义中该文件的职责说明并追加变更历史。备份位于 module_agent_backup。\\n\\n测试：适用编译测试（TypeScript 类型检查），已启动离朱（会话 ses_f2c2cafd0ffe8ZdzzIKjB0IfnT）并读取结果。\\n- 编译测试：tsc -p .lizhu_env/env/tsconfig.typecheck.json 通过，module_agent_start.ts 0 错误；变更前该处 TS2322（\"plugin\" 不可赋给 kind 联合）已消除。\\n- 静态扫描：src/tools/module_agent_start.ts 中 kind:'plugin' 且 plugin:'module-agent' 的退役组合匹配数为 0。\\n- 单元/功能测试：定向用例 19 passed，全量回归 48 文件 / 636 用例全部通过。\\n遗留（与本次变更无关）：src/lib/subagent_host.ts:79/85 存在 SubagentCatalogEntry/SubagentListEntry 类型漂移错误，建议另行立项。",
+    "errors": [
+      "遗留（非本次回归）：src/lib/subagent_host.ts:79/85 SubagentCatalogEntry/SubagentListEntry 类型不匹配、kind 属性不存在，建议在对应模块计划中单独立项。"
+    ]
+  }
+]

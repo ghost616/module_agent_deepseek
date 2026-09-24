@@ -13,5 +13,6 @@
   "src/tools/module_agent_done.ts": "111c038e3dba5066d0b48d230350b731",
   ".lizhu_env/tests/executor-status.test.ts": "06f81690ed4102e37dba460d5c4e2864",
   ".lizhu_env/env/vitest.config.ts": "14dc20cb8e77409cc35d94f606dc179e",
-  "src/lib/kui_rules.ts": "e3289886a305092837c743cade200314"
+  "src/lib/kui_rules.ts": "e3289886a305092837c743cade200314",
+  "src/tools/module_agent_start.ts": "bd741016caac0111c2bc1384d7fadcd4"
 }

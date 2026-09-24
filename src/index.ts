@@ -1,7 +1,7 @@
 import { isAbsolute, relative, resolve } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
-import { createUserMessage, type ContentBlock, type UserMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage, type ContentBlock, type UserMessage, type ContextFormed } from '@deepseek-ai/dsh-llm'
 import type { PostToolDecision, PreToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'
 import type { AssembleContext } from '@deepseek-ai/dsh-system-prompt'
 import { Config, type Config as ModuleAgentConfig } from './config.ts'
@@ -25,6 +25,15 @@ import { BEGINNER_TIPS } from './lib/beginner_tips.ts'
 import { registerOrchestrationGuards } from './lib/orchestration_guards.ts'
 import { recordActivity, clearActivity } from './lib/limu_monitor.ts'
 import { getModuleNameBySession } from './lib/module_session_tracker.ts'
+
+// dsh v4 退役 source.kind='plugin' 旧包装（含 plugin 字段），改由每个生产者经
+// MessageSourceMap 声明自有 kind。声明 'module-agent' 后，本插件注入的用户消息
+// 使用 { kind: 'module-agent', ... } 即可通过 v4 原生准入。
+declare module '@deepseek-ai/dsh-llm' {
+  interface MessageSourceMap {
+    'module-agent': { kind: 'module-agent' } & ContextFormed
+  }
+}
 
 export const name = 'module-agent'
 export { Config }
@@ -284,8 +293,7 @@ function frameworkCompletionMessage(
   return createUserMessage({
     content: [{ type: 'text', text }] satisfies ContentBlock[],
     source: {
-      kind: 'plugin',
-      plugin: 'module-agent',
+      kind: 'module-agent',
       form: 'notice',
       summary: `${AGENT_MODE_LABELS[mode]}任务完成通知`,
     },

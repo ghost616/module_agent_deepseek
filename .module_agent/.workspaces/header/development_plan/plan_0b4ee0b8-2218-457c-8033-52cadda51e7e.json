@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_0b4ee0b8-2218-457c-8033-52cadda51e7e",
-  "module_name": "workspace",
-  "development_plan": "同步修正 workspace 模块中过时的事件名引用（dsh 实际事件为 agent/created，agent/session-start 不存在）。\n\n修复要求：\n1. 修改 src/tools/module_agent_setup.ts 中「宿主会话身份经文件持久化，重启后由 agent/session-start 恢复。」注释，将事件名更正为 agent/created。\n2. 更新 workspace 模块定义中 src/tools/module_agent_setup.ts 的文件职责说明，将其中「重启后由 agent/session-start 恢复」更正为 agent/created。",
-  "session_id": "ses_f365dc23fffe1wpLoXlcNIKsDN",
-  "modified_files": [
-    "src/tools/module_agent_setup.ts"
-  ]
-}

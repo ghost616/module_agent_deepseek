@@ -49,7 +49,8 @@ export function createModuleAgentSetupTool(options: ModuleAgentSetupToolOptions)
         const message = createUserMessage({
           content: [{ type: 'text', text: SETUP_GUIDE }] satisfies ContentBlock[],
           source: {
-            kind: 'module-agent',
+            kind: 'plugin',
+            plugin: 'module-agent',
             form: 'notice',
             summary: '岐伯设置向导已注入',
           },

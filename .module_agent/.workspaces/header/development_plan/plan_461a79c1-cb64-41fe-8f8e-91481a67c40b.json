@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_461a79c1-cb64-41fe-8f8e-91481a67c40b",
+  "module_name": "",
+  "development_plan": "修正 framework current_spec.md 中过时的 producer-owned 消息源措辞：将段末句「同类旧 source 在 module_agent_start / module_agent_setup / module_agent_classifier 中亦有残留，分属 orchestration / workspace / module-management 模块，由各自模块同步适配」更正为反映「已由各模块同步适配完成」的现状；section 其余内容不变。",
+  "session_id": "",
+  "modified_files": [
+    ".module_agent/framework/current_spec.md"
+  ]
+}

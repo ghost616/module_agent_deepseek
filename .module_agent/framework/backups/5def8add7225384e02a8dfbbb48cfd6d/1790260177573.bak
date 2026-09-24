@@ -50,7 +50,8 @@ export function createModuleAgentClassifierTool(options: ModuleAgentClassifierTo
         exec.deferContext(createUserMessage({
           content: [{ type: 'text', text: CLASSIFIER_RULES }] satisfies ContentBlock[],
           source: {
-            kind: 'module-agent',
+            kind: 'plugin',
+            plugin: 'module-agent',
             form: 'instructions',
           },
         }))

@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_dd1416e7-c482-4708-9d6c-f4487e9fd61d",
+  "module_name": "framework",
+  "development_plan": "修正 framework 模块 current_spec.md 中过时的 producer-owned 消息源措辞。\n\n背景：dsh v4 producer-owned 消息源适配已在 framework/orchestration/workspace/module-management 四个模块全部完成（src 下已无 kind:'plugin' 残留），但 framework 的 current_spec.md 中「producer-owned 消息源（dsh v4 适配）」段末句仍写「同类旧 source 在 module_agent_start / module_agent_setup / module_agent_classifier 中亦有残留，分属 orchestration / workspace / module-management 模块，由各自模块同步适配」，措辞已过时（暗示仍有残留、尚待适配）。\n\n修复要求：\n1. 读取 .module_agent（即 framework 模块数据目录）下 current_spec.md，将上述段末句更正为反映现状的表述，例如「同类旧 source 已由 orchestration（module_agent_start）、workspace（module_agent_setup）、module-management（module_agent_classifier）各自同步适配完成」，删除\"亦有残留/由各自模块同步适配\"的过时暗示。\n2. 保持该 section 其余内容不变。\n3. 纯文档措辞变更，无代码逻辑改动；按规范追加 change_history。",
+  "session_id": "ses_f2c20f127ffeiji7We6u8YYLR1",
+  "modified_files": [
+    ".module_agent/current_spec.md"
+  ]
+}

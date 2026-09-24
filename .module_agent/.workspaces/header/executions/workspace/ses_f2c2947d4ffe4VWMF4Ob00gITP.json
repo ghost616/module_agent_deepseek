@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_0036a9da-26cc-4e0f-8e58-8c5367336dd6",
+    "plan": "修改 src/tools/module_agent_setup.ts 中 createUserMessage 的 source，由 { kind:'plugin', plugin:'module-agent', ... } 改为 { kind:'module-agent', ... }；同步更新 workspace 模块定义中 module_agent_setup.ts 的文件职责说明。",
+    "modified_files": [
+      "src/tools/module_agent_setup.ts"
+    ],
+    "summary": "更新了 src/tools/module_agent_setup.ts：createUserMessage 的 source 改为 producer-owned kind 'module-agent'，去掉 plugin 字段。",
+    "errors": []
+  }
+]

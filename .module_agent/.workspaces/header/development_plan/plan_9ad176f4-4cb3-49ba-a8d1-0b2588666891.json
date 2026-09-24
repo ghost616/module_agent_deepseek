@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_9ad176f4-4cb3-49ba-a8d1-0b2588666891",
+  "module_name": "orchestration",
+  "development_plan": "适配新版 dsh（会话格式 v4）的 producer-owned 消息源机制：修改 src/tools/module_agent_start.ts 中 agent.inject(createUserMessage(...)) 的 source，由 { kind:'plugin', plugin:'module-agent', form:'notice', summary:'风后力牧规则注入' } 改为 { kind:'module-agent', form:'notice', summary:'风后力牧规则注入' }（去掉 plugin 字段）；同步更新 orchestration 模块定义中 module_agent_start.ts 的文件职责说明。",
+  "session_id": "ses_f2c295481ffe1Zwxp0LjBWEM7t",
+  "modified_files": [
+    "src/tools/module_agent_start.ts"
+  ]
+}

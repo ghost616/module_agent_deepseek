@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_4fbbcd31-6a26-4053-b5dd-78a240632c9b",
+  "module_name": "framework",
+  "development_plan": "适配新版 dsh（会话格式 v4）的 producer-owned 消息源机制，修复加载风后工具时报「format v4 message requires a producer-owned source kind」错误。\n\n根因：dsh v4 退役了 source.kind='plugin' 的旧包装（含 plugin 字段），改为每个生产者通过 MessageSourceMap 模块增强声明自己的 kind；module-agent 插件仍在多处构造 source:{kind:'plugin', plugin:'module-agent', ...}，被 v4 原生准入拒绝。\n\n修复要求：\n1. 在 src/index.ts 增加模块增强声明：将 dsh-llm 的现有 import 扩展为「import { createUserMessage, type ContentBlock, type UserMessage, type ContextFormed } from '@deepseek-ai/dsh-llm'」，并在文件顶部（或其他合适模块位置）新增：\n   declare module '@deepseek-ai/dsh-llm' { interface MessageSourceMap { 'module-agent': { kind: 'module-agent' } & ContextFormed } }\n2. 将 src/index.ts 的 frameworkCompletionMessage 中 createUserMessage 的 source 由 { kind:'plugin', plugin:'module-agent', form:'notice', summary } 改为 { kind:'module-agent', form:'notice', summary }（去掉 plugin 字段）。\n3. 同步更新 framework 模块定义中 src/index.ts 的文件职责说明，并在 current_spec.md 相应功能领域 section 记录 producer-owned 消息源适配。",
+  "session_id": "ses_f2c2e28ffffeExJvfy1fe6gQ2n",
+  "modified_files": [
+    "src/index.ts"
+  ]
+}

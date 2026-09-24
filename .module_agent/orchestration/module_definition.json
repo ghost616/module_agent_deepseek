@@ -59,7 +59,7 @@
     },
     {
       "path": "src/tools/module_agent_start.ts",
-      "description": "启动力牧编排模式：校验互斥身份（岐伯/力牧/皋陶/隶首/离朱）后，将当前会话标记为风后（setAgentMode）并将身份经 persistMode 持久化到 .module_agent/session_modes.json（重启后可恢复），再通过 agent.inject 注入风后力牧规则（ORCHESTRATOR_RULES）。"
+      "description": "启动力牧编排模式：校验互斥身份（岐伯/力牧/皋陶/隶首/离朱）后，将当前会话标记为风后（setAgentMode）并将身份经 persistMode 持久化到 .module_agent/session_modes.json（重启后可恢复），再通过 agent.inject 注入风后力牧规则（ORCHESTRATOR_RULES）。注入消息的 source 采用 dsh v4 producer-owned 形式 { kind: 'module-agent', form: 'notice', summary: '风后力牧规则注入' }——kind 由本插件经 MessageSourceMap 声明合并，已弃用退役的 { kind: 'plugin', plugin: 'module-agent' } 包装。"
     },
     {
       "path": "src/tools/module_agent_done.ts",

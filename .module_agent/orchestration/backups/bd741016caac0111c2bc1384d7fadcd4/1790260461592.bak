@@ -53,7 +53,8 @@ export function createModuleAgentStartTool(options: ModuleAgentStartToolOptions)
         agent.inject(createUserMessage({
           content: [{ type: 'text', text: ORCHESTRATOR_RULES }],
           source: {
-            kind: 'module-agent',
+            kind: 'plugin',
+            plugin: 'module-agent',
             form: 'notice',
             summary: '风后力牧规则注入',
           },

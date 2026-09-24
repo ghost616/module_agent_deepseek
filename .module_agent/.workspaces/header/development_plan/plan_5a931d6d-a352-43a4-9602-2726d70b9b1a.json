@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_5a931d6d-a352-43a4-9602-2726d70b9b1a",
-  "module_name": "",
-  "development_plan": "修正 src/tools/module_agent_start.ts 第 49 行过时事件名注释 agent/session-start → agent/created",
-  "session_id": "",
-  "modified_files": [
-    "src/tools/module_agent_start.ts"
-  ]
-}

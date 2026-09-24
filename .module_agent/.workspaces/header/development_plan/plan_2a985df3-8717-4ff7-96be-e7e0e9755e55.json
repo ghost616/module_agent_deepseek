@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_2a985df3-8717-4ff7-96be-e7e0e9755e55",
-  "module_name": "framework",
-  "development_plan": "修复宿主会话模式（风后/岐伯/隶首）在 dsh 重启后无法恢复的缺陷。\n\n根因：src/lib/session_state.ts 的 registerSessionState 订阅了 dsh 中不存在的事件名 agent/session-start，导致监听器永不触发，restoreMode 恢复逻辑不执行；重启后 getAgentMode 对宿主会话返回 undefined，module_agent_executor 等工具误报「仅供风后或夔调用」。\n\n修复要求：\n1. 在 src/lib/session_state.ts 的 registerSessionState 中，将订阅的事件名由 agent/session-start 改为 dsh 实际的 agent/created（payload 为 { agent, source: 'startup' | 'resume' | 'clear' | 'compact', signal? }）。\n2. 保持原有恢复逻辑不变：内存已有 mode 时跳过；restoreMode 命中且为宿主模式（fengzhou/qibo/lishou）时 setAgentMode；对 dsh 普通顶层 fork child（header.parentSession 存在且 origin !== 'subagent'）继承父会话宿主 mode 并 persistMode，随后调用 inheritWorkspaceBinding 继承工作空间绑定；子代理 fork/续用（origin='subagent'）不触发继承。\n3. 同步更新该文件内所有引用 agent/session-start 的 JSDoc 与注释，改为 agent/created，并说明 source 取值。\n4. 更新 framework 模块定义中 src/lib/session_state.ts 的文件职责说明（将「重启后由 agent/session-start 恢复」更正为 agent/created），并在 current_spec.md 对应功能领域 section 同步更正。",
-  "session_id": "ses_f365dd0faffe0G2pnFo7Y0Hvb9",
-  "modified_files": [
-    "src/lib/session_state.ts"
-  ]
-}

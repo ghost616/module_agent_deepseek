@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_f2c2947d4ffe4VWMF4Ob00gITP",
+  "content": "## 待测试功能\n\n适配 dsh 会话格式 v4 的 producer-owned 消息源机制。\n\n### 涉及代码文件\n- `src/tools/module_agent_setup.ts`\n\n### 需验证点\n- `createModuleAgentSetupTool` 中 `createUserMessage` 的 `source` 现为 `{ kind: 'module-agent', form: 'notice', summary: '岐伯设置向导已注入' }`，不再包含 `plugin` 字段。\n- 项目能通过 TypeScript 编译/类型检查（`kind: 'module-agent'` 须由 `src/index.ts` 的 `MessageSourceMap` 声明合并提供，类型合法）。\n",
+  "timestamp": "2026-09-24T14:34:52.132Z"
+}

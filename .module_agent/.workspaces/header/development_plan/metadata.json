@@ -1,39 +1,47 @@
 [
   {
-    "plan_id": "plan_2a985df3-8717-4ff7-96be-e7e0e9755e55",
-    "plan_summary": "修复宿主会话模式在 dsh 重启后无法恢复的缺陷：将 session_state.ts 订阅事件由 agent/session-start 改为 agent/created，并同步注释与模块定义",
-    "starter_session_id": "ses_f365e00d0ffePSaW2tv5wXgxjb",
+    "plan_id": "plan_4fbbcd31-6a26-4053-b5dd-78a240632c9b",
+    "plan_summary": "框架模块：适配 dsh v4 producer-owned 消息源（module-agent kind）",
+    "starter_session_id": "ses_f2c2e61b3ffe2ae4D99aNUNr36",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_0b4ee0b8-2218-457c-8033-52cadda51e7e",
-    "plan_summary": "修正 workspace 模块中过时事件名引用：module_agent_setup.ts 注释由 agent/session-start 改为 agent/created，并同步模块定义",
-    "starter_session_id": "ses_f365e00d0ffePSaW2tv5wXgxjb",
+    "plan_id": "plan_9ad176f4-4cb3-49ba-a8d1-0b2588666891",
+    "plan_summary": "编排模块：适配 dsh v4 producer-owned 消息源（module-agent kind）",
+    "starter_session_id": "ses_f2c2e61b3ffe2ae4D99aNUNr36",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_abcd5db9-84f6-4b2f-9cf0-7f74b150adcd",
-    "plan_summary": "修正 module-management 模块中过时事件名引用：module_agent_classifier.ts 注释由 agent/session-start 改为 agent/created，并同步模块定义",
-    "starter_session_id": "ses_f365e00d0ffePSaW2tv5wXgxjb",
+    "plan_id": "plan_0036a9da-26cc-4e0f-8e58-8c5367336dd6",
+    "plan_summary": "工作空间模块：适配 dsh v4 producer-owned 消息源（module-agent kind）",
+    "starter_session_id": "ses_f2c2e61b3ffe2ae4D99aNUNr36",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_6796d045-3634-4a70-94e9-6349f3608d4a",
-    "plan_summary": "修正 module_agent_start.ts 过时事件名注释 agent/session-start → agent/created",
+    "plan_id": "plan_ef621551-7a0b-480c-907a-3ee390674608",
+    "plan_summary": "模块管理：适配 dsh v4 producer-owned 消息源（module-agent kind）",
+    "starter_session_id": "ses_f2c2e61b3ffe2ae4D99aNUNr36",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_dd1416e7-c482-4708-9d6c-f4487e9fd61d",
+    "plan_summary": "修正 framework current_spec.md 中过时的 producer-owned 消息源措辞",
     "starter_session_id": "ses_f366e862dffeU8ulLHx3R27SIk",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_5a931d6d-a352-43a4-9602-2726d70b9b1a",
-    "plan_summary": "审查 module_agent_start.ts 注释事件名更正",
+    "plan_id": "plan_461a79c1-cb64-41fe-8f8e-91481a67c40b",
+    "plan_summary": "审查 framework current_spec.md 措辞更正",
     "starter_session_id": "ses_f366e862dffeU8ulLHx3R27SIk",
     "code_reviewed": true,
     "plan_completed": true,

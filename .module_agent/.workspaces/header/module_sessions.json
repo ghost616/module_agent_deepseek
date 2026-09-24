@@ -1,12 +1,15 @@
 {
   "framework": [
-    "ses_f365dd0faffe0G2pnFo7Y0Hvb9",
-    "ses_f3655d79dffemjeHnpVshQBv76"
+    "ses_f2c2e28ffffeExJvfy1fe6gQ2n",
+    "ses_f2c20f127ffeiji7We6u8YYLR1"
+  ],
+  "orchestration": [
+    "ses_f2c295481ffe1Zwxp0LjBWEM7t"
   ],
   "workspace": [
-    "ses_f365dc23fffe1wpLoXlcNIKsDN"
+    "ses_f2c2947d4ffe4VWMF4Ob00gITP"
   ],
   "module-management": [
-    "ses_f365da1fdffeGzhrxZBYGn6J4b"
+    "ses_f2c2938a9ffe8nOaXSMLU0fm8f"
   ]
 }
