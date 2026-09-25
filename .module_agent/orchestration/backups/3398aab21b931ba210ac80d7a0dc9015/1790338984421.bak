@@ -1,0 +1,401 @@
+/**
+ * 工具测试：src/tools/module_agent_status.ts（父子会话状态问询 ask/write/read）。
+ * 覆盖调用者身份校验、参数校验、目标存活/父级关系/忙碌判定、
+ * followup 下发、状态文件写入/读取消费、损坏文件处理等分支。
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+vi.mock('@deepseek-ai/dsh-tools', () => ({
+  defineTool: (def: unknown) => def,
+}))
+vi.mock('@deepseek-ai/dsh-session', () => ({
+  SessionId: (id: string) => id,
+}))
+vi.mock('@deepseek-ai/schemastery', () => ({
+  default: {
+    object: () => ({}),
+    string: () => ({ default: () => ({}), optional: () => ({}) }),
+  },
+}))
+vi.mock('@deepseek-ai/dsh-llm', () => ({
+  createUserMessage: (msg: unknown) => msg,
+}))
+
+import { createModuleAgentStatusTool } from '../../src/tools/module_agent_status.ts'
+import { SessionState, type AgentMode } from '../../src/lib/session_state.ts'
+import { getWorkspaceDir } from '../../src/lib/workspace.ts'
+import {
+  writeStatusReport,
+  readStatusReport,
+  statusReportExists,
+  statusReportPath,
+} from '../../src/lib/status_report.ts'
+import { recordActivity, clearActivity } from '../../src/lib/limu_monitor.ts'
+
+const WS = 'ws1'
+const CALLER_FZ = 'caller-fz'
+const TARGET = 'ses-target-limu'
+
+async function tempDir(): Promise<string> {
+  return (await mkdtemp(join(tmpdir(), 'ma-status-tool-'))).replace(/\\/g, '/')
+}
+
+async function writeJson(path: string, data: unknown): Promise<void> {
+  await mkdir(join(path.split('/').slice(0, -1).join('/')), { recursive: true })
+  await writeFile(path, JSON.stringify(data), 'utf-8')
+}
+
+interface RuntimeOptions {
+  callerId?: string
+  callerMode: AgentMode
+  /** 目标会话角色（用于绑定表父级判定；缺省时不注册）。 */
+  targetMode?: AgentMode
+  /** session_workspaces 映射（缺省时 callerId/target 均映射到 WS）。 */
+  workspaces?: Record<string, string>
+  alive?: string[]
+  children?: Record<string, string[]>
+  bindings?: Partial<Record<'limu' | 'gaotao' | 'lizhu' | 'kui', Record<string, string>>>
+}
+
+interface Runtime {
+  dir: string
+  workspaceDir: string
+  followupTexts: string[]
+  run: (args: Record<string, unknown>) => Promise<Record<string, unknown>>
+}
+
+async function makeRuntime(opts: RuntimeOptions): Promise<Runtime> {
+  const dir = await tempDir()
+  const callerId = opts.callerId ?? CALLER_FZ
+  const workspaces = opts.workspaces ?? { [callerId]: WS, [TARGET]: WS }
+  await writeJson(`${dir}/.module_agent/session_workspaces.json`, workspaces)
+  const wsDir = getWorkspaceDir(dir, WS)
+  await writeJson(`${wsDir}/session_bindings.json`, {
+    limu: opts.bindings?.limu ?? {},
+    gaotao: opts.bindings?.gaotao ?? {},
+    lizhu: opts.bindings?.lizhu ?? {},
+    kui: opts.bindings?.kui ?? {},
+    lizhu_fengzhou: {},
+  })
+
+  const state = new SessionState()
+  state.setAgentMode(callerId, opts.callerMode)
+  if (opts.targetMode !== undefined) state.setAgentMode(TARGET, opts.targetMode)
+
+  const alive = new Set(opts.alive ?? [])
+  const followupTexts: string[] = []
+
+  const ctx: any = {
+    sessions: { get: (id: string) => (alive.has(id) ? { id } : undefined) },
+    agents: { get: () => undefined },
+    get: () => undefined,
+    subagents: {
+      startContinuable: async () => ({ childId: 'unused' }),
+      [Symbol.for('dsh.subagent.deliverPrompt')]: async (_p: unknown, _c: unknown, messages: unknown[]) => {
+        followupTexts.push((messages as Array<{ type: string; text: string }>)[0]?.text ?? '')
+      },
+      listChildren: async (parentId: string) =>
+        (opts.children?.[parentId] ?? []).map(id => ({ kind: 'child', id })),
+    },
+    logger: { info: () => {}, warn: () => {} },
+  }
+
+  const tool = createModuleAgentStatusTool({
+    ctx,
+    sessionState: state,
+    dataDir: dir,
+    subagentProvider: 'spawn',
+  })
+
+  const caller = { id: callerId, session: { header: { cwd: dir } } }
+  const run = async (args: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    const result = await tool.execute(args as never, {
+      agent: caller as never,
+      signal: new AbortController().signal,
+    } as never)
+    return result as Record<string, unknown>
+  }
+
+  return { dir, workspaceDir: wsDir, followupTexts, run }
+}
+
+beforeEach(() => {
+  // limu_monitor 为进程内模块级状态，逐用例清理避免跨用例串扰
+  clearActivity(TARGET)
+  clearActivity(CALLER_FZ)
+})
+
+describe('module_agent_status action="write"（子会话写状态）', () => {
+  it('非框架子会话调用 → error', async () => {
+    const rt = await makeRuntime({ callerMode: 'fengzhou' })
+    try {
+      const res = await rt.run({ action: 'write', content: 'x' })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('仅供框架子会话')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('content 缺失 → error', async () => {
+    const rt = await makeRuntime({ callerId: 'child-lz', callerMode: 'lizhu' })
+    try {
+      const res = await rt.run({ action: 'write' })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('需提供 content')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('content 为空字符串（边界）→ error', async () => {
+    const rt = await makeRuntime({ callerId: 'child-lz', callerMode: 'lizhu' })
+    try {
+      const res = await rt.run({ action: 'write', content: '' })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('需提供 content')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('无法解析工作空间 → error', async () => {
+    const rt = await makeRuntime({ callerId: 'child-lz', callerMode: 'lizhu', workspaces: {} })
+    try {
+      const res = await rt.run({ action: 'write', content: '进度' })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('无法解析当前会话的工作空间')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('合法写入：返回 ok 且状态文件内容/角色正确', async () => {
+    const rt = await makeRuntime({ callerId: 'child-lz', callerMode: 'lizhu' })
+    try {
+      const res = await rt.run({ action: 'write', content: '测试进行中' })
+      expect(res.status).toBe('ok')
+      expect(res.session_id).toBe('child-lz')
+      const report = readStatusReport(rt.workspaceDir, 'child-lz')
+      expect(report).not.toBeNull()
+      expect(report!.content).toBe('测试进行中')
+      expect(report!.mode).toBe('lizhu')
+      expect(report!.session_id).toBe('child-lz')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('重复 write 为覆盖写', async () => {
+    const rt = await makeRuntime({ callerId: 'child-lz', callerMode: 'lizhu' })
+    try {
+      await rt.run({ action: 'write', content: '一' })
+      await rt.run({ action: 'write', content: '二' })
+      expect(readStatusReport(rt.workspaceDir, 'child-lz')!.content).toBe('二')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('module_agent_status action="ask"（父会话问询）', () => {
+  it('非风后/夔/力牧调用 → error', async () => {
+    const rt = await makeRuntime({ callerId: 'child-lz', callerMode: 'lizhu', alive: [TARGET] })
+    try {
+      const res = await rt.run({ action: 'ask', session_id: TARGET })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('仅供风后、夔或力牧调用')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('session_id 缺失 → error', async () => {
+    const rt = await makeRuntime({ callerMode: 'fengzhou' })
+    try {
+      const res = await rt.run({ action: 'ask' })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('需提供 session_id')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('目标会话不存在/已关闭 → error', async () => {
+    const rt = await makeRuntime({ callerMode: 'fengzhou', alive: [] })
+    try {
+      const res = await rt.run({ action: 'ask', session_id: TARGET })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('不存在')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('调用者非目标真实父级（无 dsh 父子关系）→ error', async () => {
+    const rt = await makeRuntime({ callerMode: 'fengzhou', alive: [TARGET], children: {} })
+    try {
+      const res = await rt.run({ action: 'ask', session_id: TARGET })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('不是当前会话的直接子会话')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('绑定表记录的真实父级与调用者不符 → error（即使 dsh 父子关系成立）', async () => {
+    const rt = await makeRuntime({
+      callerMode: 'fengzhou',
+      targetMode: 'limu',
+      alive: [TARGET],
+      children: { [CALLER_FZ]: [TARGET] },
+      bindings: { limu: { [TARGET]: 'other-fengzhou' } },
+    })
+    try {
+      const res = await rt.run({ action: 'ask', session_id: TARGET })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('不是当前会话的直接子会话')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('目标忙碌（isWorking）→ error', async () => {
+    const rt = await makeRuntime({
+      callerMode: 'fengzhou',
+      alive: [TARGET],
+      children: { [CALLER_FZ]: [TARGET] },
+    })
+    try {
+      recordActivity(TARGET)
+      const res = await rt.run({ action: 'ask', session_id: TARGET })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('正在执行中')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('合法 ask：下发写状态指令、返回已发送、记录活动', async () => {
+    const rt = await makeRuntime({
+      callerMode: 'fengzhou',
+      targetMode: 'limu',
+      alive: [TARGET],
+      children: { [CALLER_FZ]: [TARGET] },
+      bindings: { limu: { [TARGET]: CALLER_FZ } },
+    })
+    try {
+      const res = await rt.run({ action: 'ask', session_id: TARGET })
+      expect(res.status).toBe('ok')
+      expect(res.session_id).toBe(TARGET)
+      expect(res.message).toContain('已向子会话')
+      expect(rt.followupTexts).toHaveLength(1)
+      expect(rt.followupTexts[0]).toContain('module_agent_status')
+      expect(rt.followupTexts[0]).toContain('action="write"')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('module_agent_status action="read"（父会话读取消费）', () => {
+  it('无状态文件 → error', async () => {
+    const rt = await makeRuntime({
+      callerMode: 'fengzhou',
+      alive: [TARGET],
+      children: { [CALLER_FZ]: [TARGET] },
+    })
+    try {
+      const res = await rt.run({ action: 'read', session_id: TARGET })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('没有状态文件可读')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('有状态文件：返回摘要内容并删除文件（消费）', async () => {
+    const rt = await makeRuntime({
+      callerMode: 'fengzhou',
+      alive: [TARGET],
+      children: { [CALLER_FZ]: [TARGET] },
+    })
+    try {
+      writeStatusReport(rt.workspaceDir, TARGET, '当前进度 60%', 'limu')
+      const res = await rt.run({ action: 'read', session_id: TARGET })
+      expect(res.status).toBe('ok')
+      expect(res.session_id).toBe(TARGET)
+      expect(res.content).toBe('当前进度 60%')
+      expect(res.mode).toBe('limu')
+      expect(typeof res.updated_at).toBe('string')
+      expect(statusReportExists(rt.workspaceDir, TARGET)).toBe(false)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('状态文件损坏：返回解析失败错误并清理文件', async () => {
+    const rt = await makeRuntime({
+      callerMode: 'fengzhou',
+      alive: [TARGET],
+      children: { [CALLER_FZ]: [TARGET] },
+    })
+    try {
+      await mkdir(join(rt.workspaceDir, 'status_reports'), { recursive: true })
+      await writeFile(statusReportPath(rt.workspaceDir, TARGET), 'not-json', 'utf-8')
+      const res = await rt.run({ action: 'read', session_id: TARGET })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('无法解析')
+      expect(statusReportExists(rt.workspaceDir, TARGET)).toBe(false)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('调用者非目标真实父级 → error', async () => {
+    const rt = await makeRuntime({ callerMode: 'fengzhou', alive: [TARGET], children: {} })
+    try {
+      writeStatusReport(rt.workspaceDir, TARGET, 'x', 'limu')
+      const res = await rt.run({ action: 'read', session_id: TARGET })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('不是当前会话的直接子会话')
+      // 权限校验失败不应消费状态文件
+      expect(statusReportExists(rt.workspaceDir, TARGET)).toBe(true)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('module_agent_status 通用分支', () => {
+  it('未知 action → error', async () => {
+    const rt = await makeRuntime({ callerMode: 'fengzhou' })
+    try {
+      const res = await rt.run({ action: 'nope' })
+      expect(res.status).toBe('error')
+      expect(res.error).toContain('未知 action')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('缺少 agent 上下文 → error', async () => {
+    const rt = await makeRuntime({ callerMode: 'fengzhou' })
+    try {
+      const tool = createModuleAgentStatusTool({
+        ctx: {} as never,
+        sessionState: new SessionState(),
+        dataDir: rt.dir,
+        subagentProvider: 'spawn',
+      })
+      const res = await tool.execute({ action: 'ask', session_id: TARGET } as never, { agent: undefined } as never)
+      expect((res as Record<string, unknown>).status).toBe('error')
+      expect((res as Record<string, unknown>).error).toContain('agent 上下文')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+})

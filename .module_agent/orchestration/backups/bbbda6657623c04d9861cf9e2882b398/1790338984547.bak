@@ -1,0 +1,604 @@
+import { describe, it, expect, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+vi.mock('@deepseek-ai/dsh-tools', () => ({
+  defineTool: (def: unknown) => def,
+}))
+vi.mock('@deepseek-ai/dsh-session', () => ({
+  SessionId: (id: string) => id,
+}))
+vi.mock('@deepseek-ai/schemastery', () => ({
+  default: {
+    object: () => ({}),
+    string: () => ({ default: () => ({}), optional: () => ({}) }),
+  },
+}))
+vi.mock('@deepseek-ai/dsh-llm', () => ({
+  createUserMessage: (msg: unknown) => msg,
+}))
+
+import { createModuleAgentExecutorTool } from '../../src/tools/module_agent_executor.ts'
+import { SessionState } from '../../src/lib/session_state.ts'
+import { savePlan, markPlanComplete } from '../../src/lib/development_plan.ts'
+import { storePlanConfirmation, getLatestCode, verificationCode, CODE_CONSUMED_NOTICE } from '../../src/tools/verification_code.ts'
+
+const CALLER = 'caller-fz'
+const WS = 'ws1'
+const PROVIDER = 'prov-x'
+const MODEL = 'model-x'
+
+async function tempDir(): Promise<string> {
+  return (await mkdtemp(join(tmpdir(), 'ma-wsreuse-'))).replace(/\\/g, '/')
+}
+
+async function writeJson(path: string, data: unknown): Promise<void> {
+  await mkdir(join(path.split('/').slice(0, -1).join('/')), { recursive: true })
+  await writeFile(path, JSON.stringify(data), 'utf-8')
+}
+
+function readWsMap(dir: string): Record<string, string> {
+  return JSON.parse(readFileSync(join(dir, '.module_agent', 'session_workspaces.json'), 'utf-8'))
+}
+
+function readBindings(workspaceDir: string): Record<string, Record<string, string>> {
+  return JSON.parse(readFileSync(join(workspaceDir, 'session_bindings.json'), 'utf-8'))
+}
+
+function readLizhuSessions(workspaceDir: string): string[] {
+  return JSON.parse(readFileSync(join(workspaceDir, 'lizhu_sessions.json'), 'utf-8'))
+}
+
+interface RuntimeOptions {
+  bindings?: Record<string, Record<string, string>>
+  moduleSessions?: Record<string, string[]>
+  lizhuSessions?: string[]
+  modules?: string[]
+  children?: string[]
+  seedWorkspaces?: Record<string, string>
+  agentModes?: Record<string, string>
+  modelConfig?: Record<string, { providerID: string; modelID: string }>
+  newChildId?: string
+  /** 内存无 agent 时，经 ctx.agents 暴露的 continuable descriptor persona 模式（供 recoverAgentMode 识别）。 */
+  inMemoryDescriptorMode?: string
+}
+
+interface Runtime {
+  dir: string
+  workspaceDir: string
+  state: SessionState
+  followupTexts: string[]
+  run: (args: Record<string, unknown>) => Promise<Record<string, unknown>>
+}
+
+/** 构造 continuable subagent descriptor 事件（persona 含 module-agent:role=<mode> 标记）。 */
+function descriptorEvents(mode: string): unknown[] {
+  return [
+    {
+      type: 'subagent/descriptor',
+      seq: 1,
+      time: 0,
+      data: {
+        version: 3,
+        mode: 'continuable',
+        provider: 'module-agent:test',
+        label: '测试子智能体',
+        persona: `module-agent:role=${mode}\n\n## 执行流程指令`,
+      },
+    },
+  ]
+}
+
+async function makeRuntime(opts: RuntimeOptions = {}): Promise<Runtime> {
+  const dir = await tempDir()
+  const followupTexts: string[] = []
+
+  await writeJson(`${dir}/.module_agent/session_workspaces.json`, {
+    [CALLER]: WS,
+    ...(opts.seedWorkspaces ?? {}),
+  })
+  const wsDir = `${dir}/.module_agent/.workspaces/${WS}`
+  await writeJson(`${wsDir}/session_bindings.json`, {
+    gaotao: opts.bindings?.gaotao ?? {},
+    limu: opts.bindings?.limu ?? {},
+    lizhu: opts.bindings?.lizhu ?? {},
+    lizhu_fengzhou: opts.bindings?.lizhu_fengzhou ?? {},
+    kui: opts.bindings?.kui ?? {},
+  })
+  await writeJson(`${wsDir}/module_sessions.json`, opts.moduleSessions ?? {})
+  await writeJson(`${wsDir}/lizhu_sessions.json`, opts.lizhuSessions ?? [])
+  if (opts.modelConfig) {
+    await writeJson(`${wsDir}/agent_model_config.json`, opts.modelConfig)
+  }
+  await writeJson(`${dir}/.module_agent/module_tree.json`, {
+    modules: (opts.modules ?? []).map(name => ({ name })),
+  })
+
+  const state = new SessionState()
+  state.setAgentMode(CALLER, 'fengzhou')
+  for (const [sid, mode] of Object.entries(opts.agentModes ?? {})) {
+    state.setAgentMode(sid, mode as never)
+  }
+
+  const children = (opts.children ?? []).map(id => ({ kind: 'child', id }))
+
+  const ctx: any = {
+    sessions: { get: () => ({ id: 'alive' }) },
+    agents: {
+      get: () => opts.inMemoryDescriptorMode
+        ? { session: { ownEvents: () => descriptorEvents(opts.inMemoryDescriptorMode!) } }
+        : undefined,
+    },
+    get: () => undefined,
+    subagents: {
+      startContinuable: async () => ({ childId: opts.newChildId ?? 'unused-child' }),
+      [Symbol.for('dsh.subagent.deliverPrompt')]: async (
+        _parent: unknown,
+        _child: unknown,
+        messages: unknown[],
+      ) => {
+        const text = (messages as Array<{ type: string; text: string }>)[0]?.text ?? ''
+        followupTexts.push(text)
+      },
+      listChildren: async () => children,
+    },
+    logger: { info: () => {}, warn: () => {} },
+  }
+
+  const tool = createModuleAgentExecutorTool({
+    ctx,
+    sessionState: state,
+    catalog: {
+      listProviders: async () => [{ id: PROVIDER, name: PROVIDER }],
+      listModels: async () => [{ id: MODEL, name: MODEL }],
+    },
+    dataDir: dir,
+    subagentProvider: 'spawn',
+  })
+
+  const caller = { id: CALLER, session: { header: { cwd: dir } } }
+
+  const run = async (args: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    const result = await tool.execute(
+      args as never,
+      { agent: caller as never, signal: new AbortController().signal } as never,
+    )
+    return result as Record<string, unknown>
+  }
+
+  return { dir, workspaceDir: wsDir, state, followupTexts, run }
+}
+
+function seedPendingPlan(rt: Runtime, planId: string): void {
+  savePlan(rt.workspaceDir, planId, {
+    plan_id: planId,
+    module_name: 'mod-x',
+    development_plan: 'dev',
+    session_id: 'ses-limu-x',
+    modified_files: [],
+  }, 'summary', CALLER)
+  markPlanComplete(rt.workspaceDir, planId, [])
+}
+
+describe('复用会话分支写入会话工作空间映射（session_workspaces.json）', () => {
+  it('皋陶 start_review 复用分支：归属+角色匹配时写入当前 workspaceName', async () => {
+    const rt = await makeRuntime({
+      bindings: { gaotao: { [CALLER]: 'ses-gaotao-reuse' } },
+      seedWorkspaces: { 'ses-gaotao-reuse': WS },
+      agentModes: { 'ses-gaotao-reuse': 'gaotao' },
+    })
+    try {
+      seedPendingPlan(rt, 'plan-gt')
+
+      const res = await rt.run({ action: 'start_review' })
+
+      expect(res.status).toBeUndefined()
+      expect(res.reviewer_session_id).toBe('ses-gaotao-reuse')
+      expect(res.reused).toBe(true)
+      expect(readWsMap(rt.dir)['ses-gaotao-reuse']).toBe(WS)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('夔 start_kui 复用分支：归属+角色匹配时写入当前 workspaceName', async () => {
+    const rt = await makeRuntime({
+      bindings: { kui: { [CALLER]: 'ses-kui-reuse' } },
+      seedWorkspaces: { 'ses-kui-reuse': WS },
+      agentModes: { 'ses-kui-reuse': 'kui' },
+    })
+    try {
+      const res = await rt.run({
+        action: 'start_kui',
+        plans: [{ module_name: 'mod-x', development_plan: 'plan-a' }],
+      })
+
+      expect(res.kui_session_id).toBe('ses-kui-reuse')
+      expect(res.reused).toBe(true)
+      expect(readWsMap(rt.dir)['ses-kui-reuse']).toBe(WS)
+      expect(rt.state.getAgentMode('ses-kui-reuse')).toBe('kui')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('离朱 start_lizhu 复用分支：归属+角色匹配时写入当前 workspaceName', async () => {
+    const rt = await makeRuntime({
+      lizhuSessions: ['ses-lizhu-reuse'],
+      children: ['ses-lizhu-reuse'],
+      seedWorkspaces: { 'ses-lizhu-reuse': WS },
+      agentModes: { 'ses-lizhu-reuse': 'lizhu' },
+    })
+    try {
+      const res = await rt.run({ action: 'start_lizhu' })
+
+      expect(res.lizhu_session_id).toBe('ses-lizhu-reuse')
+      expect(res.reused).toBe(true)
+      expect(readWsMap(rt.dir)['ses-lizhu-reuse']).toBe(WS)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('力牧 start 复用分支回归：reusable 仍被写入当前 workspaceName 且含 notice', async () => {
+    const rt = await makeRuntime({
+      modules: ['mod-x'],
+      moduleSessions: { 'mod-x': ['ses-limu-reuse'] },
+    })
+    try {
+      await verificationCode.execute({}, { agent: { id: CALLER } } as never)
+      const code = getLatestCode(CALLER)!
+      storePlanConfirmation('plan-limu', code)
+
+      const res = await rt.run({
+        action: 'start',
+        module_name: 'mod-x',
+        development_plan: 'dev',
+        plan_id: 'plan-limu',
+        plan_summary: 'summary',
+      })
+
+      expect(res.session_id).toBe('ses-limu-reuse')
+      expect(res.reused).toBe(true)
+      expect(readWsMap(rt.dir)['ses-limu-reuse']).toBe(WS)
+      expect(res.notice).toBe(CODE_CONSUMED_NOTICE)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('复用前校验：工作空间归属不符', () => {
+  it('皋陶无归属记录 → 清绑定、不复用、无模型配置返回 error', async () => {
+    const rt = await makeRuntime({
+      bindings: { gaotao: { [CALLER]: 'ses-gaotao-norec' } },
+      agentModes: { 'ses-gaotao-norec': 'gaotao' },
+    })
+    try {
+      const res = await rt.run({ action: 'start_review' })
+
+      expect(res.status).toBe('error')
+      expect(res.reused).toBeUndefined()
+      expect(readBindings(rt.workspaceDir).gaotao[CALLER]).toBeUndefined()
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('皋陶归属为其他工作空间 → 清绑定、不复用、映射不被覆盖', async () => {
+    const rt = await makeRuntime({
+      bindings: { gaotao: { [CALLER]: 'ses-gaotao-other' } },
+      seedWorkspaces: { 'ses-gaotao-other': 'old-ws' },
+      agentModes: { 'ses-gaotao-other': 'gaotao' },
+    })
+    try {
+      seedPendingPlan(rt, 'plan-gt2')
+
+      const res = await rt.run({ action: 'start_review' })
+
+      expect(res.status).toBe('error')
+      expect(res.reused).toBeUndefined()
+      expect(readBindings(rt.workspaceDir).gaotao[CALLER]).toBeUndefined()
+      expect(readWsMap(rt.dir)['ses-gaotao-other']).toBe('old-ws')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('夔归属不符 → 清绑定、不复用', async () => {
+    const rt = await makeRuntime({
+      bindings: { kui: { [CALLER]: 'ses-kui-other' } },
+      seedWorkspaces: { 'ses-kui-other': 'old-ws' },
+      agentModes: { 'ses-kui-other': 'kui' },
+    })
+    try {
+      const res = await rt.run({
+        action: 'start_kui',
+        plans: [{ module_name: 'mod-x', development_plan: 'plan-a' }],
+      })
+
+      expect(res.status).toBe('error')
+      expect(res.reused).toBeUndefined()
+      expect(readBindings(rt.workspaceDir).kui[CALLER]).toBeUndefined()
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('离朱归属不符 → 从 lizhu_sessions 移除、不复用', async () => {
+    const rt = await makeRuntime({
+      lizhuSessions: ['ses-lizhu-other'],
+      children: ['ses-lizhu-other'],
+      seedWorkspaces: { 'ses-lizhu-other': 'old-ws' },
+      agentModes: { 'ses-lizhu-other': 'lizhu' },
+    })
+    try {
+      const res = await rt.run({ action: 'start_lizhu' })
+
+      expect(res.status).toBe('error')
+      expect(res.reused).toBeUndefined()
+      expect(readLizhuSessions(rt.workspaceDir)).not.toContain('ses-lizhu-other')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('复用前校验：框架角色不符', () => {
+  it('皋陶归属正确但角色为其他 → 清绑定、不复用', async () => {
+    const rt = await makeRuntime({
+      bindings: { gaotao: { [CALLER]: 'ses-gaotao-wrongrole' } },
+      seedWorkspaces: { 'ses-gaotao-wrongrole': WS },
+      agentModes: { 'ses-gaotao-wrongrole': 'limu' },
+    })
+    try {
+      seedPendingPlan(rt, 'plan-gt3')
+
+      const res = await rt.run({ action: 'start_review' })
+
+      expect(res.status).toBe('error')
+      expect(res.reused).toBeUndefined()
+      expect(readBindings(rt.workspaceDir).gaotao[CALLER]).toBeUndefined()
+      expect(readWsMap(rt.dir)['ses-gaotao-wrongrole']).toBe(WS)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('皋陶归属正确但角色无法识别（无 mode 且无法恢复）→ 清绑定、不复用', async () => {
+    const rt = await makeRuntime({
+      bindings: { gaotao: { [CALLER]: 'ses-gaotao-unknown' } },
+      seedWorkspaces: { 'ses-gaotao-unknown': WS },
+    })
+    try {
+      seedPendingPlan(rt, 'plan-gt4')
+
+      const res = await rt.run({ action: 'start_review' })
+
+      expect(res.status).toBe('error')
+      expect(res.reused).toBeUndefined()
+      expect(readBindings(rt.workspaceDir).gaotao[CALLER]).toBeUndefined()
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('夔归属正确但角色不符 → 清绑定、不复用', async () => {
+    const rt = await makeRuntime({
+      bindings: { kui: { [CALLER]: 'ses-kui-wrongrole' } },
+      seedWorkspaces: { 'ses-kui-wrongrole': WS },
+      agentModes: { 'ses-kui-wrongrole': 'gaotao' },
+    })
+    try {
+      const res = await rt.run({
+        action: 'start_kui',
+        plans: [{ module_name: 'mod-x', development_plan: 'plan-a' }],
+      })
+
+      expect(res.status).toBe('error')
+      expect(res.reused).toBeUndefined()
+      expect(readBindings(rt.workspaceDir).kui[CALLER]).toBeUndefined()
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('离朱归属正确但角色不符 → 移除会话、不复用', async () => {
+    const rt = await makeRuntime({
+      lizhuSessions: ['ses-lizhu-wrongrole'],
+      children: ['ses-lizhu-wrongrole'],
+      seedWorkspaces: { 'ses-lizhu-wrongrole': WS },
+      agentModes: { 'ses-lizhu-wrongrole': 'gaotao' },
+    })
+    try {
+      const res = await rt.run({ action: 'start_lizhu' })
+
+      expect(res.status).toBe('error')
+      expect(res.reused).toBeUndefined()
+      expect(readLizhuSessions(rt.workspaceDir)).not.toContain('ses-lizhu-wrongrole')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('start_review / start_kui 返回不含 notice；handleStart 仍含 notice', () => {
+  it('start_review 复用成功返回不含 notice', async () => {
+    const rt = await makeRuntime({
+      bindings: { gaotao: { [CALLER]: 'ses-gaotao-n' } },
+      seedWorkspaces: { 'ses-gaotao-n': WS },
+      agentModes: { 'ses-gaotao-n': 'gaotao' },
+    })
+    try {
+      seedPendingPlan(rt, 'plan-n1')
+
+      const res = await rt.run({ action: 'start_review' })
+
+      expect(res.reused).toBe(true)
+      expect('notice' in res).toBe(false)
+      expect(res.notice).toBeUndefined()
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('start_review 无可审查计划返回不含 notice', async () => {
+    const rt = await makeRuntime({
+      bindings: { gaotao: { [CALLER]: 'ses-gaotao-n2' } },
+      seedWorkspaces: { 'ses-gaotao-n2': WS },
+      agentModes: { 'ses-gaotao-n2': 'gaotao' },
+    })
+    try {
+      const res = await rt.run({ action: 'start_review' })
+
+      expect(res.status).toBe('ok')
+      expect(res.message).toContain('当前没有需要代码审查的计划')
+      expect('notice' in res).toBe(false)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('start_review 新建成功返回不含 notice', async () => {
+    const rt = await makeRuntime({
+      modelConfig: { gaotao: { providerID: PROVIDER, modelID: MODEL } },
+      newChildId: 'ses-gaotao-new',
+    })
+    try {
+      const res = await rt.run({ action: 'start_review' })
+
+      expect(res.reviewer_session_id).toBe('ses-gaotao-new')
+      expect('notice' in res).toBe(false)
+      expect(readWsMap(rt.dir)['ses-gaotao-new']).toBe(WS)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('start_kui 复用成功返回不含 notice', async () => {
+    const rt = await makeRuntime({
+      bindings: { kui: { [CALLER]: 'ses-kui-n' } },
+      seedWorkspaces: { 'ses-kui-n': WS },
+      agentModes: { 'ses-kui-n': 'kui' },
+    })
+    try {
+      const res = await rt.run({
+        action: 'start_kui',
+        plans: [{ module_name: 'mod-x', development_plan: 'plan-a' }],
+      })
+
+      expect(res.reused).toBe(true)
+      expect('notice' in res).toBe(false)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('start_kui 新建成功返回不含 notice', async () => {
+    const rt = await makeRuntime({
+      modelConfig: { kui: { providerID: PROVIDER, modelID: MODEL } },
+      newChildId: 'ses-kui-new',
+    })
+    try {
+      const res = await rt.run({
+        action: 'start_kui',
+        plans: [{ module_name: 'mod-x', development_plan: 'plan-a' }],
+      })
+
+      expect(res.kui_session_id).toBe('ses-kui-new')
+      expect('notice' in res).toBe(false)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('力牧 start 复用返回仍含 notice', async () => {
+    const rt = await makeRuntime({
+      modules: ['mod-x'],
+      moduleSessions: { 'mod-x': ['ses-limu-n'] },
+    })
+    try {
+      await verificationCode.execute({}, { agent: { id: CALLER } } as never)
+      const code = getLatestCode(CALLER)!
+      storePlanConfirmation('plan-limu-n', code)
+
+      const res = await rt.run({
+        action: 'start',
+        module_name: 'mod-x',
+        development_plan: 'dev',
+        plan_id: 'plan-limu-n',
+        plan_summary: 'summary',
+      })
+
+      expect(res.reused).toBe(true)
+      expect(res.notice).toBe(CODE_CONSUMED_NOTICE)
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('复用分支补设内存 agent mode（三智能体对称）', () => {
+  it('夔：内存 mode 为空、仅 recoverAgentMode 识别为 kui 时，复用后补设 mode=kui', async () => {
+    const rt = await makeRuntime({
+      bindings: { kui: { [CALLER]: 'ses-kui-recover' } },
+      seedWorkspaces: { 'ses-kui-recover': WS },
+      inMemoryDescriptorMode: 'kui',
+    })
+    try {
+      expect(rt.state.getAgentMode('ses-kui-recover')).toBeUndefined()
+
+      const res = await rt.run({
+        action: 'start_kui',
+        plans: [{ module_name: 'mod-x', development_plan: 'plan-a' }],
+      })
+
+      expect(res.reused).toBe(true)
+      expect(res.kui_session_id).toBe('ses-kui-recover')
+      // 关键：复用后内存 mode 被补设为 kui，使后续 checkGenericPermission 可通过。
+      expect(rt.state.getAgentMode('ses-kui-recover')).toBe('kui')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('皋陶：内存 mode 为空、仅 recoverAgentMode 识别为 gaotao 时，复用后补设 mode=gaotao', async () => {
+    const rt = await makeRuntime({
+      bindings: { gaotao: { [CALLER]: 'ses-gaotao-recover' } },
+      seedWorkspaces: { 'ses-gaotao-recover': WS },
+      inMemoryDescriptorMode: 'gaotao',
+    })
+    try {
+      expect(rt.state.getAgentMode('ses-gaotao-recover')).toBeUndefined()
+      seedPendingPlan(rt, 'plan-gt-recover')
+
+      const res = await rt.run({ action: 'start_review' })
+
+      expect(res.reused).toBe(true)
+      expect(rt.state.getAgentMode('ses-gaotao-recover')).toBe('gaotao')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+
+  it('离朱：内存 mode 为空、仅 recoverAgentMode 识别为 lizhu 时，复用后补设 mode=lizhu', async () => {
+    const rt = await makeRuntime({
+      lizhuSessions: ['ses-lizhu-recover'],
+      children: ['ses-lizhu-recover'],
+      seedWorkspaces: { 'ses-lizhu-recover': WS },
+      inMemoryDescriptorMode: 'lizhu',
+    })
+    try {
+      expect(rt.state.getAgentMode('ses-lizhu-recover')).toBeUndefined()
+
+      const res = await rt.run({ action: 'start_lizhu' })
+
+      expect(res.reused).toBe(true)
+      expect(rt.state.getAgentMode('ses-lizhu-recover')).toBe('lizhu')
+    } finally {
+      await rm(rt.dir, { recursive: true, force: true })
+    }
+  })
+})

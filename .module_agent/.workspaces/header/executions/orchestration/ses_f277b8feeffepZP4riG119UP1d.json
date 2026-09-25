@@ -1,0 +1,15 @@
+[
+  {
+    "plan_id": "plan_9bb04851-ca4e-424d-bea9-3374c1159925",
+    "plan": "修复 SubagentHost.childAlive/listChildren 结构判断并补回归测试",
+    "modified_files": [
+      "src/lib/subagent_host.ts",
+      ".lizhu_env/tests/module-agent-status-tool.test.ts",
+      ".lizhu_env/tests/session-workspace-reuse.test.ts",
+      ".lizhu_env/tests/executor-recover-persist.test.ts",
+      ".lizhu_env/tests/subagent-host-child-alive.test.ts"
+    ],
+    "summary": "执行总结：修复 src/lib/subagent_host.ts —— listChildren 返回类型与 import 由 SubagentListEntry 改为 dsh 实际返回的 SubagentCatalogEntry（无 kind），childAlive 去除 entry.kind === 'child' 判定改为按 entry.id 匹配直接子级；同步将 module-agent-status-tool/session-workspace-reuse/executor-recover-persist 三个测试的 listChildren mock 改为真实 SubagentCatalogEntry 结构，并新增 .lizhu_env/tests/subagent-host-child-alive.test.ts 覆盖 childAlive、离朱复用与父级隔离。修复后 getAvailableLizhuSession 的 isChildOf 与 module_agent_status 的 isRealParent 恢复。\n测试总结：全部测试通过，通过 712 项（新增 7 项 + 关联回归 58 项 + 全量回归 647 项，50 个测试文件），失败 0 项，跳过 0 项。编译检查（tsc --noEmit）src 零错误，仅有 D:/deepseek-harness/vendor 外部依赖既有噪声（与历史基线一致，与本次变更无关）。接口测试/E2E 不适用（库内部函数逻辑，无 UI 交互）。离朱报告结论：通过。",
+    "errors": []
+  }
+]

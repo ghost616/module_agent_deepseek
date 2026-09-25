@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "plan_id": "plan_9bb04851-ca4e-424d-bea9-3374c1159925",
+    "plan_summary": "修复 SubagentHost.childAlive 误用 dsh listChildren 返回结构，恢复离朱复用",
+    "starter_session_id": "ses_f2c1db04bffez48JtwP053prHH",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  }
+]

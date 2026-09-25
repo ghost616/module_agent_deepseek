@@ -1,0 +1,13 @@
+{
+  "plan_id": "plan_9bb04851-ca4e-424d-bea9-3374c1159925",
+  "module_name": "orchestration",
+  "development_plan": "修复 SubagentHost.childAlive 与 listChildren 对 dsh 返回结构的判断：\n\n背景：dsh 的 ctx.subagents.listChildren() 返回 SubagentCatalogEntry[]（字段 id/createdAt/mode/label），不含 kind 字段；kind:'child' 属于 listDescendants 的 SubagentListEntry。当前 src/lib/subagent_host.ts 的 childAlive 以 entry.kind === 'child' 判定，恒为 false，导致 getAvailableLizhuSession 的 isChildOf 恒 false、离朱无法复用（同一力牧二次测试总是新开离朱），并使 module_agent_status 的 isRealParent 失效。\n\n任务：\n1. 修正 src/lib/subagent_host.ts 的 childAlive：按 SubagentCatalogEntry 的真实字段判定 dsh 直接父子关系（listChildren 已限定为该 parent 的直接子级，按 id 匹配即可），去除对不存在的 kind 字段的依赖。\n2. 同步修正该文件中 listChildren 包装方法的返回类型与 import（SubagentListEntry → SubagentCatalogEntry）。\n3. 补充回归验证：针对真实 SubagentCatalogEntry 结构（无 kind）构造 listChildren，断言 childAlive 与离朱复用路径（同启动者二次测试复用同一离朱）恢复；同时保证 module_agent_status 的父级校验不再因该结构误判。\n\n约束：不改动 dsh 仓库；仅在本工作目录内修改。",
+  "session_id": "ses_f277b8feeffepZP4riG119UP1d",
+  "modified_files": [
+    "src/lib/subagent_host.ts",
+    ".lizhu_env/tests/subagent-host-child-alive.test.ts",
+    ".lizhu_env/tests/module-agent-status-tool.test.ts",
+    ".lizhu_env/tests/session-workspace-reuse.test.ts",
+    ".lizhu_env/tests/executor-recover-persist.test.ts"
+  ]
+}
