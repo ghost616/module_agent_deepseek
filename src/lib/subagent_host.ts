@@ -1,7 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent, AgentOptions } from '@deepseek-ai/dsh-agent'
 import { SessionId } from '@deepseek-ai/dsh-session'
-import type { ContinuableStart, SubagentCatalogEntry } from '@deepseek-ai/dsh-subagent'
+import type { SubagentActivation, SubagentCatalogEntry } from '@deepseek-ai/dsh-subagent'
 import { queueHostSubagentPrompt } from '@deepseek-ai/dsh-subagent/internal'
 import type { ToolRestriction } from '@deepseek-ai/dsh-tools'
 // Type-only: pulls the subagent service augmentation into the program.
@@ -17,7 +17,7 @@ export interface StartChildOptions {
 }
 
 /**
- * 子智能体运行时抽象：封装 dsh 的 ctx.subagents（startContinuable / 宿主 queue
+ * 子智能体运行时抽象：封装 dsh 的 ctx.subagents（startActivation / 宿主 queue
  * 投递（queueHostSubagentPrompt，见 {@link SubagentHost.followup}）/ listChildren）、
  * ctx.sessions 存活判定与 ctx.agents 停止操作，
  * 替代 opencode 的 client.session.create / promptAsync / get / delete。
@@ -38,8 +38,8 @@ export class SubagentHost {
     prompt: string,
     options: StartChildOptions,
     signal: AbortSignal,
-  ): Promise<ContinuableStart> {
-    return this.ctx.subagents.startContinuable({
+  ): Promise<SubagentActivation> {
+    return this.ctx.subagents.startActivation({
       provider: this.subagentProvider,
       label,
       request: {
@@ -50,6 +50,7 @@ export class SubagentHost {
         ...(options.toolFilter !== undefined ? { toolFilter: options.toolFilter } : {}),
       },
       signal,
+      delivery: 'parent',
     })
   }
 

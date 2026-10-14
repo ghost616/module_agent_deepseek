@@ -1,6 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import { foldSubagentDescriptor, type ContinuableStart } from '@deepseek-ai/dsh-subagent'
+import { foldSubagentDescriptor, type SubagentActivation } from '@deepseek-ai/dsh-subagent'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import { defineTool } from '@deepseek-ai/dsh-tools'
@@ -244,7 +244,7 @@ function checkGenericPermission(mode: string | undefined): string | null {
 
 /**
  * 智能体调度执行工具：启动力牧/皋陶/离朱/夔子会话、查询状态、ping 提醒、批量编排。
- * dsh 侧通过 ctx.subagents.startContinuable + followup 实现会话的建立与复用，
+ * dsh 侧通过 ctx.subagents.startActivation + followup 实现会话的建立与复用，
  * 会话身份通过 sessionState.setAgentMode 与 persona 标记记录。
  */
 export function createModuleAgentExecutorTool(options: ModuleAgentExecutorToolOptions) {
@@ -490,7 +490,7 @@ async function handleStart(handler: HandlerContext, args: ExecutorArgs): Promise
 
   const persona = personaFor('limu', buildModuleAgentSystem(agentProfile, finalCodeConventions, module_name))
 
-  let started: ContinuableStart
+  let started: SubagentActivation
   try {
     started = await host.startChild(
       caller,
@@ -612,7 +612,7 @@ async function handleStartReview(handler: HandlerContext): Promise<JsonValue> {
 
   const persona = personaFor('gaotao', buildReviewerSystem(codeConventions))
 
-  let started: ContinuableStart
+  let started: SubagentActivation
   try {
     started = await host.startChild(
       caller,
@@ -1034,7 +1034,7 @@ async function handleStartLizhu(handler: HandlerContext): Promise<JsonValue> {
 
   const persona = personaFor('lizhu', LIZHU_RULES)
 
-  let started: ContinuableStart
+  let started: SubagentActivation
   try {
     started = await host.startChild(
       caller,
@@ -1157,7 +1157,7 @@ async function handleStartKui(handler: HandlerContext, plans: Array<{ module_nam
 
   const persona = personaFor('kui', KUI_RULES)
 
-  let started: ContinuableStart
+  let started: SubagentActivation
   try {
     started = await host.startChild(
       caller,
