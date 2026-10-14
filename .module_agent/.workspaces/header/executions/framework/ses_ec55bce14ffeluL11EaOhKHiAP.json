@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_1bb1d719-5ec5-469e-9821-1153e2d9a435",
+    "plan": "README 去代码化改造",
+    "modified_files": [
+      "README.md"
+    ],
+    "summary": "执行总结：本轮仅修改 README.md（1 个文件），完成 README 去代码化改造。1) 删除「## 与 opencode 版实现方案差异」整节（含 9 项机制映射表，涉及 @opencode-ai/plugin、Cordis apply/inject、defineTool、ctx.*、src/index.ts 等代码级引用）；2) 首段去掉对底层插件框架的代码引用（移除 `@deepseek-ai/cordis`），改为纯移植/功能描述；3) 工作流程第 10 步字面命令 `git add`/`git commit`/`git push` 改为「提交代码变更」；4) 第 3 步内部标识 `framework` 改为「框架层模块」；5) 知识库小节工具名 `knowledge_base` 改为自然语言描述。「## 安装与加载」整节保持原样（含 cordis.patch.yml 配置示例与部署步骤），七级智能体介绍、架构总览图、新手模式、工作流程叙述、知识库、回退并重发等叙述性内容不变。未改动 src/ 代码及其他文件。module_definition 的 README.md 描述已同步（去除差异对照表、标注纯功能说明书定位）。\n测试总结：纯文档变更，单元测试/接口测试/编译测试/E2E 测试四类均不适用（无函数实现、无 HTTP 端点、无编译型源码、无页面样式与交互逻辑），跳过测试流程。",
+    "errors": []
+  }
+]

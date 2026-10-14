@@ -1,0 +1,12 @@
+[
+  {
+    "plan_id": "plan_08f6e0cb-c0a3-420c-8c89-6578ce5c5c52",
+    "plan": "迁移 SubagentHost 到 dsh 新版子智能体启动 API",
+    "modified_files": [
+      "src/lib/subagent_host.ts",
+      "src/tools/module_agent_executor.ts"
+    ],
+    "summary": "迁移完成。src/lib/subagent_host.ts：startChild 由 ctx.subagents.startContinuable 改为 startActivation({ provider, label, request, signal, delivery: 'parent' })，返回 SubagentActivation，import 与 JSDoc 同步。src/tools/module_agent_executor.ts：import 类型改 SubagentActivation，4 处 let started 注解与顶部注释同步。验证：.lizhu_env/env/tsconfig.typecheck.json 下 tsc src/ 零错误（仅 D:/deepseek-harness/vendor 既有噪声，模块匹配计数 0）；vitest 50 文件 648/648 用例通过（离朱将 9 个测试文件陈旧 mock 从 startContinuable 迁移为 startActivation 并强化 delivery/签名断言）；力牧/皋陶/离朱/夔启动路径回归通过，无 startContinuable is not a function。未改动 dsh 仓库。观察项（非阻断）：README.md:215 文档仍写 startContinuable，建议后续同步。",
+    "errors": []
+  }
+]

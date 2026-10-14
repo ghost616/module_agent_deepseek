@@ -17,5 +17,6 @@
   "src/tools/module_agent_start.ts": "bd741016caac0111c2bc1384d7fadcd4",
   ".lizhu_env/tests/module-agent-status-tool.test.ts": "3398aab21b931ba210ac80d7a0dc9015",
   ".lizhu_env/tests/session-workspace-reuse.test.ts": "bbbda6657623c04d9861cf9e2882b398",
-  ".lizhu_env/tests/executor-recover-persist.test.ts": "6adec60fa6744475c56a4dfe7b00e0c2"
+  ".lizhu_env/tests/executor-recover-persist.test.ts": "6adec60fa6744475c56a4dfe7b00e0c2",
+  ".module_agent/orchestration/current_spec.md": "948a1bf414e688660e74ade8bec9ee46"
 }

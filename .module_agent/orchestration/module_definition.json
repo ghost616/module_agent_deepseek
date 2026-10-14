@@ -47,7 +47,7 @@
     },
     {
       "path": "src/lib/subagent_host.ts",
-      "description": "子智能体运行时抽象（SubagentHost）：封装 ctx.subagents.startContinuable（startChild）、followup、listChildren、childAlive，ctx.sessions + sessionPersistence 的 isAlive 存活判定、ctx.agents 的 agent 查找与 stop 停止，替代 opencode 的 client.session.create/promptAsync/get/delete。"
+      "description": "子智能体运行时抽象（SubagentHost）：封装 ctx.subagents.startActivation（startChild，delivery:'parent' 使子会话 settle 后向父 agent 发送完成通知）、followup、listChildren、childAlive，ctx.sessions + sessionPersistence 的 isAlive 存活判定、ctx.agents 的 agent 查找与 stop 停止，替代 opencode 的 client.session.create/promptAsync/get/delete。"
     },
     {
       "path": "src/lib/orchestration_guards.ts",

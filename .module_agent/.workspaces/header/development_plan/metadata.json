@@ -6,5 +6,37 @@
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
+  },
+  {
+    "plan_id": "plan_08f6e0cb-c0a3-420c-8c89-6578ce5c5c52",
+    "plan_summary": "迁移 dsh 子智能体启动 API：startContinuable → startActivation，ContinuableStart → SubagentActivation",
+    "starter_session_id": "ses_f2c1db04bffez48JtwP053prHH",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_dca1bd11-62e0-48d4-bf7d-267c2a9f96ad",
+    "plan_summary": "同步 orchestration 模块规格中过时的启动 API 描述：startContinuable+followup 更新为 startActivation+followup",
+    "starter_session_id": "ses_ec55c13f6ffeeyhYNk2ID7KkIx",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_1bb1d719-5ec5-469e-9821-1153e2d9a435",
+    "plan_summary": "README 去代码化改造：README.md 定位为纯功能说明书，除「安装与加载」节外正文不出现代码级实现细节",
+    "starter_session_id": "ses_ec55c13f6ffeeyhYNk2ID7KkIx",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_bba167c9-a9e4-4899-bee6-16e428edbaf2",
+    "plan_summary": "修复 update_spec 对重复同名 section 的处理，实现规格自愈",
+    "starter_session_id": "ses_f2c1db04bffez48JtwP053prHH",
+    "code_reviewed": true,
+    "plan_completed": true,
+    "test_passed": true
   }
 ]

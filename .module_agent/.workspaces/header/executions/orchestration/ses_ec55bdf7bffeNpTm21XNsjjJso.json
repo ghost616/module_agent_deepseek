@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_dca1bd11-62e0-48d4-bf7d-267c2a9f96ad",
+    "plan": "同步 orchestration 模块规格中过时的启动 API 描述",
+    "modified_files": [
+      ".module_agent/orchestration/current_spec.md"
+    ],
+    "summary": "执行总结：本轮修改 .module_agent/orchestration/current_spec.md，将「智能体调度」section 中过时的 `ctx.subagents.startContinuable + followup` 更新为 `ctx.subagents.startActivation + followup`，与已落地的 src/lib/subagent_host.ts、src/tools/module_agent_executor.ts 及 module_definition.json（subagent_host.ts 说明）保持一致；其余 section（会话复用与身份恢复、父子会话状态问询）内容与结构不变。已通过 module_agent_reader read_spec_section(\"智能体调度\") 验证返回更新后的 startActivation 文本。异常说明：该 current_spec.md 原存在重复的「智能体调度」标题（首个为空、原内容位于第二个同名标题下），update_spec 按首个匹配标题写入，故可读的「智能体调度」section 已反映新 API；由于力牧被禁止直接编辑 .module_agent 文件（write/edit 均被拦截），重复的第二个同名标题无法通过工具消除，文件中仍残留一份旧文本，建议后续由框架修复 update_spec 以支持重复标题或人工清理该重复标题。\n测试总结：本次为纯规格文档同步（仅 current_spec.md 的 section 文本更新），不涉及函数实现、HTTP 接口、编译型代码或页面逻辑，无适用测试类型；未启动离朱，未执行测试，passed_count=0, failed_count=0, skip_count=0。",
+    "errors": []
+  }
+]

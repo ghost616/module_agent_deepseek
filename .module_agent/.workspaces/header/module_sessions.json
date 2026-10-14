@@ -1,5 +1,12 @@
 {
   "orchestration": [
-    "ses_f277b8feeffepZP4riG119UP1d"
+    "ses_ec575c93fffeesNysfUVv3J3RP",
+    "ses_ec55bdf7bffeNpTm21XNsjjJso"
+  ],
+  "framework": [
+    "ses_ec55bce14ffeluL11EaOhKHiAP"
+  ],
+  "module-management": [
+    "ses_ec54d1f15ffe0Bpb9nXFRfdACk"
   ]
 }

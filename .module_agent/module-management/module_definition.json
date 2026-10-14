@@ -43,7 +43,7 @@
     },
     {
       "path": "src/lib/module_spec.ts",
-      "description": "模块功能说明（current_spec.md）数据访问：读取全文、获取 ## 二级标题列表、按 heading 读取 section、按 set/add 模式增量更新 section。"
+      "description": "模块功能说明（current_spec.md）数据访问：读取全文、获取 ## 二级标题列表（同名标题去重，保留首次出现）、按 heading 读取 section（取首个匹配）、按 set/add 模式增量更新 section（更新前自动折叠重复同名标题——set 在首个匹配位置写入并删除其后同名节，add 并入首个 section 并删除其余同名节，最终仅保留单标题；单标题场景 set/add 行为不变）。"
     },
     {
       "path": "src/lib/classifier_rules.ts",

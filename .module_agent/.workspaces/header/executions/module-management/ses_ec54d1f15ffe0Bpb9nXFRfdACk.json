@@ -1,0 +1,11 @@
+[
+  {
+    "plan_id": "plan_bba167c9-a9e4-4899-bee6-16e428edbaf2",
+    "plan": "修复 updateSpecSection 对重复同名 section 的折叠处理",
+    "modified_files": [
+      "src/lib/module_spec.ts"
+    ],
+    "summary": "更新了 src/lib/module_spec.ts：getSpecHeadings 同名标题去重；新增辅助函数并让 updateSpecSection 先折叠重复同名 section 再 set/add",
+    "errors": []
+  }
+]

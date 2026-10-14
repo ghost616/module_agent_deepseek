@@ -1,0 +1,9 @@
+{
+  "plan_id": "plan_1bb1d719-5ec5-469e-9821-1153e2d9a435",
+  "module_name": "framework",
+  "development_plan": "README 去代码化改造：README.md 定位为纯功能说明书，除「## 安装与加载」部署说明一节外，正文不得出现代码级实现细节。\n任务：\n1. 删除「## 与 opencode 版实现方案差异」整节（含 opencode/dsh 关键机制映射表：函数名、事件名、源码路径如 src/index.ts、ctx.* 等）。\n2. 清理正文其余代码级表述并保留「安装与加载」节原样：首段去掉对底层插件框架的代码引用（如 @deepseek-ai/cordis），改为纯移植/功能描述；工作流程等处的字面命令与内部工具名（如 git add/commit/push、knowledge_base 工具名、反引号包裹的内部标识 framework 等）改为自然语言的功能描述。\n3. 保持七级智能体介绍、架构总览图、新手模式、工作流程、知识库、回退并重发等功能叙述性内容不变。\n约束：仅修改 README.md，不改动 src/ 代码及其他文件。",
+  "session_id": "ses_ec55bce14ffeluL11EaOhKHiAP",
+  "modified_files": [
+    "README.md"
+  ]
+}

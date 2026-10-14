@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_ec54d1f15ffe0Bpb9nXFRfdACk",
+  "content": "# 待测试功能说明\n\n## 涉及文件\n- `src/lib/module_spec.ts`（`getSpecHeadings`、`getSpecSection`、`updateSpecSection`）\n\n## 待验证功能/行为\n\n### updateSpecSection —— 重复同名 section 折叠\n`current_spec.md` 可能出现重复的同名 `## heading`（trim 后完全相等）。更新时须折叠为单标题，消除新旧内容并存与结构重复：\n\n1. mode='set'，存在重复标题（「空节 + 内容节」）：以首个匹配标题位置写入新内容，删除其后所有同名 section（含标题与内容），结果仅保留一个该 heading 且内容为新内容。\n2. mode='set'，存在重复标题（「两个内容节」）：同上，仅保留首个标题并写入新内容。\n3. mode='add'，存在重复标题（「空节 + 内容节」）：把新内容并入首个 section，删除其余同名节，结果仅保留一个该 heading。\n4. mode='add'，存在重复标题（「两个内容节」）：把新内容追加到首个 section 末尾，删除其余同名节，结果仅保留一个该 heading。\n5. 折叠时不影响其他非同名 section 的内容与顺序。\n6. mode='set'，目标 heading 不存在时仍抛错。\n\n### updateSpecSection —— 单标题场景回归\n7. 无重复时，mode='set' 替换整个 section 内容的行为与既有实现一致。\n8. 无重复时，mode='add' 追加到 section 末尾的行为与既有实现一致。\n9. 目标 heading 不存在、mode='add' 时按既有逻辑在文件末尾新增 section。\n\n### getSpecHeadings 去重\n10. 当同一 heading 出现多次时，返回的标题列表对该 heading 仅保留一次（保留首次出现顺序）。\n\n### getSpecSection 取首个\n11. 当同一 heading 出现多次时，返回首个匹配 section 的内容。\n\n## 编译验证\n- `src/lib/module_spec.ts` 须通过 TypeScript 类型检查（`npm run typecheck`）。\n",
+  "timestamp": "2026-10-14T14:13:57.821Z"
+}
