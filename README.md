@@ -2,7 +2,7 @@
 
 多模块协同开发插件，内置岐伯、隶首、风后、夔、力牧、皋陶、离朱七级智能体，覆盖从项目初始化、代码归类、计划编排、批量执行、代码审查到测试验证的完整开发闭环。
 
-本插件为 opencode 版「风后力牧」多智能体协同框架的 DeepSeek Harness（dsh）移植，基于 `@deepseek-ai/cordis` 插件体系实现。
+本插件为 opencode 版「风后力牧」多智能体协同框架的 DeepSeek Harness（dsh）移植实现。
 
 ## 安装与加载
 
@@ -149,7 +149,7 @@
 
 1. **工作空间初始化**：创建或绑定工作空间，配置各智能体的默认模型
 2. **规范检查**：检查代码规范和模块设计是否存在，不存在则引导先用岐伯生成
-3. **模块树建立**：读取或创建模块结构，默认生成 `framework` 框架模块
+3. **模块树建立**：读取或创建模块结构，默认生成框架层模块
 4. **评估变更**：读取模块信息 + 直接分析代码，生成开发计划
 5. **执行模式选择**：
    - **逐模块确认**：风后逐个展示计划，用户确认后启动执行
@@ -163,7 +163,7 @@
    - 风后路径：风后独立编写测试说明，启动离朱测试
 8. **皋陶审查**：检查皋陶状态 → 启动代码审查 → 获取审查结果
 9. **汇总报告**：收集所有执行结果、测试结果和审查结论
-10. **Git 提交**：确认后执行 `git add` / `git commit` / `git push`
+10. **Git 提交**：确认后提交代码变更
 11. **收尾清理**：关闭各智能体会话，清理已完成计划
 
 ### 纠正与反馈
@@ -187,7 +187,7 @@
 
 风后可配置工作空间的知识库目录，作为子代理（夔/力牧/皋陶/离朱）执行时的外部参考资料。
 
-- 风后通过 `knowledge_base` 工具设置知识库目录及说明
+- 风后为工作空间设置知识库目录及说明
 - 工作空间初始化时自动读取知识库列表
 - 子代理启动后自动获得知识库信息，并可直接读取知识库目录（无需审批）
 
@@ -203,19 +203,3 @@
   - 把最后那条用户消息回填到输入框，便于修改后重新发送；
   - 当没有可回退的已完成回合等场景时，会给出提示。
 - **注意**：该按钮仅出现在启用了本插件的 dsh 会话（如风后工作流会话）输入框上；由分支产生的新会话沿用同一会话上下文，可继续使用。
-
-## 与 opencode 版实现方案差异
-
-下表为 opencode 版（`@opencode-ai/plugin`）与本 dsh 版关键机制的映射，参照 `src/index.ts`、`src/config.ts` 的实际实现：
-
-| 机制 | opencode 版 | dsh 版（本插件） |
-|------|-------------|------------------|
-| 插件入口 | `Plugin(ctx) => tool`，函数返回工具对象 | Cordis 插件 `apply(ctx, config)` + `inject(['tools','systemPrompt','agents','subagents','llm','sessions'])`（`src/index.ts`） |
-| 工具定义 | `tool({...})` 声明工具 | `defineTool` + `ctx.tools.register()`（`src/tools/index.ts` 的 `registerModuleAgentTools`） |
-| 子智能体调度 | `client.session.create` / `promptAsync` | `ctx.subagents.startContinuable()` / `followup()` |
-| 身份标记 | `setAgentMode` 持久化到 session_modes.json | subagent persona/descriptor：`module-agent:role=<mode>` marker 或 `module-agent:<mode>` provider 命名（`src/lib/session_state.ts`） |
-| 权限拦截 | `permission.ask` / `tool.execute.before` | `tools/pre-execute` 事件 + `ctx.tools.guard()`（`src/index.ts` `registerGuards`） |
-| 系统提示词注入 | `chat.system.transform` | `ctx.systemPrompt.section()`（`src/index.ts` `registerPromptInjection`） |
-| 完成通知 | `session.idle` 事件 | `agent/pre-step` 拦截 dsh 的 `subagent-settled` 消息并替换为框架完成通知（`src/index.ts` `registerCompletionNotification`） |
-| 模型能力 | opencode sdk `client` | `ctx.llm`（`ModelCatalog` 抽象：`listProviders` / `listModels`，`src/index.ts`） |
-| 数据存储 | `.module_agent/*.json` 文件存储 | 两版一致，沿用 `.module_agent/*.json` 文件存储 |
