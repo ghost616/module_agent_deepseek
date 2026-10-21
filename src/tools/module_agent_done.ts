@@ -33,6 +33,7 @@ import { deletePlan, readAllMetadata } from '../lib/development_plan.ts'
 import { releasePlanFilesSession } from '../lib/plan_files.ts'
 import { getSessionWorkspace, removeSessionWorkspace } from '../lib/session_workspace.ts'
 import { deleteStatusReport } from '../lib/status_report.ts'
+import { deleteTestReport, deleteTestSpec } from '../lib/testing.ts'
 import { SubagentHost } from '../lib/subagent_host.ts'
 import { jsonToolOutput } from '../lib/tool_output.ts'
 
@@ -139,6 +140,7 @@ async function cleanupLizhu(c: CleanupContext, wsDir: string, sessionId: string,
   clearActivity(sessionId)
   removeLizhuSession(wsDir, sessionId)
   deleteStatusReport(wsDir, sessionId)
+  deleteTestReport(wsDir, sessionId)
   await removeSessionWorkspace(c.directory, sessionId)
 }
 
@@ -174,6 +176,7 @@ async function cleanupLimu(c: CleanupContext, wsDir: string, moduleName: string 
   }
   await removeMapping(wsDir, sessionId)
   deleteStatusReport(wsDir, sessionId)
+  deleteTestSpec(wsDir, sessionId)
   await removeSessionWorkspace(c.directory, sessionId)
 }
 
