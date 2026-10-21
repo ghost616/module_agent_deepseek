@@ -1,0 +1,10 @@
+{
+  "plan_id": "plan_2c2038ea-c329-44de-a7d9-5808eee2151e",
+  "module_name": "orchestration",
+  "development_plan": "关闭子会话时同步删除对应测试产物（src/tools/module_agent_done.ts）：\n背景：cleanupLimu/cleanupLizhu 未删除 test_specs/test_reports，导致 module_agent_done 关闭会话后失效文件残留（start_lizhu 仅风后/力牧可调用，故只需处理力牧 spec 与离朱 report）。workflow 模块已在 src/lib/testing.ts 新增 deleteTestSpec(workspaceDir, sessionId) 与 deleteTestReport(workspaceDir, sessionId)，可直接导入使用。\n任务：\n1. cleanupLimu：在清理流程中调用 workflow 模块新增的 deleteTestSpec(wsDir, sessionId)，删除该力牧会话的 test_specs 条目。\n2. cleanupLizhu：调用 deleteTestReport(wsDir, sessionId)，删除该离朱会话的 test_reports 条目。\n3. 保持 close（单个）/ close_all / 夔关联关闭等既有流程与阻塞判定不变；alive=false 时同样清理。\n4. 补充或更新测试：关闭力牧/离朱后对应 test_specs/test_reports 文件被删除，覆盖 close_all 场景。\n约束：仅修改 orchestration 模块文件（module_agent_done.ts 及相关测试）。",
+  "session_id": "ses_ea62127d0ffe8VmKLDSXTy1aUr",
+  "modified_files": [
+    "src/tools/module_agent_done.ts",
+    "src/tools/module_agent_done.test.ts"
+  ]
+}

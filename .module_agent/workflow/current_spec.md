@@ -40,3 +40,4 @@ lizhu_rules.ts 提供离朱测试规则文本（工具清单、.lizhu_env/ 环�
 
 依赖 orchestration 预留：离朱启动者绑定校验（getBoundStarter）与离朱子代理调度（module_agent_executor action="start_lizhu"）。
 
+数据层删除：deleteTestSpec/deleteTestReport 按 sessionId 删除 test_specs/ 与 test_reports/ 下的对应文件，路径与写入侧一致（sanitizeIdSegment 编码），文件不存在时静默返回，删除失败（并发删除等）忽略不抛错。

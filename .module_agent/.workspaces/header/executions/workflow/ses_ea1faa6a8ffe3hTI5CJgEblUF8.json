@@ -1,0 +1,12 @@
+[
+  {
+    "plan_id": "plan_7eea48a9-2715-4f5c-bcc2-a75b3e69f0bf",
+    "plan": "为测试产物新增删除能力",
+    "modified_files": [
+      "src/lib/testing.ts",
+      "src/lib/testing.test.ts"
+    ],
+    "summary": "任务已启动：核对 src/lib/testing.ts 中 deleteTestSpec/deleteTestReport 与 src/lib/testing.test.ts 的现有实现",
+    "errors": []
+  }
+]

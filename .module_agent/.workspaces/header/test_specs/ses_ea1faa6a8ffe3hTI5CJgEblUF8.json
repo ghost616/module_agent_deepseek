@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_ea1faa6a8ffe3hTI5CJgEblUF8",
+  "content": "## 待测试功能\n\n测试产物删除能力（src/lib/testing.ts）及单元测试（src/lib/testing.test.ts）：\n\n- `deleteTestSpec(workspaceDir, sessionId)`：删除 `test_specs/<sanitizeIdSegment(sessionId)>.json`，与 writeTestSpec 写入路径一致；文件不存在时静默返回；删除失败（并发删除等）忽略不抛错。\n- `deleteTestReport(workspaceDir, sessionId)`：删除 `test_reports/<sanitizeIdSegment(sessionId)>.json`，与 writeTestReport 写入路径一致；文件不存在时静默返回；删除失败（并发删除等）忽略不抛错。\n\n涉及文件：\n- src/lib/testing.ts\n- src/lib/testing.test.ts\n\n测试命令：npm test（vitest run），目标用例 src/lib/testing.test.ts。\n",
+  "timestamp": "2026-10-21T10:33:08.913Z"
+}

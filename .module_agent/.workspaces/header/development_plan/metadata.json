@@ -1,42 +1,34 @@
 [
   {
-    "plan_id": "plan_9bb04851-ca4e-424d-bea9-3374c1159925",
-    "plan_summary": "修复 SubagentHost.childAlive 误用 dsh listChildren 返回结构，恢复离朱复用",
+    "plan_id": "plan_b2a7c401-8774-4fd8-ab5e-e909749b1104",
+    "plan_summary": "为测试产物新增删除能力（testing.ts 新增 deleteTestSpec/deleteTestReport 及单元测试）",
+    "starter_session_id": "ses_ea67ff1dcffeuxVaOvUZvc5xpq",
+    "code_reviewed": false,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_2c2038ea-c329-44de-a7d9-5808eee2151e",
+    "plan_summary": "关闭力牧/离朱子会话时同步删除对应 test_specs/test_reports 产物（module_agent_done.ts 及测试）",
+    "starter_session_id": "ses_ea67ff1dcffeuxVaOvUZvc5xpq",
+    "code_reviewed": false,
+    "plan_completed": true,
+    "test_passed": true
+  },
+  {
+    "plan_id": "plan_7eea48a9-2715-4f5c-bcc2-a75b3e69f0bf",
+    "plan_summary": "testing.ts 新增 test_specs/test_reports 删除能力",
     "starter_session_id": "ses_f2c1db04bffez48JtwP053prHH",
     "code_reviewed": true,
     "plan_completed": true,
     "test_passed": true
   },
   {
-    "plan_id": "plan_08f6e0cb-c0a3-420c-8c89-6578ce5c5c52",
-    "plan_summary": "迁移 dsh 子智能体启动 API：startContinuable → startActivation，ContinuableStart → SubagentActivation",
+    "plan_id": "plan_0dd02df2-7d57-4e26-8ed5-89373509ad48",
+    "plan_summary": "module_agent_done 关闭会话时清理 test_specs/test_reports 产物",
     "starter_session_id": "ses_f2c1db04bffez48JtwP053prHH",
     "code_reviewed": true,
     "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_dca1bd11-62e0-48d4-bf7d-267c2a9f96ad",
-    "plan_summary": "同步 orchestration 模块规格中过时的启动 API 描述：startContinuable+followup 更新为 startActivation+followup",
-    "starter_session_id": "ses_ec55c13f6ffeeyhYNk2ID7KkIx",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_1bb1d719-5ec5-469e-9821-1153e2d9a435",
-    "plan_summary": "README 去代码化改造：README.md 定位为纯功能说明书，除「安装与加载」节外正文不出现代码级实现细节",
-    "starter_session_id": "ses_ec55c13f6ffeeyhYNk2ID7KkIx",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
-  },
-  {
-    "plan_id": "plan_bba167c9-a9e4-4899-bee6-16e428edbaf2",
-    "plan_summary": "修复 update_spec 对重复同名 section 的处理，实现规格自愈",
-    "starter_session_id": "ses_f2c1db04bffez48JtwP053prHH",
-    "code_reviewed": true,
-    "plan_completed": true,
-    "test_passed": true
+    "test_passed": false
   }
 ]

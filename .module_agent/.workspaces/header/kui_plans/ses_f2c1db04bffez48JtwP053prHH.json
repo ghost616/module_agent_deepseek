@@ -1,0 +1,22 @@
+[
+  {
+    "kui_plan_id": "kui_plan_57c83e34-f5d6-407f-bc4b-8e097c20dc75",
+    "plans": [
+      {
+        "module_name": "workflow",
+        "development_plan": "为测试产物新增删除能力（src/lib/testing.ts）：\n背景：module_agent_done 关闭力牧/离朱子会话时未删除其 test_specs/test_reports 产物，导致失效文件残留。\n任务：\n1. 新增 deleteTestSpec(workspaceDir, sessionId) 与 deleteTestReport(workspaceDir, sessionId)：路径与写入侧一致（test_specs/<sanitizeIdSegment(sessionId)>.json、test_reports/<sanitizeIdSegment(sessionId)>.json）；文件不存在时静默返回；删除失败（并发删除等）忽略，不抛错。\n2. 补充单元测试：文件存在时被删除、不存在时不报错。\n约束：仅修改 workflow 模块文件（testing.ts 及相关测试）。"
+      },
+      {
+        "module_name": "orchestration",
+        "development_plan": "关闭子会话时同步删除对应测试产物（src/tools/module_agent_done.ts）：\n背景：cleanupLimu/cleanupLizhu 未删除 test_specs/test_reports，导致 module_agent_done 关闭会话后失效文件残留（start_lizhu 仅风后/力牧可调用，故只需处理力牧 spec 与离朱 report）。\n任务：\n1. cleanupLimu：在清理流程中调用 workflow 模块新增的 deleteTestSpec(wsDir, sessionId)，删除该力牧会话的 test_specs 条目。\n2. cleanupLizhu：调用 deleteTestReport(wsDir, sessionId)，删除该离朱会话的 test_reports 条目。\n3. 保持 close（单个）/ close_all / 夔关联关闭等既有流程与阻塞判定不变；alive=false 时同样清理。\n4. 补充或更新测试：关闭力牧/离朱后对应 test_specs/test_reports 文件被删除，覆盖 close_all 场景。\n约束：仅修改 orchestration 模块文件（module_agent_done.ts 及相关测试）。"
+      }
+    ],
+    "plan_ids": [
+      "plan_b2a7c401-8774-4fd8-ab5e-e909749b1104",
+      "plan_2c2038ea-c329-44de-a7d9-5808eee2151e"
+    ],
+    "status": "running",
+    "result": "",
+    "kui_session_id": "ses_ea67ff1dcffeuxVaOvUZvc5xpq"
+  }
+]

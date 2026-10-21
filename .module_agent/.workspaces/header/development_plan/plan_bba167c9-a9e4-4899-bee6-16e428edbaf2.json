@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_bba167c9-a9e4-4899-bee6-16e428edbaf2",
-  "module_name": "module-management",
-  "development_plan": "修复 module_agent_updater 的 update_spec 对重复同名 section 的处理（src/lib/module_spec.ts 的 updateSpecSection）。\n\n背景：current_spec.md 可能出现重复的同名 `## heading`（例如一个空节 + 一个内容节）。update_spec(mode=set) 仅替换首个同名 section 并保留后续同名节，导致更新后新旧内容并存、结构重复，且无工具可清理（风后/力牧均被禁止直接编辑 .module_agent 文件）。\n\n任务：\n1. 增强 updateSpecSection：\n   - 收集所有与目标 heading 完全匹配（trim 后等于 `## <heading>`）的标题行。\n   - mode='set'：以首个匹配标题的位置为准写入新内容，并删除其后所有同名 section（含标题与内容），消除重复标题。\n   - mode='add'：无匹配则按现有逻辑新增；存在匹配时并入首个 section 并删除其余同名重复节，避免累积重复标题。\n   - 保持「单标题」场景下既有 set（替换）/add（追加）行为完全不变。\n2. 视需要同步 getSpecHeadings / getSpecSection 对重复标题的去重行为，保证读取与更新一致（headings 去重、section 取首个）。\n3. 补充单元测试：覆盖「空节 + 内容节」与「两个内容节」两种重复标题在 mode=set / mode=add 下的折叠结果，并保证单标题行为回归不变。\n\n约束：仅修改 module-management 模块的文件（module_spec.ts 及相关测试）；不改动其他模块。",
-  "session_id": "ses_ec54d1f15ffe0Bpb9nXFRfdACk",
-  "modified_files": [
-    "src/lib/module_spec.ts"
-  ]
-}

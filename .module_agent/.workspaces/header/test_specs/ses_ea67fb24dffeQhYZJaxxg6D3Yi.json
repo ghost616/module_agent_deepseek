@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_ea67fb24dffeQhYZJaxxg6D3Yi",
+  "content": "## 待测试功能\n\n新增测试产物删除能力（workflow 模块）：\n\n1. `src/lib/testing.ts` 新增 `deleteTestSpec(workspaceDir, sessionId)`：\n   - 删除 `test_specs/<sanitizeIdSegment(sessionId)>.json`；\n   - 文件不存在时静默返回，不抛错；\n   - 删除失败（如并发删除）被忽略，不抛错。\n\n2. `src/lib/testing.ts` 新增 `deleteTestReport(workspaceDir, sessionId)`：\n   - 删除 `test_reports/<sanitizeIdSegment(sessionId)>.json`；\n   - 行为同上。\n\n3. `src/lib/testing.test.ts` 单元测试：\n   - 文件存在时被删除；\n   - 文件不存在时不报错。\n\n## 涉及文件\n\n- `src/lib/testing.ts`\n- `src/lib/testing.test.ts`\n\n## 测试建议\n\n- 运行单元测试：`npx vitest run src/lib/testing.test.ts`\n- 编译/类型检查：`npx tsc --noEmit`\n",
+  "timestamp": "2026-10-20T15:08:00.335Z"
+}

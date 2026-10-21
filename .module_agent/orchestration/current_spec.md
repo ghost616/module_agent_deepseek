@@ -20,3 +20,6 @@
 - 状态文件数据模型：status_report.ts 在工作空间目录下以 status_reports/<子会话id>.json 覆盖写入子会话状态（session_id/mode/content/updated_at），提供 statusReportPath/statusReportExists/writeStatusReport/readStatusReport/deleteStatusReport/cleanStaleStatusReports（同步 JSON 读写，sessionId 经 sanitizeIdSegment 编码防路径穿越）；statusReportExists 供父会话与 framework 完成通知判断子会话是否已汇报状态。
 - 状态问询工具：module_agent_status 提供 ask（父会话风后/夔/力牧校验调用者为目标真实父级——绑定表 getLimuStarter/getGaotaoStarter/getBoundStarter/getKuiStarter 与 dsh 父子关系 host.childAlive——后经 SubagentHost.followup 唤醒子会话概括进度并写状态；目标不存在/已关闭、忙碌分别报错）、write（框架子会话解析自身工作空间后覆盖写入）、read（父会话读取并消费删除状态文件、返回摘要，无文件时提示先 ask 或等待）。目标角色经「内存 mode → recoverAgentMode」解析，recoverAgentMode 由 module_agent_executor 导出复用。
 - 接线：module_agent_done 的 cleanupLizhu/cleanupGaotao/cleanupLimu/cleanupKui 关闭会话时调用 deleteStatusReport 清理状态文件；stale_cleanup 的 cleanWorkspaceStale 接入 cleanStaleStatusReports 并在 WorkspaceCleanupStats 新增 status_reports 字段；module_agent_executor 的夔 toolFilter allow 列表放行 module_agent_status。
+## 会话关闭与测试产物清理
+
+- 测试产物清理：module_agent_done 的 cleanupLimu 调用 workflow 模块 deleteTestSpec(wsDir, sessionId) 删除力牧会话的 test_specs 条目；cleanupLizhu 调用 deleteTestReport(wsDir, sessionId) 删除离朱会话的 test_reports 条目。close（单个）、close_all、夔关联关闭及 alive=false 的清理路径均复用同一清理函数，保证关闭会话后不残留测试说明/报告。

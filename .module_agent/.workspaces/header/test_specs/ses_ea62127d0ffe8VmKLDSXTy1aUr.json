@@ -1,0 +1,5 @@
+{
+  "session_id": "ses_ea62127d0ffe8VmKLDSXTy1aUr",
+  "content": "## 待测试功能\n\n关闭子会话时同步删除测试产物：\n\n1. `module_agent_done` 的 `cleanupLimu` 在关闭力牧会话时调用 `deleteTestSpec(wsDir, sessionId)`，删除该力牧会话对应的 `test_specs/<sessionId>.json`。\n2. `module_agent_done` 的 `cleanupLizhu` 在关闭离朱会话时调用 `deleteTestReport(wsDir, sessionId)`，删除该离朱会话对应的 `test_reports/<sessionId>.json`。\n3. `action=\"close_all\"` 批量关闭当前风后关联的力牧与离朱会话后，两类测试产物文件均被删除。\n4. `action=\"close\"` 单个关闭力牧/离朱后，对应测试产物文件被删除。\n5. 既有阻塞判定与关闭流程保持不变。\n\n## 涉及代码文件\n\n- `src/tools/module_agent_done.ts`\n- `src/tools/module_agent_done.test.ts`\n\n## 测试文件\n\n- `src/tools/module_agent_done.test.ts`\n",
+  "timestamp": "2026-10-20T15:13:28.622Z"
+}

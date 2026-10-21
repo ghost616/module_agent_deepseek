@@ -39,7 +39,7 @@
     },
     {
       "path": "src/lib/testing.ts",
-      "description": "测试数据层：workspace 下 test_specs/ 与 test_reports/ 的说明/报告写入（JSON 记录），runShellCommand 执行 shell 命令返回退出码与输出，以及 test_specs/test_reports 的过期清理。"
+      "description": "测试数据层：workspace 下 test_specs/ 与 test_reports/ 的说明/报告写入（JSON 记录），runShellCommand 执行 shell 命令返回退出码与输出，按 sessionId 删除单个测试说明/报告，以及 test_specs/test_reports 的过期清理。"
     },
     {
       "path": "src/lib/reviewer_rules.ts",
@@ -52,6 +52,10 @@
     {
       "path": "src/lib/lizhu_env_guard.ts",
       "description": "离朱环境构建命令守卫：识别 install/init/create 等环境构建命令，校验 working_dir 必须位于 .lizhu_env/ 内且命令中禁止切换目录，供 orchestration 挂载 bash 守卫。"
+    },
+    {
+      "path": "src/lib/testing.test.ts",
+      "description": "测试数据层单元测试：验证 deleteTestSpec 与 deleteTestReport 在文件存在时删除对应产物、文件不存在时不抛错。"
     }
   ]
 }

@@ -1,9 +1,0 @@
-{
-  "plan_id": "plan_dca1bd11-62e0-48d4-bf7d-267c2a9f96ad",
-  "module_name": "orchestration",
-  "development_plan": "同步 orchestration 模块规格中过时的启动 API 描述：将「智能体调度」一节规格里的 `ctx.subagents.startContinuable + followup` 更新为 `ctx.subagents.startActivation + followup`，与已落地实现保持一致；其余规格内容与结构保持不变。",
-  "session_id": "ses_ec55bdf7bffeNpTm21XNsjjJso",
-  "modified_files": [
-    ".module_agent/orchestration/current_spec.md"
-  ]
-}

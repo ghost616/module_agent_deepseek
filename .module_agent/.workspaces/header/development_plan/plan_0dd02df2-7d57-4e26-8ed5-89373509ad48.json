@@ -1,0 +1,10 @@
+{
+  "plan_id": "plan_0dd02df2-7d57-4e26-8ed5-89373509ad48",
+  "module_name": "",
+  "development_plan": "关闭力牧/离朱子会话时同步删除对应 test_specs/test_reports 产物：cleanupLimu 调用 deleteTestSpec(wsDir, sessionId)，cleanupLizhu 调用 deleteTestReport(wsDir, sessionId)；close/close_all/夔关联关闭/alive=false 路径复用同一清理函数。",
+  "session_id": "",
+  "modified_files": [
+    "src/tools/module_agent_done.ts",
+    "src/tools/module_agent_done.test.ts"
+  ]
+}

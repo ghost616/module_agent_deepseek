@@ -1,0 +1,10 @@
+{
+  "plan_id": "plan_7eea48a9-2715-4f5c-bcc2-a75b3e69f0bf",
+  "module_name": "workflow",
+  "development_plan": "为测试产物新增删除能力（src/lib/testing.ts）：\n\n背景：module_agent_done 关闭力牧/离朱子会话时未删除其 test_specs/test_reports 产物，导致失效文件残留。\n\n任务：\n1. 新增 deleteTestSpec(workspaceDir, sessionId) 与 deleteTestReport(workspaceDir, sessionId)：\n   - 路径与写入侧一致（test_specs/<sanitizeIdSegment(sessionId)>.json、test_reports/<sanitizeIdSegment(sessionId)>.json）。\n   - 文件不存在时静默返回；删除失败（并发删除等）忽略，不抛错。\n2. 补充单元测试：文件存在时被删除、文件不存在时不报错。\n\n约束：仅修改 workflow 模块文件（testing.ts 及相关测试）。",
+  "session_id": "ses_ea1faa6a8ffe3hTI5CJgEblUF8",
+  "modified_files": [
+    "src/lib/testing.ts",
+    "src/lib/testing.test.ts"
+  ]
+}
