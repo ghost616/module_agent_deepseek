@@ -65,6 +65,18 @@ export function writeTestSpec(
   writeJsonSync(path, record)
 }
 
+export function deleteTestSpec(workspaceDir: string, sessionId: string): void {
+  const path = join(workspaceDir, 'test_specs', `${sanitizeIdSegment(sessionId)}.json`)
+  if (!existsSync(path)) return
+  try { unlinkSync(path) } catch { /* 并发删除时忽略 */ }
+}
+
+export function deleteTestReport(workspaceDir: string, sessionId: string): void {
+  const path = join(workspaceDir, 'test_reports', `${sanitizeIdSegment(sessionId)}.json`)
+  if (!existsSync(path)) return
+  try { unlinkSync(path) } catch { /* 并发删除时忽略 */ }
+}
+
 export async function cleanStaleTestSpecs(
   workspaceDir: string,
   isAlive: (sessionId: string) => Promise<boolean>,
